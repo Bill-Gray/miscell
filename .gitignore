@@ -27,7 +27,27 @@
 *.i*86
 *.x86_64
 *.hex
+blunder
+clock1
+fix_obs
+grab_mpc
+i2mpc
+jpl2mpc
+ktest
+neocp
+nofs2mpc
+plot_orb
+si_print
+splottes
+xfer2
+xfer3
 
 # Debug files
 *.dSYM/
 *.su
+
+# Files created by/used by neocp
+neocp.new
+neocp.old
+neocp.txt
+neocplst.txt
