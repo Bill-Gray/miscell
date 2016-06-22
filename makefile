@@ -9,7 +9,7 @@ else
 	EXE=
 	RM=rm -f
 	PREFIX  =
-	ADDED_EXES = grab_bmp grab_mpc neocp
+	ADDED_EXES = grab_mpc neocp
 endif
 
 ifdef CLANG
@@ -28,7 +28,6 @@ clean:
 	$(RM) blunder$(EXE)
 	$(RM) clock1$(EXE)
 	$(RM) fix_obs$(EXE)
-	$(RM) grab_bmp$(EXE)
 	$(RM) grab_mpc$(EXE)
 	$(RM) i2mpc$(EXE)
 	$(RM) jpl2mpc$(EXE)
@@ -52,9 +51,6 @@ blunder$(EXE): blunder.cpp
 clock1$(EXE): clock1.cpp
 	echo $(INSTALL_PATH)
 	$(CC) $(CFLAGS) -o clock1$(EXE) clock1.cpp
-
-grab_bmp$(EXE): grab_bmp.cpp
-	$(CC) $(CFLAGS) -o grab_bmp$(EXE) grab_bmp.cpp
 
 fix_obs$(EXE): fix_obs.cpp
 	$(CC) $(CFLAGS) -o fix_obs$(EXE) fix_obs.cpp
