@@ -34,6 +34,7 @@ grab_mpc
 i2mpc
 jpl2mpc
 ktest
+mpc_stat
 neocp
 nofs2mpc
 plot_orb
