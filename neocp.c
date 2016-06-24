@@ -42,7 +42,7 @@ static FILE *err_fopen( const char *filename, const char *permits)
    return( rval);
 }
 
-static unsigned fetch_a_file( const char *url, const char *filename, const int appending)
+static unsigned fetch_a_file( const char *url, const char *filename, const int flags)
 {
    CURL *curl = curl_easy_init();
    unsigned rval = 0;
@@ -50,7 +50,7 @@ static unsigned fetch_a_file( const char *url, const char *filename, const int a
    assert( curl);
    if( curl)
       {
-      FILE *fp = fopen( filename, appending ? "ab" : "wb");
+      FILE *fp = fopen( filename, (flags & 1) ? "ab" : "wb");
       const long starting_loc = ftell( fp);
 
       if( !fp)
@@ -66,6 +66,11 @@ static unsigned fetch_a_file( const char *url, const char *filename, const int a
          curl_easy_setopt( curl, CURLOPT_URL, url);
          curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, fwrite);
          curl_easy_setopt( curl, CURLOPT_WRITEDATA, fp);
+         if( flags & 2)
+            {
+            curl_easy_setopt( curl, CURLOPT_NOBODY, 1);
+            curl_easy_setopt( curl, CURLOPT_HEADER, 1);
+            }
          res = curl_easy_perform( curl);
          if( res)
             {
@@ -288,7 +293,7 @@ static void show_differences( void)
             strcpy( url, "http://minorplanetcenter.net/cgi-bin/showobsorbs.cgi?Obj=");
             strcat( url, after[i].desig);
             strcat( url, "&obs=y");
-            n_lines_read = fetch_a_file( url, "neocp.new", true) / line_len;
+            n_lines_read = fetch_a_file( url, "neocp.new", 1) / line_len;
             if( n_lines_read != after[i].n_obs)
                printf( "!!! %u obs read\n", n_lines_read);
             }
@@ -309,9 +314,34 @@ static void show_differences( void)
    free( after);
 }
 
+static int header_check( void)
+{
+   const char *filenames[2] = { "neocplst.txt", "neocplst.tmp" };
+   char buff[2][100];
+   size_t i;
+
+   for( i = 0; i < 2; i++)
+      {
+      FILE *ifile = fopen( filenames[i], "rb");
+
+      if( !ifile)     /* assume this means files got removed;  a simple */
+         return( 1);  /* header check won't suffice */
+      while( fgets( buff[i], sizeof( buff[i]), ifile) &&
+                        memcmp( buff[i], "Last-Modified: ", 15))
+         ;
+      fclose( ifile);
+      printf( "  %s: %s", (i ? "Before" : "After "), buff[i]);
+      }
+   return( strcmp( buff[0], buff[1]));
+}
+
 /* Our procedure is as follows :
 
-   -- Download the new 'neocplst.txt',  with the name 'neocplst.tmp'.
+   -- Download the HEAD data for the NEOCP text summary.  It contains the
+         date/time that the file was modified.  If it matches the date/time
+         from the previous run (stored in 'neocplst.txt'),  nothing has
+         changed on NEOCP and our work here is done;  we can quit.
+   -- Otherwise,  download the new 'neocplst.txt',  with the name 'neocplst.tmp'.
    -- If that works,  compare it to the existing 'neocplst.txt',
          and create 'neocp.new'.
    -- If _that_ works,  merge 'neocp.txt' and 'neocp.new' to create 'neocp.tmp'.
@@ -328,6 +358,8 @@ int main( const int argc, const char **argv)
 {
     unsigned bytes_read;
     int i;
+    const char *neocp_text_summary =
+                     "http://www.minorplanetcenter.net/iau/NEO/neocp.txt";
 
     printf( "Content-type: text/html\n\n");
     avoid_runaway_process( );
@@ -339,9 +371,20 @@ int main( const int argc, const char **argv)
                 printf( "Command-line option '%s' unknown\n", argv[i]);
                 return( 0);
              }
-    bytes_read = fetch_a_file(
-                     "http://www.minorplanetcenter.net/iau/NEO/neocp.txt",
-                     "neocplst.tmp", false);
+                     /* just get the headers... */
+    bytes_read = fetch_a_file( neocp_text_summary, "neocplst.tmp", 2);
+    if( !bytes_read)
+      {
+      printf( "Couldn't get NEOCP summary header data\n");
+      return( -2);
+      }
+    if( !header_check( ))
+      {
+      printf( "NEOCP summary file is unmodified\n");
+      unlink( "neocplst.tmp");
+      return( -3);
+      }
+    bytes_read = fetch_a_file( neocp_text_summary, "neocplst.tmp", 1);
     printf( "%u objects to load\n", bytes_read / (unsigned)NEOCPLST_LINE_LEN);
             /* file should be an even multiple of NEOCPLST_LINE_LEN bytes long : */
     if( bytes_read % (unsigned)NEOCPLST_LINE_LEN)
