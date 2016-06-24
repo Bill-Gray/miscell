@@ -19,7 +19,7 @@ CC=$(PREFIX)g++
 endif
 
 all:   blunder$(EXE) clock1$(EXE) fix_obs$(EXE)   \
-	i2mpc$(EXE) jpl2mpc$(EXE) ktest$(EXE) nofs2mpc$(EXE) \
+	i2mpc$(EXE) jpl2mpc$(EXE) ktest$(EXE) mpc_stat$(EXE) nofs2mpc$(EXE) \
 	plot_orb$(EXE) si_print$(EXE)	splottes$(EXE) \
 	xfer2$(EXE) xfer3$(EXE) $(ADDED_EXES)
 
@@ -32,6 +32,7 @@ clean:
 	$(RM) i2mpc$(EXE)
 	$(RM) jpl2mpc$(EXE)
 	$(RM) ktest$(EXE)
+	$(RM) mpc_stat$(EXE)
 	$(RM) neocp$(EXE)
 	$(RM) nofs2mpc$(EXE)
 	$(RM) plot_orb$(EXE)
