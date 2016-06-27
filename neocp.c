@@ -330,7 +330,7 @@ static int header_check( void)
                         memcmp( buff[i], "Last-Modified: ", 15))
          ;
       fclose( ifile);
-      printf( "  %s: %s", (i ? "Before" : "After "), buff[i]);
+      printf( "  %s: %s", (i ? "After " : "Before"), buff[i]);
       }
    return( strcmp( buff[0], buff[1]));
 }
