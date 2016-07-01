@@ -50,7 +50,6 @@ blunder$(EXE): blunder.cpp
 	$(CC) $(CFLAGS) -o blunder$(EXE) blunder.cpp -lm
 
 clock1$(EXE): clock1.cpp
-	echo $(INSTALL_PATH)
 	$(CC) $(CFLAGS) -o clock1$(EXE) clock1.cpp
 
 fix_obs$(EXE): fix_obs.cpp
@@ -67,6 +66,9 @@ ktest$(EXE): ktest.c
 
 jpl2mpc$(EXE): jpl2mpc.cpp
 	$(CC) $(CFLAGS) -o jpl2mpc$(EXE) jpl2mpc.cpp
+
+mpc_stat$(EXE): mpc_stat.cpp
+	$(CC) $(CFLAGS) -o mpc_stat$(EXE) mpc_stat.cpp
 
 neocp$(EXE): neocp.c
 	$(CC) $(CFLAGS) -o neocp$(EXE) neocp.c -lcurl
