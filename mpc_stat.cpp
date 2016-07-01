@@ -9,7 +9,7 @@
 #define EARTH_AXIS_RATIO (EARTH_MINOR_AXIS / EARTH_MAJOR_AXIS)
 #define SWAP( A, B, TEMP) { TEMP = A; A = B; B = TEMP; }
 
-/* The following code reads in the MPC file ObsCodes.txt,  which gives
+/* The following code reads in the MPC file ObsCodes.htm,  which gives
 longitudes and parallax constants;  and outputs the same file with new
 columns for latitude and altitude.  Be warned that the parallax
 constants are usually given to five places,  or a precision of about
@@ -22,12 +22,15 @@ are computed are relative to the ellipsoid,  not to the geoid/mean sea level.
 
    It's been modified a bit so that it can read in lat/lon rectangles
 from the 'geo_rect.txt' file.  Each rectangle covers part of the interior
-of a state or nation;  if a given lat/lon from 'ObsCodes.txt' falls within
+of a state or nation;  if a given lat/lon from 'ObsCodes.htm' falls within
 that rectangle,  you can assign that state/nation data to it.  I first made
 a slew of rectangles covering most MPC codes,  ran this program,  found
 some codes without state/nation info,  and made some more rectangles to
 cover those codes.  Every now and then,  I have to add another rectangle
 to cover a new code.
+
+   Note that the MPC list of observatory codes is usually 'ObsCodes.html';
+the code now checks for both possibilities.
 */
 
 
@@ -109,8 +112,10 @@ int main( const int unused_argc, const char **unused_argv)
    GEO_RECT *rects = (GEO_RECT *)calloc( MAX_RECTS, sizeof( GEO_RECT));
 
    if( !ifile)
+   	  ifile = fopen( "ObsCodes.html", "rb");
+   if( !ifile)
       {
-      printf( "stations.txt not opened\n");
+      printf( "ObsCodes.htm (or ObsCodes.html) not opened\n");
       exit( 0);
       }
    n_geo_rects = load_geo_rects( rects);
