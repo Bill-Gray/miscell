@@ -112,7 +112,7 @@ int main( const int unused_argc, const char **unused_argv)
    GEO_RECT *rects = (GEO_RECT *)calloc( MAX_RECTS, sizeof( GEO_RECT));
 
    if( !ifile)
-   	  ifile = fopen( "ObsCodes.html", "rb");
+        ifile = fopen( "ObsCodes.html", "rb");
    if( !ifile)
       {
       printf( "ObsCodes.htm (or ObsCodes.html) not opened\n");
