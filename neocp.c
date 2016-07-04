@@ -314,6 +314,13 @@ static void show_differences( void)
    free( after);
 }
 
+/* Turns out that the NEOCP plain-text summary file is updated every half
+hour,  even if nothing has changed.  (And possibly is modified solely on
+that schedule;  that is to say,  the summary file can lag actual changes.)
+Until that's fixed,  I'm leaving CHECK_HEAD undefined;  we just download
+the file and compare it to our previous version.      */
+
+#ifdef CHECK_HEAD
 static int header_check( void)
 {
    const char *filenames[2] = { "neocplst.txt", "neocplst.tmp" };
@@ -334,6 +341,7 @@ static int header_check( void)
       }
    return( strcmp( buff[0], buff[1]));
 }
+#endif
 
 /* Our procedure is as follows :
 
@@ -371,6 +379,8 @@ int main( const int argc, const char **argv)
                 printf( "Command-line option '%s' unknown\n", argv[i]);
                 return( 0);
              }
+
+#ifdef CHECK_HEAD
                      /* just get the headers... */
     bytes_read = fetch_a_file( neocp_text_summary, "neocplst.tmp", 2);
     if( !bytes_read)
@@ -384,6 +394,7 @@ int main( const int argc, const char **argv)
       unlink( "neocplst.tmp");
       return( -3);
       }
+#endif
     bytes_read = fetch_a_file( neocp_text_summary, "neocplst.tmp", 1);
     printf( "%u objects to load\n", bytes_read / (unsigned)NEOCPLST_LINE_LEN);
             /* file should be an even multiple of NEOCPLST_LINE_LEN bytes long : */
