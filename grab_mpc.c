@@ -89,5 +89,18 @@ int main( const int argc, char **argv)
    printf( "%ld lines written\n", (long)total_written / 81L);
    if( total_written % 81)
       printf( "!!! Not an even multiple of 81\n");
+   else
+      {
+      FILE *ifile = fopen( argv[1], "rb");
+      char buff[100];
+
+      assert( ifile);
+      if( fgets( buff, sizeof( buff), ifile))
+         printf( "%s", buff);    /* show first observation */
+      fseek( ifile, -81L, SEEK_END);
+      if( fgets( buff, sizeof( buff), ifile))
+         printf( "%s", buff);    /* show last observation */
+      fclose( ifile);
+      }
    return( 0);
 }
