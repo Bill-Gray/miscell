@@ -13,14 +13,16 @@ else
 endif
 
 ifdef CLANG
-CC=clang -Weverything
+ADDED_MATH_LIB=-lm
+CC=clang
 else
+ADDED_MATH_LIB=
 CC=$(PREFIX)g++
 endif
 
 all:   blunder$(EXE) clock1$(EXE) fix_obs$(EXE)   \
 	i2mpc$(EXE) jpl2mpc$(EXE) ktest$(EXE) mpc_stat$(EXE) nofs2mpc$(EXE) \
-	plot_orb$(EXE) si_print$(EXE)	splottes$(EXE) \
+	plot_orb$(EXE) radar$(EXE) si_print$(EXE) splottes$(EXE) \
 	xfer2$(EXE) xfer3$(EXE) $(ADDED_EXES)
 
 
@@ -36,6 +38,7 @@ clean:
 	$(RM) neocp$(EXE)
 	$(RM) nofs2mpc$(EXE)
 	$(RM) plot_orb$(EXE)
+	$(RM) radar$(EXE)
 	$(RM) si_print$(EXE)
 	$(RM) splottes$(EXE)
 	$(RM) xfer2$(EXE)
@@ -68,7 +71,7 @@ jpl2mpc$(EXE): jpl2mpc.cpp
 	$(CC) $(CFLAGS) -o jpl2mpc$(EXE) jpl2mpc.cpp
 
 mpc_stat$(EXE): mpc_stat.cpp
-	$(CC) $(CFLAGS) -o mpc_stat$(EXE) mpc_stat.cpp
+	$(CC) $(CFLAGS) -o mpc_stat$(EXE) mpc_stat.cpp $(ADDED_MATH_LIB)
 
 neocp$(EXE): neocp.c
 	$(CC) $(CFLAGS) -o neocp$(EXE) neocp.c -lcurl
@@ -79,11 +82,14 @@ nofs2mpc$(EXE): nofs2mpc.cpp
 plot_orb$(EXE): plot_orb.c
 	$(CC) $(CFLAGS) -o plot_orb$(EXE) plot_orb.c -lm
 
+radar$(EXE): radar.c
+	$(CC) $(CFLAGS) -o radar$(EXE) radar.c
+
 si_print$(EXE): si_print.c
 	$(CC) $(CFLAGS) -DTEST_CODE -o si_print$(EXE) si_print.c
 
 splottes$(EXE): splottes.cpp splot.cpp
-	$(CC) $(CFLAGS) -o splottes$(EXE) splottes.cpp splot.cpp
+	$(CC) $(CFLAGS) -o splottes$(EXE) splottes.cpp splot.cpp $(ADDED_MATH_LIB)
 
 xfer2$(EXE): xfer2.cpp
 	$(CC) $(CFLAGS) -o xfer2$(EXE) xfer2.cpp -lm
