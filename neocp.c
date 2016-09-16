@@ -395,7 +395,7 @@ int main( const int argc, const char **argv)
       return( -3);
       }
 #endif
-    bytes_read = fetch_a_file( neocp_text_summary, "neocplst.tmp", 1);
+    bytes_read = fetch_a_file( neocp_text_summary, "neocplst.tmp", 0);
     printf( "%u objects to load\n", bytes_read / (unsigned)NEOCPLST_LINE_LEN);
             /* file should be an even multiple of NEOCPLST_LINE_LEN bytes long : */
     if( bytes_read % (unsigned)NEOCPLST_LINE_LEN)
