@@ -29,6 +29,7 @@
 *.hex
 blunder
 clock1
+csv2txt
 fix_obs
 grab_mpc
 i2mpc

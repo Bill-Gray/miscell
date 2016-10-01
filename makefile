@@ -20,7 +20,7 @@ ADDED_MATH_LIB=
 CC=$(PREFIX)g++
 endif
 
-all:   blunder$(EXE) clock1$(EXE) fix_obs$(EXE)   \
+all:   blunder$(EXE) clock1$(EXE) csv2txt$(EXE) fix_obs$(EXE)  \
 	i2mpc$(EXE) jpl2mpc$(EXE) ktest$(EXE) mpc_stat$(EXE) nofs2mpc$(EXE) \
 	plot_orb$(EXE) radar$(EXE) si_print$(EXE) splottes$(EXE) \
 	xfer2$(EXE) xfer3$(EXE) $(ADDED_EXES)
@@ -29,6 +29,7 @@ all:   blunder$(EXE) clock1$(EXE) fix_obs$(EXE)   \
 clean:
 	$(RM) blunder$(EXE)
 	$(RM) clock1$(EXE)
+	$(RM) csv2txt$(EXE)
 	$(RM) fix_obs$(EXE)
 	$(RM) grab_mpc$(EXE)
 	$(RM) i2mpc$(EXE)
@@ -54,6 +55,9 @@ blunder$(EXE): blunder.cpp
 
 clock1$(EXE): clock1.cpp
 	$(CC) $(CFLAGS) -o clock1$(EXE) clock1.cpp
+
+csv2txt$(EXE): csv2txt.c
+	$(CC) $(CFLAGS) -o csv2txt$(EXE) csv2txt.c
 
 fix_obs$(EXE): fix_obs.cpp
 	$(CC) $(CFLAGS) -o fix_obs$(EXE) fix_obs.cpp
