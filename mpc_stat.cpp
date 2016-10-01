@@ -9,6 +9,53 @@
 #define EARTH_AXIS_RATIO (EARTH_MINOR_AXIS / EARTH_MAJOR_AXIS)
 #define SWAP( A, B, TEMP) { TEMP = A; A = B; B = TEMP; }
 
+int lat_alt_to_parallax( const double lat, const double ht_in_meters,
+            double *rho_cos_phi, double *rho_sin_phi)
+{
+   const double u = atan( sin( lat) * EARTH_AXIS_RATIO / cos( lat));
+
+   *rho_sin_phi = EARTH_AXIS_RATIO * sin( u) +
+                            (ht_in_meters / EARTH_MAJOR_AXIS) * sin( lat);
+   *rho_cos_phi = cos( u) + (ht_in_meters / EARTH_MAJOR_AXIS) * cos( lat);
+   return( 0);
+}
+
+/* Takes parallax constants (rho_cos_phi, rho_sin_phi) in units of the
+equatorial radius.  The previous non-iterative version of this function,
+used before 2016 Oct 1,  was taken from Meeus.  It could be off by as much
+as 16 meters in altitude and wrong in latitude by about three meters for
+each km of altitude (i.e.,  about 25 meters at the top of Everest).  It's
+presumably much worse for more oblate planets than the earth.
+
+   I don't think an exact non-iterative solution is possible.  In any case,
+the iterative solution given below works nicely.   The iterations start out
+with a laughably poor guess,  but convergence is fast;  eight iterations gets
+sub-micron accuracy. */
+
+int parallax_to_lat_alt( const double rho_cos_phi, const double rho_sin_phi,
+               double *lat, double *ht_in_meters)
+{
+   double lat0 = atan2( rho_sin_phi, rho_cos_phi);
+   double rho0 = sqrt( rho_sin_phi * rho_sin_phi + rho_cos_phi * rho_cos_phi);
+   double tlat = lat0, talt = 0.;
+   int iter;
+
+   for( iter = 0; iter < 8; iter++)
+      {
+      double rc2, rs2;
+
+      lat_alt_to_parallax( tlat, talt, &rc2, &rs2);
+      talt -= (sqrt( rs2 * rs2 + rc2 * rc2) - rho0) * EARTH_MAJOR_AXIS;
+      tlat -= atan2( rs2, rc2) - lat0;
+      }
+   if( lat)
+      *lat = tlat;
+   if( ht_in_meters)
+      *ht_in_meters = talt;
+   return( 0);
+}
+
+
 /* The following code reads in the MPC file ObsCodes.htm,  which gives
 longitudes and parallax constants;  and outputs the same file with new
 columns for latitude and altitude.  Be warned that the parallax
@@ -138,21 +185,16 @@ int main( const int unused_argc, const char **unused_argv)
             double lon = atof( buff + 4), lat;
             char alt_buff[7];
             int rect_no = -1, i;
+            double ht_in_meters;
 
+            parallax_to_lat_alt( x, y, &lat, &ht_in_meters);
             if( buff[19] != ' ' && buff[28] != ' ')
                {        /* make sure there's precision for altitude */
-               double radius = sqrt( x * x + y * y);
-               double ang = atan( y / x);
-               double r_earth = cos( ang) * cos( ang) +
-                        sin( ang) * sin( ang) * EARTH_AXIS_RATIO;
-
-               sprintf( alt_buff, "%5.0f",
-                            (radius - r_earth) * EARTH_MAJOR_AXIS);
+               sprintf( alt_buff, "%5.0f", ht_in_meters);
                }
             else        /* put blanks in for altitude */
                strcpy( alt_buff, "     ");
 
-            lat = atan( y / (x * EARTH_AXIS_RATIO * EARTH_AXIS_RATIO));
             lat *= 180. / PI;
             for( i = 0; i < n_geo_rects; i++)
                if( rects[i].lon1 < lon && rects[i].lon2 > lon)
