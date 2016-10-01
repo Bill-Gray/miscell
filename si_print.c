@@ -116,11 +116,13 @@ void si_sprintf( char *buff, double ival, int n_places)
       sprintf( tbuff, "%.*f", n_places, ival);
       if( *tbuff == '0')      /* skip leading zero */
          memcpy( buff, tbuff + 1, n_places);
+#ifdef NOT_REALLY_NEEDED
       else if( tbuff[n_places - 1] == '.')
          {
          *buff = ' ';
          memcpy( buff + 1, tbuff, n_places - 1);
          }
+#endif
       else
          memcpy( buff, tbuff, n_places);
       if( n_places == 1 && ival > 9.4)
