@@ -48,59 +48,65 @@ int main( const int argc, const char **argv)
 {
    FILE *ifile;
    char buff[200];
+   int idx;
 
    if( argc < 2)
       {
       printf( "Need the name of a file containing NOFS astrometry on the command line\n");
       return( -1);
       }
-   ifile = fopen( argv[1], "rb");
-   while( fgets( buff, sizeof( buff), ifile))
-      if( strlen( buff) > 100)
+   for( idx = 1; idx < argc; idx++)
+      if( !(ifile = fopen( argv[idx], "rb")))
+         printf( "%s not opened\n", argv[idx]);
+      else
          {
-         int month = 0, i;
-         char obuff[90];
-
-         for( i = 0; i < 12; i++)
-            if( !memcmp( buff + 11,
-                        "JanFebMarAprMayJunJulAugSepOctNovDec" + i * 3, 3))
-               month = i + 1;
-         if( month)
-            {
-            static const int no_blanks[7] = { 23, 32, 35, 38, 45, 48, 51 };
-
-            memset( obuff, 0, 90);
-            for( i = 0; i < 6 && buff[i + 99] > ' '; i++)
-               obuff[i + 5] = buff[i + 99];
-            obuff[14] = 'C';
-            memcpy( obuff + 15, buff + 6, 4);       /* year */
-            obuff[20] = (char)( '0' + month / 10);
-            obuff[21] = (char)( '0' + month % 10);
-            sprintf( obuff + 24, "%.6f",
-                     atof( buff + 19) / 24. + atof( buff + 22) / 1440.
-                   + atof( buff + 25) / 86400.);
-            obuff[23] = buff[15];   /* day (10s) */
-            obuff[24] = buff[16];   /* day (units) */
-            memcpy( obuff + 32, buff + 31, 12);       /* RA */
-            memcpy( obuff + 44, buff + 46, 12);       /* dec */
-            if( obuff[44] == ' ')
-               obuff[44] = '+';           /* correct dec sign */
-            if( obuff[45] == '-')
+         while( fgets( buff, sizeof( buff), ifile))
+            if( strlen( buff) > 100)
                {
-               obuff[44] = '-';           /* correct dec sign */
-               obuff[45] = '0';
+               int month = 0, i;
+               char obuff[90];
+               const char *month_names = "JanFebMarAprMayJunJulAugSepOctNovDec";
+
+               for( i = 0; i < 12; i++)
+                  if( !memcmp( buff + 11, month_names + i * 3, 3))
+                     month = i + 1;
+               if( month)
+                  {
+                  static const int no_blanks[7] = { 23, 32, 35, 38, 45, 48, 51 };
+
+                  memset( obuff, 0, 90);
+                  for( i = 0; i < 6 && buff[i + 99] > ' '; i++)
+                     obuff[i + 5] = buff[i + 99];
+                  obuff[14] = 'C';
+                  memcpy( obuff + 15, buff + 6, 4);       /* year */
+                  obuff[20] = (char)( '0' + month / 10);
+                  obuff[21] = (char)( '0' + month % 10);
+                  sprintf( obuff + 24, "%.6f",
+                           atof( buff + 19) / 24. + atof( buff + 22) / 1440.
+                         + atof( buff + 25) / 86400.);
+                  obuff[23] = buff[15];   /* day (10s) */
+                  obuff[24] = buff[16];   /* day (units) */
+                  memcpy( obuff + 32, buff + 31, 12);       /* RA */
+                  memcpy( obuff + 44, buff + 46, 12);       /* dec */
+                  if( obuff[44] == ' ')
+                     obuff[44] = '+';           /* correct dec sign */
+                  if( obuff[45] == '-')
+                     {
+                     obuff[44] = '-';           /* correct dec sign */
+                     obuff[45] = '0';
+                     }
+                  memcpy( obuff + 77, buff + 74, 3);       /* MPC code */
+                  for( i = 0; i < 80; i++)
+                     if( !obuff[i])
+                        obuff[i] = ' ';
+                  for( i = 0; i < 7; i++)
+                     if( obuff[no_blanks[i]] == ' ')
+                        obuff[no_blanks[i]] = '0';
+                  fix_name( obuff);
+                  printf( "%s\n", obuff);
+                  }
                }
-            memcpy( obuff + 77, buff + 74, 3);       /* MPC code */
-            for( i = 0; i < 80; i++)
-               if( !obuff[i])
-                  obuff[i] = ' ';
-            for( i = 0; i < 7; i++)
-               if( obuff[no_blanks[i]] == ' ')
-                  obuff[no_blanks[i]] = '0';
-            fix_name( obuff);
-            printf( "%s\n", obuff);
-            }
+         fclose( ifile);
          }
-   fclose( ifile);
    return( 0);
 }
