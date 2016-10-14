@@ -3,7 +3,7 @@
 #include <string.h>
 #include <math.h>
 
-#ifdef _MSC_VER
+#ifndef isfinite
    #include <float.h>
    #define isfinite _finite
 #endif
