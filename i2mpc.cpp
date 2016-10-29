@@ -8,19 +8,25 @@ described at
 
 http://www.satobs.org/position/IODformat.html
                K130213:032353605     (CYYMMDD HH:MM:SS.sss)
-*/
+
+   The '-f' flag causes the date/time to be output in MPC 'standard'
+format,  to a precision of 0.000001 day = 86.4 milliseconds.  By
+default,  it's output in the form show above,  to millisecond
+precision.  But only Find_Orb will understand that format.   */
 
 int main( const int argc, const char **argv)
 {
    char buff[200];
    int i;
-   bool use_extended_time_format = false;
+   bool use_extended_time_format = true;
    FILE *ifile = fopen( argv[1], "rb"), *ofile = NULL;
    const char *code_xlate[] = {
          "0433 GRR",    /* Greg Roberts */
          "1086 AOO",    /* Odessa Astronomical Observatory, Kryzhanovka */
          "1244 AMa",    /* Andriy Makeyev */
+         "1753 VMe",    /* Vitaly Mechinsky  */
          "1775 Fet",    /* Kevin Fetter */
+         "1860 SGu",    /* Sergey Guryanov, Siberia, N56.1016, E94.5536, Alt=170m */
          "4171 CBa",    /* Cees Bassa */
          "4172 Alm",    /* ALMERE  52.3713 N 5.2580 E  -3 (meters?) ASL */
          "4541 Ran",    /* Alberto Rango */
@@ -43,7 +49,7 @@ int main( const int argc, const char **argv)
          switch( argv[i][1])
             {
             case 'f':
-               use_extended_time_format = true;
+               use_extended_time_format = false;
                break;
             default:
                printf( "Option '%s' ignored\n", argv[i]);
