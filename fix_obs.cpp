@@ -152,7 +152,7 @@ int main( const int argc, const char **argv)
    size_t i, len, n_lines;
    int add_old_desig = 0;
 
-   printf( "Starting fix_obs\n");
+   printf( "Starting fix_obs.  Total runtime should be a few seconds.\n");
    for( i = 1; i < (size_t)argc; i++)
       if( argv[i][0] == '-')
          switch( argv[i][1])
@@ -199,7 +199,7 @@ int main( const int argc, const char **argv)
          {
          char *tptr = obs + i * 81;
 
-         if( add_old_desig)
+         if( add_old_desig && tptr[14] == 'C')
             memcpy( tptr + 56, tptr + 5, 7);
          memcpy( tptr + 5, xdesigs + i * 7, 7);
          }
