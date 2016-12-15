@@ -148,7 +148,7 @@ int code_compare( const void *a, const void *b)
 #define MAX_RECTS 1000
 #define MAX_CODES 8000
 
-int main( const int unused_argc, const char **unused_argv)
+int main( void)
 {
    char buff[190];
    int in_code_section = 0, n_geo_rects;
