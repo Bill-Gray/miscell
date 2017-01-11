@@ -6,13 +6,24 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <time.h>
 
-/* Code to download astrometry for a given object from MPC.  Run as
+/* Code to download MPEC headers for a given year to create an index.  See
 
-./grab_mpc filename object name [-a]
+http://projectpluto.com/mpecs/2016.htm
 
--a = append astrometry to file rather than overwriting the file. */
+   for an example.  This code may be of no real interest to anyone except
+me;  everybody else can probably just use the indices generated with the
+code as provided at the above URL.  Unless I drop dead and somebody else
+wants to update those indices.  Example usages :
+
+./mpecer 2016.htm K16        (used to create the above)
+./mpecer 1997.htm J97        (similar for 1997)
+./mpecer 2016.htm K16 CF
+
+   That last would be used to limit the index to the half-months C to F,
+i.e.,  February and March.       */
 
 size_t total_written;
 
@@ -95,42 +106,39 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
    return( rval);
 }
 
-const char *month_links =
-                  "<TABLE BORDER=1 >\n"
-                  "<TR>\n"
-                  "<TD><a href=\"#A\">  Jan </a></TD>\n"
-                  "<TD><a href=\"#C\">  Feb </a></TD>\n"
-                  "<TD><a href=\"#E\">  Mar </a></TD>\n"
-                  "<TD><a href=\"#G\">  Apr </a></TD>\n"
-                  "<TD><a href=\"#J\">  May </a></TD>\n"
-                  "<TD><a href=\"#L\">  Jun </a></TD>\n"
-                  "</TR>\n"
-                  "<TR>\n"
-                  "<TD><a href=\"#N\">  Jul </a></TD>\n"
-                  "<TD><a href=\"#P\">  Aug </a></TD>\n"
-                  "<TD><a href=\"#R\">  Sep </a></TD>\n"
-                  "<TD><a href=\"#T\">  Oct </a></TD>\n"
-                  "<TD><a href=\"#V\">  Nov </a></TD>\n"
-                  "<TD><a href=\"#X\">  Dec </a></TD>\n"
-                  "</TR>\n"
-                  "\n"
-                  "</TABLE>\n"
-                  "\n"
-                  "<p>\n";
+/* Used in situations where failure to open a file is a fatal error */
+
+static FILE *err_fopen( const char *filename, const char *permits)
+{
+   FILE *rval = fopen( filename, permits);
+
+   if( !rval)
+      {
+      printf( "Couldn't open %s\n", filename);
+      perror( NULL);
+      exit( -1);
+      }
+   return( rval);
+}
 
 int main( const int argc, char **argv)
 {
    int half_month;
-   FILE *ofile = fopen( argv[1], "wb");
+   FILE *ofile = err_fopen( argv[1], "wb");
+   FILE *ifile = err_fopen( "mpec_hdr.htm", "rb");
    int start = 'A', end = 'Y';
+   char buff[100];
 
    if( argc > 3)
       {
       start = argv[3][0];
       end   = argv[3][1];
       }
+   while( fgets( buff, sizeof( buff), ifile))    /* create HTML hdr */
+      if( *buff != '#')
+         fputs( buff, ofile);
+   fclose( ifile);
 
-   fprintf( ofile, "%s", month_links);
    for( half_month = start; half_month <= end; half_month++)
       if( half_month != 'I')
          {
