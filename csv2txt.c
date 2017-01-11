@@ -3,7 +3,14 @@
 #include <assert.h>
 #include <stdio.h>
 
-int find_csv_field( char *ibuff)
+/* Code to read in a .csv file,  figure out the field lengths,  and write
+out a fixed-field file that is more human-readable and editor-sortable.
+Though,  of course,  (usually) much larger.
+
+Only command-line argument is the name of the input .csv file.  Output
+is to stdout.        */
+
+static int find_csv_field( char *ibuff)
 {
    int i = 0;
 
