@@ -21,16 +21,23 @@ int lat_alt_to_parallax( const double lat, const double ht_in_meters,
 }
 
 /* Takes parallax constants (rho_cos_phi, rho_sin_phi) in units of the
-equatorial radius.  The previous non-iterative version of this function,
-used before 2016 Oct 1,  was taken from Meeus.  It could be off by as much
-as 16 meters in altitude and wrong in latitude by about three meters for
-each km of altitude (i.e.,  about 25 meters at the top of Everest).  It's
+equatorial radius,  and returns the geographical latitude/altitude.  The
+previous (non-iterative) version of this function,  used before 2016 Oct
+1,  was derived by me as an approximate inversion of the above function
+to convert lat/altitude to parallax. It could be off by as much as 16
+meters in altitude and wrong in latitude by about three meters for each
+km of altitude (i.e.,  about 25 meters at the top of Everest).  It's
 presumably much worse for more oblate planets than the earth.
 
-   I don't think an exact non-iterative solution is possible.  In any case,
-the iterative solution given below works nicely.   The iterations start out
-with a laughably poor guess,  but convergence is fast;  eight iterations gets
-sub-micron accuracy. */
+   An exact non-iterative solution is possible,  but it involves solving a
+fourth-degree (quartic) polynomial,  and I don't recommend it.  The
+iterations in the following function start out with a laughably poor guess,
+but convergence is fast;  eight iterations gets sub-micron accuracy.
+
+   For a solution for truly oblate objects,  and for points near the
+center of the object,  see 'ellip_pt.c'.  (Since MPC stations are on
+the only mildly oblate earth,  and none of them are near the geocenter,
+the following code is perfectly good for the current purposes.)  */
 
 int parallax_to_lat_alt( const double rho_cos_phi, const double rho_sin_phi,
                double *lat, double *ht_in_meters)
