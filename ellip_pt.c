@@ -243,5 +243,11 @@ int main( const int argc, const char **argv)
    printf( "Lat %.12f (Meeus approximation)\n",
             approx_lat_from_parallax( rho_cos_phi, rho_sin_phi) * 180. / PI);
 
+         /* From Wolfgang Wepner, _Mathematisches Hilfsbuch für Studierende
+            und Freunde der Astronomie, Dr. Vehrenberg KG, Düsseldorf 1982.
+            Good to within 2 meters on the surface of the ellipsoid,  but off
+            by 20 meters at the altitude of Everest.   */
+   printf( "Lat %.12f (Wepner 1982)\n",
+            atan( (rho_sin_phi / rho_cos_phi) / .99330546) * 180. / PI);
    return( 0);
 }
