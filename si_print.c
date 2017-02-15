@@ -3,7 +3,9 @@
 #include <string.h>
 #include <math.h>
 
-#ifndef isfinite
+/* MS only got around to adding 'isfinite',  asinh in VS2013 : */
+
+#if defined( _MSC_VER) && (_MSC_VER < 1800)
    #include <float.h>
    #define isfinite _finite
 #endif
