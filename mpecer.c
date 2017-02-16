@@ -11,19 +11,27 @@
 
 /* Code to download MPEC headers for a given year to create an index.  See
 
-http://projectpluto.com/mpecs/2016.htm
+http://projectpluto.com/mpecs/2017.htm
 
    for an example.  This code may be of no real interest to anyone except
 me;  everybody else can probably just use the indices generated with the
 code as provided at the above URL.  Unless I drop dead and somebody else
-wants to update those indices.  Example usages :
+wants to update those indices.
 
-./mpecer 2016.htm K16        (used to create the above)
-./mpecer 1997.htm J97        (similar for 1997)
-./mpecer 2016.htm K16 CF
+   When run with the (four-digit) year as a command line arguments,  the
+code looks through the _existing_ 'YYYY.htm' file to find the last MPEC in
+it.   Let's say you're running it for 2017,  and the last MPEC listed in
+'2017.htm' is 2017-C42;  the code will grab the first 20000 bytes of the
+assumed next MPEC,  2017-C43,  and get a summary for it. Then for C44,
+and so on.
 
-   That last would be used to limit the index to the half-months C to F,
-i.e.,  February and March.       */
+   Eventually,  this will fail to access anything,  and the code looks for
+2017-D01,  D02, ...
+
+   If you run the code frequently,  it'll usually just access a few recent
+MPECs and fail when it tries to get the first MPEC of the next half-month.
+If you haven't run it for four months,  though,  it'll get data for eight
+half-months.         */
 
 size_t total_written;
 
@@ -64,7 +72,7 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
 {
    char buff[200], url[200], *tptr;
    FILE *ifile;
-   int rval = -1, found_name = 0;
+   int i, rval = -1, found_name = 0;
 
    sprintf( url, "http://www.minorplanetcenter.net/mpec/%s/%s%cx%d.html",
                         year, year, half_month, mpec_no % 10);
@@ -81,6 +89,8 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
          tptr = strstr( buff, "</h2>");
          assert( tptr);
          assert( !found_name);
+         if( mpec_no == 1)
+            fprintf( ofile, "<a name=\"%c\"> </a>\n", half_month);
          *tptr = '\0';
          fprintf( ofile, "<a href=\"%s\"> %s </a>", url, buff + 4);
          printf( "%s\n", buff + 4);
@@ -99,9 +109,34 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
             assert( ut);
             *ut = '\0';
             }
-         fprintf( ofile, "%s <br>\n", tptr + 6);
+         fprintf( ofile, "%s", tptr + 6);
          rval = 0;
          }
+   if( !rval)
+      while( fgets( buff, sizeof( buff), ifile))
+         if( !memcmp( buff, "Orbital elements:", 17))
+            {
+            int n_written = 0;
+
+            for( i = 0; i < 9 && fgets( buff, sizeof( buff), ifile); i++)
+               {
+               if( strchr( "aeq", *buff) && !memcmp( buff + 1, "   ", 3))
+                  n_written += fprintf( ofile, " %s%c=%.5s",
+                              (n_written ? "" : "("), *buff, buff + 4);
+               if( !memcmp( buff + 19, "Incl.", 5))
+                  n_written += fprintf( ofile, " %si=%.5s",
+                              (n_written ? "" : "("), buff + 26);
+               if( !memcmp( buff + 19, "H   ", 4))
+                  n_written += fprintf( ofile, " %sH=%.4s",
+                              (n_written ? "" : "("), buff + 23);
+               memset( buff, 0, sizeof( buff));
+               }
+            if( n_written)
+               fprintf( ofile, ")");
+            fseek( ifile, 0L, SEEK_END);
+            }
+   if( !rval)
+      fprintf( ofile, "<br>\n");
    fclose( ifile);
    return( rval);
 }
@@ -121,36 +156,64 @@ static FILE *err_fopen( const char *filename, const char *permits)
    return( rval);
 }
 
-int main( const int argc, char **argv)
+int main( const int argc, const char **argv)
 {
-   int half_month;
-   FILE *ofile = err_fopen( argv[1], "wb");
-   FILE *ifile = err_fopen( "mpec_hdr.htm", "rb");
-   int start = 'A', end = 'Y';
-   char buff[100];
+   int half_month = 'A', i = 1, year;
+   FILE *ifile;
+   char buff[200];
+   char mpcized_year[10];
+   const char *search_str = "<a href=\"http://www.minorplanetcenter.net/mpec/";
+   long end_loc = 0L;
 
-   if( argc > 3)
+   if( argc != 2)
       {
-      start = argv[3][0];
-      end   = argv[3][1];
+      printf( "'mpecer' needs the (four-digit) year as a command line argument\n");
+      return( -1);
       }
-   while( fgets( buff, sizeof( buff), ifile))    /* create HTML hdr */
-      if( *buff != '#')
-         fputs( buff, ofile);
-   fclose( ifile);
+   year = atoi( argv[1]);
+   if( year < 1993 || year > 2100)
+      {
+      printf( "Invalid year\n");
+      return( -2);
+      }
+   sprintf( buff, "%s.htm", argv[1]);
+   ifile = err_fopen( buff, "r+b");
+   while( fgets( buff, sizeof( buff), ifile))
+      if( !memcmp( buff, search_str, strlen( search_str)))
+         {
+         half_month = buff[54];
+         if( buff[55] >= 'a')
+            i = (buff[55] - 'a' + 36) * 10;
+         else if( buff[55] >= 'A')
+            i = (buff[55] - 'A' + 10) * 10;
+         else
+            i = (buff[55] - '0') * 10;
+         i += buff[56] - '0';
+         end_loc = ftell( ifile);
+         i++;     /* we're looking for the _next_ MPEC */
+         }
 
-   for( half_month = start; half_month <= end; half_month++)
+   if( end_loc)
+      fseek( ifile, end_loc, SEEK_SET);
+   else        /* starting new year */
+      {
+      half_month = 'A';
+      i = 1;
+      }
+   sprintf( mpcized_year, "%c%02d", 'A' + year / 100 - 10, year % 100);
+   for( ; half_month <= 'Y'; half_month++)
       if( half_month != 'I')
          {
-         int i = 1;
-
-         fprintf( ofile, "<a name=\"%c\"> </a>\n", half_month);
-         while( !grab_mpec( ofile, argv[2], half_month, i))
+         while( !grab_mpec( ifile, mpcized_year, half_month, i))
             i++;
          if( i > 1)
-            fprintf( ofile, "<br>\n");
+            fprintf( ifile, "<br>\n");
+         else      /* didn't find anything for this half-month; we're done */
+            half_month = 'Y';
+         i = 1;
          }
-   fprintf( ofile, "</p> </body> </html>\n");
-   fclose( ofile);
+   fprintf( ifile, "<a name=\"the_end\"> </a>\n");
+   fprintf( ifile, "</p> </body> </html>\n");
+   fclose( ifile);
    return( 0);
 }
