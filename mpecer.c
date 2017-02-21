@@ -28,6 +28,11 @@ and so on.
    Eventually,  this will fail to access anything,  and the code looks for
 2017-D01,  D02, ...
 
+   The revised index file is written to 'temp.htm'.  If everything goes
+without error,  'yyyy.htm' is unlinked and replaced by 'temp.htm'.  If a
+failure occurs (MPC site unavailable,  for example),  the original 'yyyy.htm'
+is unharmed.
+
    If you run the code frequently,  it'll usually just access a few recent
 MPECs and fail when it tries to get the first MPEC of the next half-month.
 If you haven't run it for four months,  though,  it'll get data for eight
@@ -90,7 +95,7 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
          assert( tptr);
          assert( !found_name);
          if( mpec_no == 1)
-            fprintf( ofile, "<a name=\"%c\"> </a>\n", half_month);
+            fprintf( ofile, "<br>\n<a name=\"%c\"> </a>\n", half_month);
          *tptr = '\0';
          fprintf( ofile, "<a href=\"%s\"> %s </a>", url, buff + 4);
          printf( "%s\n", buff + 4);
@@ -158,12 +163,15 @@ static FILE *err_fopen( const char *filename, const char *permits)
 
 int main( const int argc, const char **argv)
 {
-   int half_month = 'A', i = 1, year;
-   FILE *ifile;
+   int half_month = 'A', mpec_no = 1, year;
+   FILE *ifile, *ofile;
+   char filename[100];
    char buff[200];
    char mpcized_year[10];
    const char *search_str = "<a href=\"http://www.minorplanetcenter.net/mpec/";
-   long end_loc = 0L;
+   const char *end_marker = "<a name=\"the_end\"> </a>";
+   const char *temp_file_name = "temp.htm";
+   bool found_end = false;
 
    if( argc != 2)
       {
@@ -176,44 +184,44 @@ int main( const int argc, const char **argv)
       printf( "Invalid year\n");
       return( -2);
       }
-   sprintf( buff, "%s.htm", argv[1]);
-   ifile = err_fopen( buff, "r+b");
-   while( fgets( buff, sizeof( buff), ifile))
+   sprintf( filename, "%s.htm", argv[1]);
+   ifile = err_fopen( filename, "rb");
+   ofile = err_fopen( temp_file_name, "wb");
+   while( fgets( buff, sizeof( buff), ifile)
+            && !(found_end = !memcmp( buff, end_marker, strlen( end_marker))))
+      {
+      fputs( buff, ofile);
       if( !memcmp( buff, search_str, strlen( search_str)))
          {
          half_month = buff[54];
          if( buff[55] >= 'a')
-            i = (buff[55] - 'a' + 36) * 10;
+            mpec_no = (buff[55] - 'a' + 36) * 10;
          else if( buff[55] >= 'A')
-            i = (buff[55] - 'A' + 10) * 10;
+            mpec_no = (buff[55] - 'A' + 10) * 10;
          else
-            i = (buff[55] - '0') * 10;
-         i += buff[56] - '0';
-         end_loc = ftell( ifile);
-         i++;     /* we're looking for the _next_ MPEC */
-         }
+            mpec_no = (buff[55] - '0') * 10;
+         mpec_no += buff[56] - '0';
 
-   if( end_loc)
-      fseek( ifile, end_loc, SEEK_SET);
-   else        /* starting new year */
-      {
-      half_month = 'A';
-      i = 1;
+         mpec_no++;     /* we're looking for the _next_ MPEC */
+         }
       }
+   assert( found_end);
    sprintf( mpcized_year, "%c%02d", 'A' + year / 100 - 10, year % 100);
    for( ; half_month <= 'Y'; half_month++)
       if( half_month != 'I')
          {
-         while( !grab_mpec( ifile, mpcized_year, half_month, i))
-            i++;
-         if( i > 1)
-            fprintf( ifile, "<br>\n");
-         else      /* didn't find anything for this half-month; we're done */
-            half_month = 'Y';
-         i = 1;
+         while( !grab_mpec( ofile, mpcized_year, half_month, mpec_no))
+            mpec_no++;
+         if( mpec_no == 1)         /* didn't find anything for this  */
+            half_month = 'Y';       /* half-month; we're done */
+         mpec_no = 1;
          }
-   fprintf( ifile, "<a name=\"the_end\"> </a>\n");
-   fprintf( ifile, "</p> </body> </html>\n");
+   fprintf( ofile, "%s\n", end_marker);
+   while( fgets( buff, sizeof( buff), ifile))
+      fputs( buff, ofile);
    fclose( ifile);
+   fclose( ofile);
+   unlink( filename);
+   rename( temp_file_name, filename);
    return( 0);
 }
