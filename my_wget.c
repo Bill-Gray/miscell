@@ -50,6 +50,8 @@ typedef struct
    size_t ultotal, ulnow;
 } file_fetch_t;
 
+/* Older cURL libraries don't have a progress function option  */
+#if defined( CURLOPT_XFERINFOFUNCTION) && defined( CURLOPT_XFERINFODATA)
 int progress_callback( void *clientp, curl_off_t dltotal, curl_off_t dlnow,
                     curl_off_t ultotal, curl_off_t ulnow)
 {
@@ -61,6 +63,7 @@ int progress_callback( void *clientp, curl_off_t dltotal, curl_off_t dlnow,
    f->ulnow   = (size_t)ulnow;
    return( 0);       /* return non-zero value to abort xfer */
 }
+#endif
 
 void *fetch_a_file( void *args)
 {
@@ -89,8 +92,10 @@ void *fetch_a_file( void *args)
          curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, fwrite);
          curl_easy_setopt( curl, CURLOPT_WRITEDATA, fp);
          curl_easy_setopt( curl, CURLOPT_NOPROGRESS, 0);
+#if defined( CURLOPT_XFERINFOFUNCTION) && defined( CURLOPT_XFERINFODATA)
          curl_easy_setopt( curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
          curl_easy_setopt( curl, CURLOPT_XFERINFODATA, args);
+#endif
          if( f->n_bytes)
             {
             char tbuff[60];
