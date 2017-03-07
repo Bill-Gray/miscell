@@ -30,17 +30,24 @@
 blunder
 clock1
 csv2txt
+ellip_pt
+eop_proc
 fix_obs
 grab_mpc
 i2mpc
 jpl2mpc
 ktest
+mpc_extr
 mpc_stat
+mpecer
+my_wget
 neocp
 nofs2mpc
 plot_orb
+radar
 si_print
 splottes
+vid_dump
 xfer2
 xfer3
 
