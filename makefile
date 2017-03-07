@@ -23,7 +23,7 @@ endif
 all:   blunder$(EXE) clock1$(EXE) csv2txt$(EXE) ellip_pt$(EXE) fix_obs$(EXE) \
 	eop_proc$(EXE) i2mpc$(EXE) jpl2mpc$(EXE) ktest$(EXE) \
 	mpecer$(EXE) mpc_extr$(EXE) mpc_stat$(EXE) my_wget$(EXE) nofs2mpc$(EXE) \
-	plot_orb$(EXE) radar$(EXE) si_print$(EXE) splottes$(EXE) \
+	plot_orb$(EXE) radar$(EXE) si_print$(EXE) splottes$(EXE) vid_dump$(EXE) \
 	xfer2$(EXE) xfer3$(EXE) $(ADDED_EXES)
 
 
@@ -48,6 +48,7 @@ clean:
 	$(RM) radar$(EXE)
 	$(RM) si_print$(EXE)
 	$(RM) splottes$(EXE)
+	$(RM) vid_dump$(EXE)
 	$(RM) xfer2$(EXE)
 	$(RM) xfer3$(EXE)
 
@@ -57,7 +58,7 @@ CFLAGS=-Wextra -Wall -O3 -pedantic
 	$(CC) $(CFLAGS) -c $<
 
 blunder$(EXE): blunder.cpp
-	$(CC) $(CFLAGS) -o blunder$(EXE) blunder.cpp -lm
+	$(CC) $(CFLAGS) -o blunder$(EXE) blunder.cpp $(ADDED_MATH_LIB)
 
 clock1$(EXE): clock1.cpp
 	$(CC) $(CFLAGS) -o clock1$(EXE) clock1.cpp
@@ -66,7 +67,7 @@ csv2txt$(EXE): csv2txt.c
 	$(CC) $(CFLAGS) -o csv2txt$(EXE) csv2txt.c
 
 ellip_pt$(EXE): ellip_pt.c
-	$(CC) $(CFLAGS) -o ellip_pt$(EXE) ellip_pt.c
+	$(CC) $(CFLAGS) -o ellip_pt$(EXE) ellip_pt.c $(ADDED_MATH_LIB)
 
 eop_proc$(EXE): eop_proc.c
 	$(CC) $(CFLAGS) -o eop_proc$(EXE) eop_proc.c
@@ -81,7 +82,7 @@ i2mpc$(EXE): i2mpc.cpp
 	$(CC) $(CFLAGS) -o i2mpc$(EXE) i2mpc.cpp
 
 ktest$(EXE): ktest.c
-	$(CC) $(CFLAGS) -o ktest$(EXE) ktest.c -lm
+	$(CC) $(CFLAGS) -o ktest$(EXE) ktest.c $(ADDED_MATH_LIB)
 
 jpl2mpc$(EXE): jpl2mpc.cpp
 	$(CC) $(CFLAGS) -o jpl2mpc$(EXE) jpl2mpc.cpp
@@ -102,25 +103,28 @@ neocp$(EXE): neocp.c
 	$(CC) $(CFLAGS) -o neocp$(EXE) neocp.c -lcurl
 
 nofs2mpc$(EXE): nofs2mpc.cpp
-	$(CC) $(CFLAGS) -o nofs2mpc$(EXE) nofs2mpc.cpp -lm
+	$(CC) $(CFLAGS) -o nofs2mpc$(EXE) nofs2mpc.cpp $(ADDED_MATH_LIB)
 
 plot_orb$(EXE): plot_orb.c
-	$(CC) $(CFLAGS) -o plot_orb$(EXE) plot_orb.c -lm
+	$(CC) $(CFLAGS) -o plot_orb$(EXE) plot_orb.c $(ADDED_MATH_LIB)
 
 radar$(EXE): radar.c
 	$(CC) $(CFLAGS) -o radar$(EXE) radar.c
 
 si_print$(EXE): si_print.c
-	$(CC) $(CFLAGS) -DTEST_CODE -o si_print$(EXE) si_print.c
+	$(CC) $(CFLAGS) -o si_print$(EXE) si_print.c -DTEST_CODE $(ADDED_MATH_LIB)
 
 splottes$(EXE): splottes.cpp splot.cpp
 	$(CC) $(CFLAGS) -o splottes$(EXE) splottes.cpp splot.cpp $(ADDED_MATH_LIB)
 
+vid_dump$(EXE): vid_dump.c
+	$(CC) $(CFLAGS) -o vid_dump$(EXE) vid_dump.c
+
 xfer2$(EXE): xfer2.cpp
-	$(CC) $(CFLAGS) -o xfer2$(EXE) xfer2.cpp -lm
+	$(CC) $(CFLAGS) -o xfer2$(EXE) xfer2.cpp $(ADDED_MATH_LIB)
 
 xfer3$(EXE): xfer3.cpp
-	$(CC) $(CFLAGS) -o xfer3$(EXE) xfer3.cpp -lm
+	$(CC) $(CFLAGS) -o xfer3$(EXE) xfer3.cpp $(ADDED_MATH_LIB)
 
 z1$(EXE): z1.cpp
 	$(CC) $(CFLAGS) -o z1$(EXE) z1.cpp -lcurses
