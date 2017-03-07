@@ -29,6 +29,8 @@ int main( const int argc, const char **argv)
          "1860 SGu",    /* Sergey Guryanov, Siberia, N56.1016, E94.5536, Alt=170m */
          "4171 CBa",    /* Cees Bassa */
          "4172 Alm",    /* ALMERE  52.3713 N 5.2580 E  -3 (meters?) ASL */
+         "4353 Lei",    /* Leiden 52.15412 N 4.49081 E  +0 ASL */
+         "4355 Cro",    /* Cronesteyn 52.13878 N 4.49947 E -2 meters ASL */
          "4541 Ran",    /* Alberto Rango */
          "4553 SOb",    /* Unknown sat observer: 53.3199N, 2.24377W, 86 m */
          "8049 ScT",    /* Roberts Creek 1 (Scott Tilley) */
