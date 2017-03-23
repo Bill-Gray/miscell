@@ -5,7 +5,6 @@
 #define AU_IN_METERS 1.495978707e+11
 #define EARTH_MAJOR_AXIS 6378140.
 #define EARTH_MINOR_AXIS 6356755.
-#define EARTH_AXIS_RATIO (EARTH_MINOR_AXIS / EARTH_MAJOR_AXIS)
 
 int lat_alt_to_parallax( const double lat, const double ht_in_meters,
             double *rho_cos_phi, double *rho_sin_phi, const int planet_idx);
@@ -19,6 +18,8 @@ not for this little demonstration code : */
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
+double axis_ratio = EARTH_MINOR_AXIS / EARTH_MAJOR_AXIS;
+
 static double planet_radius_in_meters( const int planet_idx)
 {
    return( EARTH_MAJOR_AXIS);
@@ -26,7 +27,7 @@ static double planet_radius_in_meters( const int planet_idx)
 
 static double planet_axis_ratio( const int planet_idx)
 {
-   return( EARTH_AXIS_RATIO);
+   return( axis_ratio);
 }
 
 #pragma GCC diagnostic warning "-Wunused-parameter"
@@ -202,27 +203,52 @@ double approx_parallax_to_lat_alt( const double x, const double y, double *lat)
 
 /* An approximation from p. 83,  Meeus' _Astronomical Algorithms_,
 relying on a series conversion from geocentric to geographic
-latitude.  On the ellipsoid (altitude = 0),  this is good to
+latitude.  (I've generalized it to take the axis ratio as a
+parameter.) On the ellipsoid (altitude = 0),  this is good to
 better than a meter.  At altitudes of several kilometers,  it's
 still good to about ten meters. */
 
-double approx_lat_from_parallax( const double rho_cos_phi, const double rho_sin_phi)
+double approx_lat_from_parallax( const double rho_cos_phi,
+                  const double rho_sin_phi, const double axis_ratio)
 {
+   const double flattening = 1. - axis_ratio;
    const double phi = atan2( rho_sin_phi, rho_cos_phi);
-   const double arcsec_to_radians = PI / (180. * 3600.);
-   const double lat = phi + (692.73 * arcsec_to_radians) * sin( phi * 2.)
-                           + (1.16 * arcsec_to_radians) * sin( phi * 4.);
+   const double lat = phi + flattening * (sin( phi * 2.)
+                                 + .5 * flattening * sin( phi * 4.));
 
    return( lat);
 }
 
+static void show_error_msg( void)
+{
+   printf( "'ellip_pt' tests various methods of converting parallax\n"
+       "constants to/from latitude/altitude.  Run it as either:\n"
+       "\n"
+       "ellip_pt (rho cos phi) (rho sin phi) p\n"
+       "ellip_pt (latitude) (altitude in meters) p\n"
+       "\n"
+       "To this can be added 'e(axis ratio).  The default axis ratio\n"
+       "is that for the WGS-84 ellipsoid.\n");
+}
+
 #include <stdlib.h>
 
-int main( const int argc, const char **argv)
+int main( int argc, const char **argv)
 {
    double lat, ht_in_meters;
    double rho_cos_phi, rho_sin_phi;
 
+   if( argc < 3)
+      {
+      show_error_msg( );
+      return( -1);
+      }
+   if( argc > 3 && argv[argc - 1][0] == 'e')
+      {
+      axis_ratio = atof( argv[argc - 1] + 1);
+      printf( "Reset axis ratio to %f\n", axis_ratio);
+      argc--;
+      }
    if( argc == 3)
       {
       lat = atof( argv[1]) * PI / 180.;
@@ -241,13 +267,14 @@ int main( const int argc, const char **argv)
    printf( "Lat %.12f   alt %.12f (Australian approximation)\n",
                lat * 180. / PI, ht_in_meters);
    printf( "Lat %.12f (Meeus approximation)\n",
-            approx_lat_from_parallax( rho_cos_phi, rho_sin_phi) * 180. / PI);
+            approx_lat_from_parallax( rho_cos_phi, rho_sin_phi, axis_ratio) * 180. / PI);
 
          /* From Wolfgang Wepner, _Mathematisches Hilfsbuch für Studierende
             und Freunde der Astronomie, Dr. Vehrenberg KG, Düsseldorf 1982.
             Good to within 2 meters on the surface of the ellipsoid,  but off
-            by 20 meters at the altitude of Everest.   */
+            by 20 meters at the altitude of Everest.  Again,  I've generalized
+            the method to apply to any ellipsoid. */
    printf( "Lat %.12f (Wepner 1982)\n",
-            atan( (rho_sin_phi / rho_cos_phi) / .99330546) * 180. / PI);
+            atan( (rho_sin_phi / rho_cos_phi) / (2 * axis_ratio - 1.)) * 180. / PI);
    return( 0);
 }
