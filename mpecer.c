@@ -121,13 +121,18 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
       while( fgets( buff, sizeof( buff), ifile))
          if( !memcmp( buff, "Orbital elements:", 17))
             {
-            int n_written = 0;
+            int n_written = 0, j;
 
             for( i = 0; i < 9 && fgets( buff, sizeof( buff), ifile); i++)
                {
-               if( strchr( "aeq", *buff) && !memcmp( buff + 1, "   ", 3))
+               if( strchr( "aeq", *buff) && buff[1] == ' ')
+                  {
+                  j = 1;
+                  while( buff[j] == ' ')
+                     j++;
                   n_written += fprintf( ofile, " %s%c=%.5s",
-                              (n_written ? "" : "("), *buff, buff + 4);
+                              (n_written ? "" : "("), *buff, buff + j);
+                  }
                if( !memcmp( buff + 19, "Incl.", 5))
                   n_written += fprintf( ofile, " %si=%.5s",
                               (n_written ? "" : "("), buff + 26);
