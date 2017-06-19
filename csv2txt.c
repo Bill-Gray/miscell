@@ -33,7 +33,7 @@ static int find_csv_field( char *ibuff)
    return( i);
 }
 
-#define MAX_COLS 200
+#define MAX_COLS 1000
 #define MAX_BUFF_SIZE 10000
 
 int main( const int argc, const char **argv)
