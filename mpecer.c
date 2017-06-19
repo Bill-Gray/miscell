@@ -78,6 +78,10 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
    char buff[200], url[200], *tptr;
    FILE *ifile;
    int i, rval = -1, found_name = 0;
+   double semimajor_axis = 0.;
+   double eccentricity = 0.;
+   double perihelion_dist = 0.;
+   double earth_moid = 0.;
 
    sprintf( url, "http://www.minorplanetcenter.net/mpec/%s/%s%cx%d.html",
                         year, year, half_month, mpec_no % 10);
@@ -125,6 +129,9 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
 
             for( i = 0; i < 9 && fgets( buff, sizeof( buff), ifile); i++)
                {
+               tptr = strstr( buff, "MOID</a>");
+               if( tptr)
+                  earth_moid = atof( tptr + 11);
                if( strchr( "aeq", *buff) && buff[1] == ' ')
                   {
                   j = 1;
@@ -132,6 +139,12 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
                      j++;
                   n_written += fprintf( ofile, " %s%c=%.5s",
                               (n_written ? "" : "("), *buff, buff + j);
+                  if( *buff == 'a')
+                     semimajor_axis = atof( buff + j);
+                  if( *buff == 'e')
+                     eccentricity = atof( buff + j);
+                  if( *buff == 'q')
+                     perihelion_dist = atof( buff + j);
                   }
                if( !memcmp( buff + 19, "Incl.", 5))
                   n_written += fprintf( ofile, " %si=%.5s",
@@ -141,6 +154,13 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
                               (n_written ? "" : "("), buff + 23);
                memset( buff, 0, sizeof( buff));
                }
+            if( semimajor_axis && eccentricity && !perihelion_dist)
+               {
+               perihelion_dist = semimajor_axis * (1. - eccentricity);
+               fprintf( ofile, " q=%.3f", perihelion_dist);
+               }
+            if( n_written && earth_moid)
+               fprintf( ofile, " MOID=%.4f", earth_moid);
             if( n_written)
                fprintf( ofile, ")");
             fseek( ifile, 0L, SEEK_END);
