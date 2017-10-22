@@ -172,12 +172,12 @@ static struct neocp_summary *get_neocp_summary( const char *filename,
 static unsigned xfer_obs( const char *desig, FILE *ofile, FILE *ifile)
 {
    char buff[90];
-   char padded_desig[20];
+   char padded_desig[40];
    unsigned rval = 0;
 
    assert( ifile);
    fseek( ifile, 0L, SEEK_SET);
-   sprintf( padded_desig, "%s        ", desig);
+   snprintf( padded_desig, sizeof( padded_desig), "%s        ", desig);
    while( fgets( buff, sizeof( buff), ifile))
       if( !memcmp( buff + 5, padded_desig, 7))
          {
