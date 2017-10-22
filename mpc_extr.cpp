@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 /* Code to extract observations for a specific object from the large
 MPC 80-column astrometry files (UnnObs.txt,  CmtObs.txt,  SatObs.txt,
@@ -43,6 +44,27 @@ static int err_exit( void)
    return( -1);
 }
 
+/* Convert,  e.g.,  '2006te179' to 'K06TG9E'  */
+
+static void convert_to_packed( char *packed, const char *ibuff)
+{
+   const int num_within_month = atoi( ibuff + 6);
+
+   *packed++ = (ibuff[1] == '9') ? 'J' : 'K';
+   *packed++ = ibuff[2];                /* decade */
+   *packed++ = ibuff[3];                /* year   */
+   *packed++ = toupper( ibuff[4]);      /* half-month */
+   if( num_within_month < 100)
+      *packed++ = '0' + num_within_month / 10;
+   else if( num_within_month < 260)
+      *packed++ = 'A' + num_within_month / 10 - 10;
+   else
+      *packed++ = 'a' + num_within_month / 10 - 36;
+   *packed++ = '0' + num_within_month % 10;
+   *packed++ = toupper( ibuff[5]);
+   *packed = '\0';
+}
+
 int main( const int argc, const char **argv)
 {
    FILE *ifile;
@@ -81,27 +103,32 @@ int main( const int argc, const char **argv)
          {
          unsigned long loc = 0, step, loc1;
          int n_found = 0;
+         char target[50];
 
+         if( atoi( argv[i]) > 1800)
+            convert_to_packed( target, argv[i]);
+         else
+            strcpy( target, argv[i]);
          for( step = 0x8000000; step; step >>= 1)
             if( (loc1 = loc + step) < n_recs)
                {
                fseek( ifile, loc1 * recsize, SEEK_SET);
                err_fgets( buff, sizeof( buff), ifile);
-               if( mpc_compare( buff, argv[i]) < 0)
+               if( mpc_compare( buff, target) < 0)
                   loc = loc1;
                }
          compare = -1;
          fseek( ifile, loc * recsize, SEEK_SET);
          while( compare <= 0 && fgets( buff, sizeof( buff), ifile))
             {
-            compare = mpc_compare( buff, argv[i]);
+            compare = mpc_compare( buff, target);
             if( !compare)
                {
                fprintf( ofile, "%s", buff);
                n_found++;
                }
             }
-         printf( "%d records found for '%s'\n", n_found, argv[i]);
+         printf( "%d records found for '%s'\n", n_found, target);
          }
    return( 0);
 }
