@@ -15,9 +15,9 @@ in the file at the above URL and spit the data back out in the MPC's 80-column
 punched-card format (two lines per observation).  Example input lines :
 
 
-101955 Bennu (1999 RQ36)      1999-09-21 09:00:00     135959.00   5.000 Hz COM  8560  -14  -14
-101955 Bennu (1999 RQ36)      1999-09-21 10:20:00   15418454.00  10.000 us COM  8560  -14  -14
-101955 Bennu (1999 RQ36)      1999-09-23 09:30:00   14820631.00   5.000 us COM  8560  -14  -14
+101955 Bennu (1999 RQ36)          1999-09-21 09:00:00     135959.00   5.000 Hz COM  8560  -14  -14
+101955 Bennu (1999 RQ36)          1999-09-21 10:20:00   15418454.00  10.000 us COM  8560  -14  -14
+101955 Bennu (1999 RQ36)          1999-09-23 09:30:00   14820631.00   5.000 us COM  8560  -14  -14
 
    And example output lines :
 
@@ -219,11 +219,11 @@ static int reformat_jpl_radar_data_to_mpc( char *line1, char *line2, const char 
    const double hrs_per_day = 24.;
    const double mins_per_day = hrs_per_day * 60.;
    const double secs_per_day = mins_per_day * 60.;
-   const double fractional_day = (double)atoi( ibuff + 41) / hrs_per_day
-                                + (double)atoi( ibuff + 44) / mins_per_day
-                                + (double)atoi( ibuff + 47) / secs_per_day;
-   const double quantity = atof( ibuff + 49);
-   const double sigma = atof( ibuff + 63);
+   const double fractional_day = (double)atoi( ibuff + 45) / hrs_per_day
+                                + (double)atoi( ibuff + 48) / mins_per_day
+                                + (double)atoi( ibuff + 51) / secs_per_day;
+   const double quantity = atof( ibuff + 53);
+   const double sigma = atof( ibuff + 67);
    unsigned offset;
 
    if( ibuff[5] == ' ')       /* provisional desig */
@@ -244,25 +244,25 @@ static int reformat_jpl_radar_data_to_mpc( char *line1, char *line2, const char 
    memset( line1 + 12, ' ', 68);
    line1[80] = '\0';
    line1[14] = 'R';
-   memcpy( line1 + 15, ibuff + 30, 10);
+   memcpy( line1 + 15, ibuff + 34, 10);
    line1[19] = line1[22] = ' ';
    line1[25] = '.';
    sprintf( line1 + 26, "%06ld", (long)( fractional_day * 1e+6 + 0.5));
    memcpy( line1 + 72, "JPLRS", 5);
-   put_mpc_code_from_dss( line1 + 68, atoi( ibuff + 86));
-   put_mpc_code_from_dss( line1 + 77, atoi( ibuff + 90));
+   put_mpc_code_from_dss( line1 + 68, atoi( ibuff + 90));
+   put_mpc_code_from_dss( line1 + 77, atoi( ibuff + 94));
    for( i = 0; i < 80; i++)
       if( !line1[i])
          line1[i] = ' ';
    strcpy( line2, line1);
-   memcpy( line1 + 63, ibuff + 80, 4);        /* frequency in MHz */
+   memcpy( line1 + 63, ibuff + 84, 4);        /* frequency in MHz */
    line2[14] = 'r';
-   if( !memcmp( ibuff + 72, "Hz", 2))
+   if( !memcmp( ibuff + 76, "Hz", 2))
       {
       line1[47] = (quantity > 0. ? '+' : '-');
       offset = 48;
       }
-   else if( !memcmp( ibuff + 72, "us", 2))
+   else if( !memcmp( ibuff + 76, "us", 2))
       offset = 33;
    else
       return( -2);
@@ -280,7 +280,7 @@ int main( const int argc, const char **argv)
 
       if( ifile)
          {
-         char ibuff[100], line1[100], line2[100];
+         char ibuff[110], line1[100], line2[100];
 
          while( fgets( ibuff, sizeof( ibuff), ifile))
             if( !reformat_jpl_radar_data_to_mpc( line1, line2, ibuff))
