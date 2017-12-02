@@ -4,6 +4,7 @@
 #include <curl/easy.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
 
@@ -29,8 +30,51 @@ static size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
 #define FETCH_FILESIZE_WRONG               -4
 #define FETCH_CURL_INIT_FAILED             -5
 
-static int grab_file( const char *url, const char *outfilename,
-                                    const bool append)
+/* In order to avoid hammering MPC's servers,  we do a bit of checking:
+if the file exists,  and has data for the object we're looking for (based
+on the URLs matching),  _and_ no more than DELAY_BETWEEN_RELOADS seconds
+have elapsed,  then we can recycle the existing file.
+
+   At least for the nonce,  let's say we don't ask for astrometry any more
+often than once every three hours.  */
+
+#define DELAY_BETWEEN_RELOADS 10800
+
+int verbose;
+
+static int check_for_existing( const char *url, const char *outfilename)
+{
+   FILE *fp = fopen( outfilename, "rb");
+   int rval = 0;
+
+   if( fp)
+      {
+      char buff[200];
+
+      if( fgets( buff, sizeof( buff), fp))
+         {
+         int i = strlen( buff);
+         const time_t t0 = time( NULL);
+
+         while( i && (buff[i - 1] == 10 || buff[i - 1] == 13))
+            i--;
+         buff[i] = '\0';
+         if( verbose)
+            {
+            printf( "Old file read\n%s\n", buff);
+            printf( "Delay is %d seconds\n", (int)( t0 - atoi( buff + 14)));
+            }
+         if( !strcmp( buff + 52, url) &&
+                  t0 < atoi( buff + 14) + DELAY_BETWEEN_RELOADS)
+            rval = 1;   /* yup,  just reuse the existing file */
+         }
+      fclose( fp);
+      }
+   return( rval);
+}
+
+static int grab_file( const char *url, const char *object_name,
+                  const char *outfilename, const bool append)
 {
     CURL *curl = curl_easy_init();
 
@@ -40,7 +84,8 @@ static int grab_file( const char *url, const char *outfilename,
 
         if( !fp)
             return( FETCH_FOPEN_FAILED);
-        fprintf( fp, "%ld (%.24s) %s\n", (long)t0, ctime( &t0), url);
+        fprintf( fp, "COM UNIX time %ld (%.24s) %s\n", (long)t0, ctime( &t0), url);
+        fprintf( fp, "COM Obj %s\n", object_name);
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
@@ -54,13 +99,22 @@ static int grab_file( const char *url, const char *outfilename,
     return 0;
 }
 
+#define BASE_MPC_URL "http://www.minorplanetcenter.net"
+
 static int fetch_astrometry_from_mpc( const char *output_filename,
             const char *object_name, const bool append)
 {
-   char url[300];
+   char url[300], url2[300];
    int i, rval;
 
-   sprintf( url, "http://www.minorplanetcenter.net/db_search/show_object?object_id=%s",
+   sprintf( url2, BASE_MPC_URL "/tmp/%s.txt", object_name);
+   for( i = 37; url2[i]; i++)
+      if( url2[i] == ' ' || url2[i] == '/')
+         url2[i] = '_';
+   if( check_for_existing( url2, output_filename))
+      return( 0);
+
+   sprintf( url, BASE_MPC_URL "/db_search/show_object?object_id=%s",
                object_name);
    for( i = 65; url[i]; i++)
       if( url[i] == '/')
@@ -71,22 +125,19 @@ static int fetch_astrometry_from_mpc( const char *output_filename,
       else if( url[i] == ' ')
          url[i] = '+';
    strcat( url, "&btnG=MPC+Database+Search");
-   rval = grab_file( url, "zzzz", 0);
+   rval = grab_file( url, object_name, "zzzz", 0);
    unlink( "zzzz");
    if( rval)
       return( rval);
    if( total_written < 200)
       return( FETCH_FILESIZE_SHORT);
 
-   sprintf( url, "http://www.minorplanetcenter.net/tmp/%s.txt", object_name);
-   for( i = 37; url[i]; i++)
-      if( url[i] == ' ' || url[i] == '/')
-         url[i] = '_';
 #ifdef TEST_MAIN
-   printf( "Grabbing '%s'\n", url);
+   if( verbose)
+      printf( "Grabbing '%s'\n", url2);
 #endif
    total_written = 0;
-   rval = grab_file( url, output_filename, append);
+   rval = grab_file( url2, object_name, output_filename, append);
    if( rval)
       return( rval - 1000);
    if( total_written % 81)
@@ -123,18 +174,28 @@ int main( const int argc, char **argv)
       }
    strcpy( obj_name, argv[2]);
    for( i = 3; i < argc; i++)
-      if( !strcmp( argv[i], "-a"))
-         append = true;
-      else
+      if( argv[i][0] != '-')
          {
          strcat( obj_name, " ");
          strcat( obj_name, argv[i]);
          }
+      else switch( argv[i][1])
+         {
+         case 'a':
+            append = true;
+            break;
+         case 'v':
+            verbose = 1;
+            break;
+         default:
+            fprintf( stderr, "Option %s ignored\n", argv[i]);
+            break;
+         }
 
    rval = fetch_astrometry_from_mpc( output_filename, obj_name, append);
    if( rval < 0)
-      printf( "Failed: rval %d\n", rval);
-   else
+      fprintf( stderr, "Failed: rval %d\n", rval);
+   else if( verbose)
       {
       FILE *ifile = fopen( output_filename, "rb");
       char buff[100];
@@ -152,7 +213,7 @@ int main( const int argc, char **argv)
          fclose( ifile);
          }
       else
-         printf( "File not opened!\n");
+         fprintf( stderr, "File not opened!\n");
       }
    return( rval < 0 ? rval : 0);
 }
