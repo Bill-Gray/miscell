@@ -40,6 +40,8 @@ half-months.         */
 
 size_t total_written;
 
+int verbose = 0;
+
 static size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     size_t written;
 
@@ -83,12 +85,12 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
    double perihelion_dist = 0.;
    double earth_moid = 0.;
 
-   sprintf( url, "http://www.minorplanetcenter.net/mpec/%s/%s%cx%d.html",
+   sprintf( url, "https://www.minorplanetcenter.net/mpec/%s/%s%cx%d.html",
                         year, year, half_month, mpec_no % 10);
    if( mpec_no < 100)
-      url[46] = '0' + mpec_no / 10;
+      url[47] = '0' + mpec_no / 10;
    else
-      url[46] = 'A' + mpec_no / 10 - 10;
+      url[47] = 'A' + mpec_no / 10 - 10;
    grab_file( url, "zz", 0);
    ifile = fopen( "zz", "rb");
    assert( ifile);
@@ -188,17 +190,28 @@ static FILE *err_fopen( const char *filename, const char *permits)
 
 int main( const int argc, const char **argv)
 {
-   int half_month = 'A', mpec_no = 1, year;
+   int half_month = 'A', mpec_no = 1, year, i;
    FILE *ifile, *ofile;
    char filename[100];
    char buff[200];
    char mpcized_year[10];
-   const char *search_str = "<a href=\"http://www.minorplanetcenter.net/mpec/";
+   const char *search_str = "<a href=\"https://www.minorplanetcenter.net/mpec/";
    const char *end_marker = "<a name=\"the_end\"> </a>";
    const char *temp_file_name = "temp.htm";
    bool found_end = false;
 
-   if( argc != 2)
+   for( i = 2; i < argc; i++)
+      if( argv[i][0] == '-')
+         switch( argv[i][1])
+            {
+            case 'v':
+               verbose = 1 + atoi( argv[i] + 2);
+               break;
+            default:
+               printf( "Unrecognized command line option '%s'\n", argv[i]);
+               return( -1);
+            }
+   if( argc < 2)
       {
       printf( "'mpecer' needs the (four-digit) year as a command line argument\n");
       return( -1);
@@ -212,20 +225,22 @@ int main( const int argc, const char **argv)
    sprintf( filename, "%s.htm", argv[1]);
    ifile = err_fopen( filename, "rb");
    ofile = err_fopen( temp_file_name, "wb");
+   assert( ifile);
+   assert( ofile);
    while( fgets( buff, sizeof( buff), ifile)
             && !(found_end = !memcmp( buff, end_marker, strlen( end_marker))))
       {
       fputs( buff, ofile);
       if( !memcmp( buff, search_str, strlen( search_str)))
          {
-         half_month = buff[54];
-         if( buff[55] >= 'a')
-            mpec_no = (buff[55] - 'a' + 36) * 10;
-         else if( buff[55] >= 'A')
-            mpec_no = (buff[55] - 'A' + 10) * 10;
+         half_month = buff[55];
+         if( buff[56] >= 'a')
+            mpec_no = (buff[56] - 'a' + 36) * 10;
+         else if( buff[56] >= 'A')
+            mpec_no = (buff[56] - 'A' + 10) * 10;
          else
-            mpec_no = (buff[55] - '0') * 10;
-         mpec_no += buff[56] - '0';
+            mpec_no = (buff[56] - '0') * 10;
+         mpec_no += buff[57] - '0';
 
          mpec_no++;     /* we're looking for the _next_ MPEC */
          }

@@ -292,7 +292,7 @@ static void show_differences( void)
                   n_obs_previously = before[k].n_obs;
             printf( "   (%u) %s: %u obs (was %u)\n", ++j, after[i].desig,
                                 after[i].n_obs, n_obs_previously);
-            strcpy( url, "http://minorplanetcenter.net/cgi-bin/showobsorbs.cgi?Obj=");
+            strcpy( url, "https://minorplanetcenter.net/cgi-bin/showobsorbs.cgi?Obj=");
             strcat( url, after[i].desig);
             strcat( url, "&obs=y");
             n_lines_read = fetch_a_file( url, "neocp.new", 1) / line_len;
@@ -369,7 +369,7 @@ int main( const int argc, const char **argv)
     unsigned bytes_read;
     int i;
     const char *neocp_text_summary =
-                     "http://www.minorplanetcenter.net/iau/NEO/neocp.txt";
+                     "https://www.minorplanetcenter.net/iau/NEO/neocp.txt";
 
     printf( "Content-type: text/html\n\n");
     avoid_runaway_process( );
@@ -420,7 +420,7 @@ int main( const int argc, const char **argv)
 }
 
 /*
-http://scully.cfa.harvard.edu/cgi-bin/showobsorbs.cgi?Obj=UKA774F&obs=y
-http://www.minorplanetcenter.net/iau/NEO/ToConfirm.html
-http://www.minorplanetcenter.net/iau/NEO/neocp.txt   (plain-text form)
+https://scully.cfa.harvard.edu/cgi-bin/showobsorbs.cgi?Obj=UKA774F&obs=y
+https://www.minorplanetcenter.net/iau/NEO/ToConfirm.html
+https://www.minorplanetcenter.net/iau/NEO/neocp.txt   (plain-text form)
 */
