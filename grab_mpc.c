@@ -99,7 +99,7 @@ static int grab_file( const char *url, const char *object_name,
     return 0;
 }
 
-#define BASE_MPC_URL "http://www.minorplanetcenter.net"
+#define BASE_MPC_URL "https://www.minorplanetcenter.net"
 
 static int fetch_astrometry_from_mpc( const char *output_filename,
             const char *object_name, const bool append)
@@ -108,7 +108,7 @@ static int fetch_astrometry_from_mpc( const char *output_filename,
    int i, rval;
 
    sprintf( url2, BASE_MPC_URL "/tmp/%s.txt", object_name);
-   for( i = 37; url2[i]; i++)
+   for( i = 38; url2[i]; i++)
       if( url2[i] == ' ' || url2[i] == '/')
          url2[i] = '_';
    if( check_for_existing( url2, output_filename))
@@ -116,7 +116,7 @@ static int fetch_astrometry_from_mpc( const char *output_filename,
 
    sprintf( url, BASE_MPC_URL "/db_search/show_object?object_id=%s",
                object_name);
-   for( i = 65; url[i]; i++)
+   for( i = 66; url[i]; i++)
       if( url[i] == '/')
          {
          memmove( url + i + 3, url + i + 1, strlen( url + i));
