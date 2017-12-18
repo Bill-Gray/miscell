@@ -33,12 +33,15 @@ csv2txt
 ellip_pt
 eop_proc
 fix_obs
+gmake2bsd
 grab_mpc
 i2mpc
 jpl2mpc
 ktest
 mpc_extr
+mpc_sort
 mpc_stat
+mpcorbx
 mpecer
 my_wget
 neocp

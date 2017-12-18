@@ -9,20 +9,22 @@ else
 	EXE=
 	RM=rm -f
 	PREFIX  =
-	ADDED_EXES = grab_mpc neocp
+	ADDED_EXES = grab_mpc neocp gmake2bsd
 endif
 
 ifdef CLANG
-ADDED_MATH_LIB=-lm
 CC=clang
 else
-ADDED_MATH_LIB=
 CC=$(PREFIX)g++
 endif
 
+ADDED_MATH_LIB=-lm
+CURL=-lcurl
+
 all:   blunder$(EXE) clock1$(EXE) csv2txt$(EXE) ellip_pt$(EXE) fix_obs$(EXE) \
-	eop_proc$(EXE) i2mpc$(EXE) jpl2mpc$(EXE) ktest$(EXE) \
-	mpecer$(EXE) mpc_extr$(EXE) mpc_stat$(EXE) my_wget$(EXE) nofs2mpc$(EXE) \
+	eop_proc$(EXE) i2mpc$(EXE) jpl2mpc$(EXE) ktest$(EXE) mpcorbx$(EXE) \
+	mpecer$(EXE) mpc_extr$(EXE) mpc_sort$(EXE) \
+	mpc_stat$(EXE) my_wget$(EXE) nofs2mpc$(EXE) \
 	plot_orb$(EXE) radar$(EXE) si_print$(EXE) splottes$(EXE) vid_dump$(EXE) \
 	xfer2$(EXE) xfer3$(EXE) $(ADDED_EXES)
 
@@ -34,12 +36,16 @@ clean:
 	$(RM) ellip_pt$(EXE)
 	$(RM) eop_proc$(EXE)
 	$(RM) fix_obs$(EXE)
+	$(RM) gmake2bsd$(EXE)
 	$(RM) grab_mpc$(EXE)
 	$(RM) i2mpc$(EXE)
 	$(RM) jpl2mpc$(EXE)
 	$(RM) ktest$(EXE)
 	$(RM) mpc_stat$(EXE)
 	$(RM) mpc_extr$(EXE)
+	$(RM) mpc_sort$(EXE)
+	$(RM) mpc_up$(EXE)
+	$(RM) mpcorbx$(EXE)
 	$(RM) mpecer$(EXE)
 	$(RM) my_wget$(EXE)
 	$(RM) neocp$(EXE)
@@ -75,8 +81,11 @@ eop_proc$(EXE): eop_proc.c
 fix_obs$(EXE): fix_obs.cpp
 	$(CC) $(CFLAGS) -o fix_obs$(EXE) fix_obs.cpp
 
+gmake2bsd$(EXE): gmake2bsd.c
+	$(CC) $(CFLAGS) -o gmake2bsd$(EXE) gmake2bsd.c
+
 grab_mpc$(EXE): grab_mpc.c
-	$(CC) $(CFLAGS) -o grab_mpc$(EXE) grab_mpc.c -DTEST_MAIN -lcurl
+	$(CC) $(CFLAGS) -o grab_mpc$(EXE) grab_mpc.c -DTEST_MAIN $(CURL) $(CURLI)
 
 i2mpc$(EXE): i2mpc.cpp
 	$(CC) $(CFLAGS) -o i2mpc$(EXE) i2mpc.cpp
@@ -93,14 +102,23 @@ mpc_stat$(EXE): mpc_stat.cpp
 mpc_extr$(EXE): mpc_extr.cpp
 	$(CC) $(CFLAGS) -o mpc_extr$(EXE) mpc_extr.cpp
 
+mpc_sort$(EXE): mpc_sort.cpp
+	$(CC) $(CFLAGS) -o mpc_sort$(EXE) mpc_sort.cpp
+
+mpc_up$(EXE): mpc_up.c
+	$(CC) $(CFLAGS) -o mpc_up$(EXE) mpc_up.c
+
 mpecer$(EXE): mpecer.c
-	$(CC) $(CFLAGS) -o mpecer$(EXE) mpecer.c -lcurl
+	$(CC) $(CFLAGS) -o mpecer$(EXE) mpecer.c $(CURL) $(CURLI)
+
+mpcorbx$(EXE): mpcorbx.c
+	$(CC) $(CFLAGS) -o mpcorbx$(EXE) mpcorbx.c
 
 my_wget$(EXE): my_wget.c
-	$(CC) $(CFLAGS) -o my_wget$(EXE) my_wget.c -lcurl -lpthread
+	$(CC) $(CFLAGS) -o my_wget$(EXE) my_wget.c $(CURL) $(CURLI) -lpthread
 
 neocp$(EXE): neocp.c
-	$(CC) $(CFLAGS) -o neocp$(EXE) neocp.c -lcurl
+	$(CC) $(CFLAGS) -o neocp$(EXE) neocp.c $(CURL) $(CURLI)
 
 nofs2mpc$(EXE): nofs2mpc.cpp
 	$(CC) $(CFLAGS) -o nofs2mpc$(EXE) nofs2mpc.cpp $(ADDED_MATH_LIB)
