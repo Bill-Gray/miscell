@@ -119,6 +119,51 @@ static int find_histogram_point( const uint8_t *pixels, const int n_pixels,
    return( i);
 }
 
+#define N_POOLS      13
+#define POOLSIZE     128
+#define POOLMASK    (POOLSIZE - 1)
+
+static uint64_t pool[N_POOLS][POOLSIZE];
+static int pool_loc = 0;
+
+/* Stirring is done with the primitive polynomial of the _mix_pool_bytes( )
+function from the Linux random.c.  The fact that the pool consists of 64
+bit quantities rather than 8 bit quantities means that the logic for the
+"twist" is different. */
+
+static void stir_pool( uint64_t *pool)
+{
+   size_t i;
+
+   for( i = 0; i < POOLSIZE; i++, pool++)
+      {
+      *pool ^= pool[(i - 104) & POOLMASK]
+             ^ pool[(i - 76) & POOLMASK] ^ pool[(i - 51) & POOLMASK]
+             ^ pool[(i - 25) & POOLMASK] ^ pool[(i - 1) & POOLMASK];
+      *pool ^= (*pool >> 7) ^ (*pool << 13);
+      }
+}
+
+static void add_entropy( const void *idata, const size_t nbytes)
+{
+   const uint64_t *iptr = (const uint64_t *)idata;
+   size_t n = nbytes / sizeof( uint64_t);
+
+   while( n--)
+      {
+      pool[pool_loc % N_POOLS][pool_loc / N_POOLS] ^= *iptr++;
+      pool_loc++;
+      if( pool_loc == N_POOLS * POOLSIZE)
+         {
+         size_t i;
+
+         for( i = 0; i < N_POOLS; i++)
+            stir_pool( pool[i]);
+         pool_loc = 0;
+         }
+      }
+}
+
 int main( const int argc, const char **argv)
 {
    FILE *ifile = fopen( "/dev/video0", "rb");
