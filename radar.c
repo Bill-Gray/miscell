@@ -68,7 +68,8 @@ int create_mpc_packed_desig( char *packed_desig, const char *obj_name)
 
                /* Check for comet-style desigs such as 'P/1995 O1' */
                /* and such.  Leading character can be P, C, X, D, or A. */
-   if( strchr( "PCXDA", *obj_name) && obj_name[1] == '/')
+               /* Or 'S' for natural satellites.  */
+   if( strchr( "PCXDAS", *obj_name) && obj_name[1] == '/')
       {
       comet_desig = *obj_name;
       obj_name += 2;
