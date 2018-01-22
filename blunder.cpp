@@ -78,16 +78,11 @@ int main( const int argc, const char **argv)
             break;
       sigma = new_sigma;
       }
-   do
+   while( n > 0 && (kurt = kurtosis( n, x, &i)) > 0.)
       {
-      kurt = kurtosis( n, x, &i);
-      if( kurt > 0.)
-         {
-         n--;
-         x[n] = x[i];
-         }
+      n--;
+      x[i] = x[n];
       printf( "kurt %f, idx %u: new mean %f\n", kurt, i, mean_value( n, x));
       }
-      while( kurt > 0.);
    return( 0);
 }
