@@ -1,3 +1,6 @@
+/* Code to produce quick & dirty PostScript plot from a Find_Orb ephemeris.
+Used originally to generate an orbit plot for WT1190F.  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,8 +9,8 @@
 
 const double pi = 3.1415926535897932384626433832795028841971693993751058209749445923;
 const double au_in_km = 1.495978707e+8;
-const double earth_r = 6378.140 / au_in_km;
-const double lunar_orbit = 385000 / au_in_km;
+const double earth_r = 6378.140;
+const double lunar_orbit = 385000.;
 
 
 int main( const int argc, const char **argv)
@@ -106,7 +109,7 @@ int main( const int argc, const char **argv)
    for( i = 0; i < 2; i++)
       fprintf( ofile, "stroke\n%s\n %.1f %.1f %.1f 0 360 arc closepath\n",
                (i ? "1 0 0 setrgbcolor\n" : "0 1 0 setrgbcolor"),
-               center_x, center_y, 72. * (i ? earth_r : lunar_orbit) / scale);
+               center_x, center_y, 72. * (i ? earth_r : lunar_orbit) / (scale * au_in_km));
    fprintf( ofile, "stroke\nshowpage\n");
    fclose( ifile);
    fclose( ofile);
