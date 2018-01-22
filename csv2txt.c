@@ -41,7 +41,7 @@ int main( const int argc, const char **argv)
    FILE *ifile;
    size_t sizes[MAX_COLS];
    int pass, i, j, lines_to_skip = 0;
-   char *buff = (char *)malloc( MAX_BUFF_SIZE);
+   char *buff;
 
    if( argc < 1)
       {
@@ -67,6 +67,8 @@ int main( const int argc, const char **argv)
             }
    for( i = 0; i < MAX_COLS; i++)
       sizes[i] = 0;
+   buff = (char *)malloc( MAX_BUFF_SIZE);
+   assert( buff);
    for( pass = 0; pass < 2; pass++)
       {
       fseek( ifile, 0L, SEEK_SET);
