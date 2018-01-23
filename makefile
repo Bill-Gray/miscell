@@ -15,7 +15,7 @@ endif
 ifdef CLANG
 CC=clang
 else
-CC=$(PREFIX)g++
+CC=$(PREFIX)cc
 endif
 
 ADDED_MATH_LIB=-lm
@@ -112,7 +112,7 @@ mpecer$(EXE): mpecer.c
 	$(CC) $(CFLAGS) -o mpecer$(EXE) mpecer.c $(CURL) $(CURLI)
 
 mpcorbx$(EXE): mpcorbx.c
-	$(CC) $(CFLAGS) -o mpcorbx$(EXE) mpcorbx.c
+	$(CC) $(CFLAGS) -o mpcorbx$(EXE) mpcorbx.c -lm
 
 my_wget$(EXE): my_wget.c
 	$(CC) $(CFLAGS) -o my_wget$(EXE) my_wget.c $(CURL) $(CURLI) -lpthread
