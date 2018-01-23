@@ -189,10 +189,10 @@ int main( void)
             {
             const double x = atof( buff + 13);
             const double y = atof( buff + 21);
-            double lon = atof( buff + 4), lat;
+            const double lon = atof( buff + 4);
             char alt_buff[7];
             int rect_no = -1, i;
-            double ht_in_meters;
+            double lat, ht_in_meters;
 
             parallax_to_lat_alt( x, y, &lat, &ht_in_meters);
             if( buff[19] != ' ' && buff[28] != ' ')
@@ -207,8 +207,6 @@ int main( void)
                if( rects[i].lon1 < lon && rects[i].lon2 > lon)
                   if( rects[i].lat1 < lat && rects[i].lat2 > lat)
                      rect_no = i;
-            if( lon > 180.)
-               lon -= 360.;
             sprintf( buff + 30, "%8.4f %s ", lat, alt_buff);
             if( rect_no >= 0)
                memcpy( buff + 45, rects[rect_no].name, 15);
@@ -238,6 +236,7 @@ int main( void)
             printf( "%s", buff);
          }
       }
+   free( rects);
    qsort( codes, n_codes, sizeof( char *), code_compare);
    ofile = fopen( "shortmpc.txt", "wb");
    j = 0;
@@ -253,6 +252,8 @@ int main( void)
          }
       j++;
       fprintf( ofile, "%s%s", codes[i], (j % codes_per_line ? " " : "\n"));
+      free( codes[i]);
       }
+   free( codes);
    fclose( ofile);
 }
