@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <curl/curl.h>
 #include <curl/easy.h>
@@ -12,6 +13,42 @@
    #include <sys/time.h>         /* these allow resource limiting */
    #include <sys/resource.h>     /* see 'avoid_runaway_process'   */
 #endif
+
+/* Code to "scrape" astrometry from NEOCP,  in as efficient and
+error-proof a manner as reasonably possible.
+
+   We begin by downloading the list of objects currently on NEOCP,
+
+https://www.minorplanetcenter.net/iau/NEO/neocp.txt
+
+   and storing it as 'neocplst.tmp'.  This file contains a 102-byte
+line for each object;  if the file isn't a multiple of 102 bytes,
+the program assumes something went wrong and bombs out.
+
+    If the file looks good,  we compare it to the previously
+downloaded list,  'neocplst.txt',  and look for objects which
+have changed (new objects,  or the number of observations or
+'added' or 'updated' times have changed).  For each of these
+objects,  we download astrometry with a URL of the form
+
+https://minorplanetcenter.net/cgi-bin/showobsorbs.cgi?Obj=A106fgF&obs=y
+
+   with designation suitably changed.  There are some checks run
+on this file (see comments above n_valid_astrometry_lines()) to make
+sure we got everything we should have gotten.  The downloaded data
+goes into 'neocp.new'.
+
+   When we're done,  we read in previously downloaded astrometry
+from 'neocp.txt' and merge in the new/updated astrometry from
+'neocp.new'. We also take the data for removed objects and add it
+to 'neocp.old'.
+
+   If all of this has worked without error,  we should have an
+updated list of NEOCP astrometry in 'neocp.tmp' and an updated
+object list in 'neocplst.tmp'.  Only then can we safely remove
+the old files 'neocp.txt' and 'neocplst.txt',  and rename the
+.tmp files to replace them.   */
+
 
    /* Limit the program to a certain amount of CPU time.  In this
       case,  if it's taking more than 200 seconds,  something
@@ -35,14 +72,32 @@ static FILE *err_fopen( const char *filename, const char *permits)
 
    if( !rval)
       {
-      printf( "Couldn't open %s\n", filename);
+      fprintf( stderr, "Couldn't open %s\n", filename);
       perror( NULL);
       exit( -1);
       }
    return( rval);
 }
 
-static unsigned fetch_a_file( const char *url, const char *filename, const int flags)
+typedef struct
+{
+   char *obuff;
+   size_t loc, max_len;
+} curl_buff_t;
+
+size_t curl_buff_write( char *ptr, size_t size, size_t nmemb, curl_buff_t *context)
+{
+   size_t bytes_to_write = size * nmemb;
+
+   if( bytes_to_write > context->max_len - context->loc)
+      bytes_to_write = context->max_len - context->loc;
+   memcpy( context->obuff + context->loc, ptr, bytes_to_write);
+   context->loc += bytes_to_write;
+   return( bytes_to_write);
+}
+
+static unsigned fetch_a_file( const char *url, char *obuff,
+                              const size_t max_len)
 {
    CURL *curl = curl_easy_init();
    unsigned rval = 0;
@@ -50,38 +105,31 @@ static unsigned fetch_a_file( const char *url, const char *filename, const int f
    assert( curl);
    if( curl)
       {
-      FILE *fp = fopen( filename, (flags & 1) ? "ab" : "wb");
-      const long starting_loc = ftell( fp);
+      CURLcode res;
+      curl_buff_t context;
 
-      if( !fp)
+      context.loc = 0;
+      context.obuff = obuff;
+      context.max_len = max_len;
+      curl_easy_setopt( curl, CURLOPT_URL, url);
+      curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, curl_buff_write);
+      curl_easy_setopt( curl, CURLOPT_WRITEDATA, &context);
+#ifdef NOT_CURRENTLY_USED
+      if( flags & 2)
          {
-         printf( "Couldn't append %s to %s\n", url, filename);
-         perror( NULL);
+         curl_easy_setopt( curl, CURLOPT_NOBODY, 1);
+         curl_easy_setopt( curl, CURLOPT_HEADER, 1);
+         }
+#endif
+      res = curl_easy_perform( curl);
+      if( res)
+         {
+         printf( "libcurl error %d occurred\n", res);
+         printf( "url %s\n", url);
          exit( -1);
          }
-      else
-         {
-         CURLcode res;
-
-         curl_easy_setopt( curl, CURLOPT_URL, url);
-         curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, fwrite);
-         curl_easy_setopt( curl, CURLOPT_WRITEDATA, fp);
-         if( flags & 2)
-            {
-            curl_easy_setopt( curl, CURLOPT_NOBODY, 1);
-            curl_easy_setopt( curl, CURLOPT_HEADER, 1);
-            }
-         res = curl_easy_perform( curl);
-         if( res)
-            {
-            printf( "libcurl error %d occurred\n", res);
-            printf( "File '%s'; url %s\n", filename, url);
-            exit( -1);
-            }
-         curl_easy_cleanup( curl);
-         rval = (unsigned)( ftell( fp) - starting_loc);
-         fclose( fp);
-         }
+      curl_easy_cleanup( curl);
+      rval = (unsigned)context.loc;
       }
    return( rval);
 }
@@ -146,6 +194,8 @@ static struct neocp_summary *get_neocp_summary( const char *filename,
          n_found++;
          assert( n_found < MAX_OBJS);
          }
+      else
+         printf( "!!! Bad NEOCP list line\n%s\n", buff);
     printf( "Got %d\n", n_found);
     memset( rval + n_found, 0, sizeof( struct neocp_summary));
     fclose( ifile);
@@ -216,6 +266,68 @@ static void crossreference( struct neocp_summary *before, struct neocp_summary *
       }
 }
 
+/* Downloaded NEOCP astrometry should look a bit like this,
+
+<html><body><pre>
+     ZBB8B17  C2018 01 26.46759 12 09 51.81 +35 20 39.3          19.6 GUNEOCPG96
+     ZBB8B17  C2018 01 26.47279 12 09 51.51 +35 20 41.9          20.4 GUNEOCPG96
+     ZBB8B17  C2018 01 26.48318 12 09 51.18 +35 20 47.2          21.2 GUNEOCPG96
+</pre></body></html>
+
+   with a line feed between lines.  The header and trailer line should be
+exactly as shown,  with intervening lines 80 bytes long plus a LF.   If it's
+not like that,  something's wrong,  and a warning message is emitted.
+
+   Satellite observations and roving observations will consume two lines,
+so we do a little checking to make sure we're not looking at a second line
+when counting observations.   */
+
+#define CR_IN_WRONG_PLACE                        1
+#define CR_NOT_FOUND_WHERE_IT_SHOULD_HAVE_BEEN   2
+#define WRONG_HEADER                             4
+#define WRONG_TRAILER                            8
+
+static unsigned n_valid_astrometry_lines( const char *buff)
+{
+   size_t i, prev = 0;
+   unsigned n_lines_found = 0;
+   const char *template = "2018 01 23.16282 05 22 27.2   21 25 08.8";
+   const char *header = "<html><body><pre>\n";
+   const char *trailer = "</pre></body></html>\n";
+   const size_t header_len = 18;
+   const size_t trailer_len = 21;
+   int errors_found = 0;
+
+   for( i = 0; buff[i]; i++)
+      if( buff[i] == 10)
+         {
+         if( i == prev + 81)     /* yes,  it's an 80-column line */
+            {
+            size_t j;
+            bool is_mpc_line = true;
+
+            for( j = 0; template[j]; j++)
+               if( isdigit( template[j]) && !isdigit( buff[prev + 16 + j]))
+                  is_mpc_line = false;
+            if( is_mpc_line)
+               n_lines_found++;
+            }
+         prev = i;
+         if( (i % 81) != header_len - 1 && buff[i + 1])
+            errors_found |= CR_IN_WRONG_PLACE;
+         }
+      else if( (i % 81) == header_len - 1)
+         errors_found |= CR_NOT_FOUND_WHERE_IT_SHOULD_HAVE_BEEN;
+
+   if( i < header_len || memcmp( buff, header, header_len))
+      errors_found |= WRONG_HEADER;
+   if( i < trailer_len || memcmp( buff + i - trailer_len, trailer, trailer_len))
+      errors_found |= WRONG_HEADER;
+   if( errors_found)
+      printf( "!!! Errors %d (see 'neocp.c' for meaning)\n", errors_found);
+   return( n_lines_found);
+}
+
 static unsigned n_not_found_in_other_list( const struct neocp_summary *list,
                unsigned list_size)
 {
@@ -230,6 +342,7 @@ static unsigned n_not_found_in_other_list( const struct neocp_summary *list,
    return( rval);
 }
 
+
 /* Here,  we load up the designations from 'before' (neocplst.txt
 and neocp.txt) and 'after' (neocplst.tmp).  Objects appearing in
 the former but not the latter are assumed to have been removed; data
@@ -238,6 +351,8 @@ for the removed objects are found in 'neocp.txt' and appended to
 observations, or simply new objects) are written to 'neocp.new'.
 We create an 'neocp.tmp' file which includes the unchanged objects
 from before,  plus the new stuff we've written out to 'neocp.new'. */
+
+#define MAX_ILEN 81000
 
 static void show_differences( void)
 {
@@ -278,14 +393,17 @@ static void show_differences( void)
 
    if( n_new)
       {
+      char *tbuff = (char *)malloc( MAX_ILEN);
+      FILE *new_fp;
+
       printf( "New/changed objects :\n");
-      unlink( "neocp.new");
+      new_fp = NULL;
       for( i = j = 0; i < n_after; i++)
          if( !after[i].exists_in_other_list)
             {
             char url[200];
-            unsigned n_lines_read, n_obs_previously = 0, k;
-            const unsigned line_len = 81;      /* MPC 80-column record + LF */
+            unsigned bytes_read, n_obs_previously = 0, k;
+            unsigned n_lines_actually_read;
 
             for( k = 0; k < n_before; k++)
                if( !strcmp( before[k].desig, after[i].desig))
@@ -295,10 +413,23 @@ static void show_differences( void)
             strcpy( url, "https://minorplanetcenter.net/cgi-bin/showobsorbs.cgi?Obj=");
             strcat( url, after[i].desig);
             strcat( url, "&obs=y");
-            n_lines_read = fetch_a_file( url, "neocp.new", 1) / line_len;
-            if( n_lines_read != after[i].n_obs)
-               printf( "!!! %u obs read\n", n_lines_read);
+            bytes_read = fetch_a_file( url, tbuff, MAX_ILEN - 1);
+            tbuff[bytes_read] = '\0';
+            n_lines_actually_read = n_valid_astrometry_lines( tbuff);
+            if( n_lines_actually_read != after[i].n_obs)
+               printf( "!!! %u obs read\n", n_lines_actually_read);
+            if( bytes_read)
+               {
+               if( !new_fp)
+                  new_fp = fopen( "neocp.new", "wb");
+               assert( new_fp);
+               fwrite( tbuff, bytes_read, 1, new_fp);
+               }
             }
+      if( new_fp)
+         fclose( new_fp);
+
+      free( tbuff);
       ifile = fopen( "neocp.new", "rb");
       if( ifile)              /* append "new" objects to neocp.tmp, */
          {                    /* skipping HTML stuff */
@@ -368,6 +499,8 @@ int main( const int argc, const char **argv)
 {
     unsigned bytes_read;
     int i;
+    FILE *ofile;
+    char *tbuff;
     const char *neocp_text_summary =
                      "https://www.minorplanetcenter.net/iau/NEO/neocp.txt";
 
@@ -383,7 +516,7 @@ int main( const int argc, const char **argv)
              }
 
 #ifdef CHECK_HEAD
-                     /* just get the headers... */
+                     /* just get the headers... not doing this at present */
     bytes_read = fetch_a_file( neocp_text_summary, "neocplst.tmp", 2);
     if( !bytes_read)
       {
@@ -397,7 +530,8 @@ int main( const int argc, const char **argv)
       return( -3);
       }
 #endif
-    bytes_read = fetch_a_file( neocp_text_summary, "neocplst.tmp", 0);
+    tbuff = (char *)malloc( MAX_ILEN);
+    bytes_read = fetch_a_file( neocp_text_summary, tbuff, MAX_ILEN);
     printf( "%u objects to load\n", bytes_read / (unsigned)NEOCPLST_LINE_LEN);
             /* file should be an even multiple of NEOCPLST_LINE_LEN bytes long : */
     if( bytes_read % (unsigned)NEOCPLST_LINE_LEN)
@@ -405,9 +539,13 @@ int main( const int argc, const char **argv)
        printf( "WARNING: bytes_read = %u\n", bytes_read);
        printf( "File is supposed to be a multiple of %d bytes long.  It isn't.\n",
                            NEOCPLST_LINE_LEN);
+       free( tbuff);
        return( -1);
        }
-
+    ofile = fopen( "neocplst.tmp", "wb");
+    assert( ofile);
+    fwrite( tbuff, bytes_read, 1, ofile);
+    fclose( ofile);
     show_differences( );
 
             /* If we got here,  everything worked.  So unlink the old */
@@ -416,6 +554,7 @@ int main( const int argc, const char **argv)
     rename( "neocplst.tmp", "neocplst.txt");
     unlink( "neocp.txt");
     rename( "neocp.tmp", "neocp.txt");
+    free( tbuff);
     return 0;
 }
 
