@@ -11,6 +11,8 @@ int lat_alt_to_parallax( const double lat, const double ht_in_meters,
 double parallax_to_lat_alt( const double rho_cos_phi, const double rho_sin_phi,
                double *lat_out, const int planet_idx);
 double approx_parallax_to_lat_alt( const double x, const double y, double *lat);
+static double geocentric_to_geodetic( const double a, const double b,
+    const double rho_cos_phi, const double rho_sin_phi, double *alt);
 
 /* Revise these next two functions if you're handling planets
 other than the earth.  I do that in much of my software,  but
@@ -45,15 +47,16 @@ int lat_alt_to_parallax( const double lat, const double ht_in_meters,
    return( 0);
 }
 
-/* Code to determine the point on the ellipse
+/* NOTE that find_closest_point_on_ellipse() below is now of mostly historical
+interest.  I recommend using geocentric_to_geodetic() further below,  a
+closed-form method.  Either will work,  though.
+
+   Both determine the point on the ellipse
 
 P = (a cos(u), b sin(u))
 
    i.e.,  ellipse centered on the origin with semimajor axes a and b, that
-is closest to a given point (x, y). There is an analytic solution to this
-problem,  resulting in a quartic polynomial.  But for practical use,  the
-following root-finding method is considerably more efficient, and also
-avoids some loss of precision issues you get with the analytic method.
+is closest to a given point (x, y).
 
    The problem arises in converting parallax constants (rho sin phi,
 rho cos phi) to geographical latitude and altitude.  (In that context,
@@ -219,6 +222,57 @@ double approx_lat_from_parallax( const double rho_cos_phi,
    return( lat);
 }
 
+/* Exact method from _Explanatory Supplement to the Astronomical Almanac_,
+pgs 206-207,  in turn from K. M. Borkowski (1989), "Accurate Algorithms
+to Transform Geocentric to Geodetic Coordinates",  _Bulletin Geodesique_
+63, no. 1, 50-56,  also described at
+
+http://www.astro.uni.torun.pl/~kb/Papers/ASS/Geod-ASS.htm
+
+This reduces the problem to finding the roots of a quartic polynomial,
+but does so in a form that is somewhat straightforward,  with unit
+leading and trailing coefficients and a zero quadratic coefficient.
+
+References are to the _Explanatory Supplement_ and then the above URL.
+For example,  the equation for 'e' is given at 4.22-12 in the ES and
+as equation (6) at the above URL.    */
+
+static double geocentric_to_geodetic( const double a, const double b,
+    const double rho_cos_phi, const double rho_sin_phi, double *alt)
+{
+   const double tval1 = fabs(b * rho_sin_phi);
+   const double c_squared = a * a - b * b;
+   const double e = (tval1 - c_squared) / (a * rho_cos_phi);       /* 4.22-12/6 */
+   const double f = (tval1 + c_squared) / (a * rho_cos_phi);       /* 4.22-13/7 */
+   const double p = (4. / 3.) * (e * f + 1.);                      /* 4.22-14/9 */
+   const double q = 2. * (e * e - f * f);                          /* 4.22-15/10 */
+   const double d = p * p * p + q * q;                             /* 4.22-16/12 */
+   double v, g, t, lat;
+
+   if( d >= 0.)
+      {
+      const double sqrt_d = sqrt( d);
+
+      v = cbrt( sqrt_d - q) - cbrt( sqrt_d + q);      /* 4.22-17/11a */
+      }
+   else
+      {
+      const double sqp = sqrt( -p);
+      const double temp_ang = acos( q / (sqp * p));
+
+      v = 2. * sqp * cos( temp_ang / 3.);             /* 11b */
+      }
+   g = (sqrt( e * e + v) + e) * .5;                                /* 4.22-18/14 */
+   t = sqrt( g * g + (f - v * g) / (2. * g - e)) - g;              /* 4.22-19/13 */
+   lat = atan( a * (1 - t * t) / (2 * b * t));                     /* 4.22-20/15a */
+   if( alt)                                                        /* 4.22-21/15b */
+      *alt = (rho_cos_phi - a * t) * cos( lat)
+                     + (fabs( rho_sin_phi) - b) * sin( lat);
+   if( rho_sin_phi < 0.)
+      lat = -lat;
+   return( lat);
+}
+
 static void show_error_msg( void)
 {
    printf( "'ellip_pt' tests various methods of converting parallax\n"
@@ -276,5 +330,9 @@ int main( int argc, const char **argv)
             the method to apply to any ellipsoid. */
    printf( "Lat %.12f (Wepner 1982)\n",
             atan( (rho_sin_phi / rho_cos_phi) / (2 * axis_ratio - 1.)) * 180. / PI);
+   lat = geocentric_to_geodetic( 1., axis_ratio, rho_cos_phi, rho_sin_phi, &ht_in_meters);
+   ht_in_meters *= EARTH_MAJOR_AXIS;
+   printf( "Lat = %.12f   alt %.12f (Borkowski method)\n",
+               lat * 180. / PI, ht_in_meters);
    return( 0);
 }
