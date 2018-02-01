@@ -181,21 +181,23 @@ int main( void)
          in_code_section = 0;
       if( in_code_section && strlen( buff) > 30 && buff[3] == ' ')
          {
-
-         memmove( buff + 60, buff + 30, strlen( buff + 29));
-         memset( buff + 30, ' ', 30);
-         if( buff[7] == '.' && buff[14] == '.' && buff[23] == '.' &&
-                       atof( buff + 13))
+         memmove( buff + 68, buff + 30, strlen( buff + 29));
+         memmove( buff + 25, buff + 21, 9);  /* move rho sin phi */
+         memmove( buff + 15, buff + 13, 8);  /* move rho cos phi */
+         buff[13] = buff[14] = buff[23] = buff[24] = ' ';
+         memset( buff + 34, ' ', 34);
+         if( buff[7] == '.' && buff[16] == '.' && buff[27] == '.' &&
+                       atof( buff + 15))
             {
-            const double x = atof( buff + 13);
-            const double y = atof( buff + 21);
+            const double x = atof( buff + 15);
+            const double y = atof( buff + 25);
             const double lon = atof( buff + 4);
             char alt_buff[7];
             int rect_no = -1, i;
             double lat, ht_in_meters;
 
             parallax_to_lat_alt( x, y, &lat, &ht_in_meters);
-            if( buff[19] != ' ' && buff[28] != ' ')
+            if( buff[21] != ' ' && buff[32] != ' ')
                {        /* make sure there's precision for altitude */
                sprintf( alt_buff, "%5.0f", ht_in_meters);
                }
@@ -207,12 +209,18 @@ int main( void)
                if( rects[i].lon1 < lon && rects[i].lon2 > lon)
                   if( rects[i].lat1 < lat && rects[i].lat2 > lat)
                      rect_no = i;
-            sprintf( buff + 30, "%8.4f %s ", lat, alt_buff);
+            sprintf( buff + 34, "  %+09.5f  %s ", lat, alt_buff);
             if( rect_no >= 0)
-               memcpy( buff + 45, rects[rect_no].name, 15);
+               memcpy( buff + 53, rects[rect_no].name, 15);
             else
-               memset( buff + 45, ' ', 15);
-            buff[59] = ' ';
+               memset( buff + 53, ' ', 15);
+            buff[67] = ' ';
+            if( buff[22] == ' ')   /* parallax given to 5 or fewer digits */
+               buff[44] = ' ';     /* means lat's good to .0001 deg at best */
+            if( buff[21] == ' ')   /* parallax given to 4 or fewer digits */
+               buff[43] = ' ';     /* means lat's good to .001 deg at best */
+            if( buff[20] == ' ')   /* parallax given to 3 or fewer digits */
+               buff[42] = ' ';     /* means lat's good to .01 deg at best */
             if( rect_no >= 0)
                {
                char name[90], *tptr = rects[rect_no].name;
@@ -232,6 +240,8 @@ int main( void)
                n_codes++;
                }
             }
+         memmove( buff + 4, buff + 3, strlen( buff + 2));
+         buff[3] = ' ';    /* insert room for four-digit MPC codes */
          if( in_code_section)
             printf( "%s", buff);
          }
