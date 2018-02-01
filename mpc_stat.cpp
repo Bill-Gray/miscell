@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
+#include <errno.h>
 #include <math.h>
 
 #define PI 3.141592653589793
@@ -138,6 +140,8 @@ int load_geo_rects( GEO_RECT *rects)
             }
       fclose( ifile);
       }
+   else
+      perror( "geo_rect.txt not opened");
    return( rval);
 }
 
@@ -155,21 +159,23 @@ int code_compare( const void *a, const void *b)
 #define MAX_RECTS 1000
 #define MAX_CODES 8000
 
-int main( void)
+int main( const int argc, const char **argv)
 {
    char buff[190];
    int in_code_section = 0, n_geo_rects;
-   FILE *ifile = fopen( "ObsCodes.htm", "rb");
-   FILE *ofile;
+   const char *ifilename = (argc > 1 ? argv[1] : "ObsCodes.htm");
+   FILE *ifile = fopen( ifilename, "rb");
+   FILE *ofile = (argc > 2 ? fopen( argv[2], "wb") : NULL);
    char **codes = (char **)calloc( MAX_CODES, sizeof( char *));
    int n_codes = 0, i, j;
    GEO_RECT *rects = (GEO_RECT *)calloc( MAX_RECTS, sizeof( GEO_RECT));
 
-   if( !ifile)
-        ifile = fopen( "ObsCodes.html", "rb");
+   assert( codes);
+   assert( rects);
    if( !ifile)
       {
-      printf( "ObsCodes.htm (or ObsCodes.html) not opened\n");
+      fprintf( stderr, "Input %s not opened: ", ifilename);
+      perror( "");
       exit( 0);
       }
    n_geo_rects = load_geo_rects( rects);
@@ -243,9 +249,16 @@ int main( void)
          memmove( buff + 4, buff + 3, strlen( buff + 2));
          buff[3] = ' ';    /* insert room for four-digit MPC codes */
          if( in_code_section)
-            printf( "%s", buff);
+            {
+            if( ofile)
+               fprintf( ofile, "%s", buff);
+            else
+               printf( "%s", buff);
+            }
          }
       }
+   if( ofile)
+      fclose( ofile);
    free( rects);
    qsort( codes, n_codes, sizeof( char *), code_compare);
    ofile = fopen( "shortmpc.txt", "wb");
