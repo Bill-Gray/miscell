@@ -166,11 +166,8 @@ int main( const int argc, const char **argv)
    const char *ifilename = (argc > 1 ? argv[1] : "ObsCodes.htm");
    FILE *ifile = fopen( ifilename, "rb");
    FILE *ofile = (argc > 2 ? fopen( argv[2], "wb") : NULL);
-   char **codes = (char **)calloc( MAX_CODES, sizeof( char *));
-   int n_codes = 0, i, j;
    GEO_RECT *rects = (GEO_RECT *)calloc( MAX_RECTS, sizeof( GEO_RECT));
 
-   assert( codes);
    assert( rects);
    if( !ifile)
       {
@@ -227,24 +224,6 @@ int main( const int argc, const char **argv)
                buff[43] = ' ';     /* means lat's good to .001 deg at best */
             if( buff[20] == ' ')   /* parallax given to 3 or fewer digits */
                buff[42] = ' ';     /* means lat's good to .01 deg at best */
-            if( rect_no >= 0)
-               {
-               char name[90], *tptr = rects[rect_no].name;
-               const char *dropouts[4] = { "SAfric", "CzechR", "NewZea", NULL };
-               int include_both_parts = 1;
-
-               memcpy( name, buff, 3);
-               name[3] = ' ';
-               if( !memcmp( tptr, tptr + 7, 6))
-                  include_both_parts = 0;
-               for( i = 0; dropouts[i]; i++)
-                  if( !memcmp( dropouts[i], tptr, 6))
-                     include_both_parts = 0;
-               strcpy( name + 4, tptr + (include_both_parts ? 0 : 7));
-               codes[n_codes] = (char *)malloc( strlen( name) + 1);
-               strcpy( codes[n_codes], name);
-               n_codes++;
-               }
             }
          memmove( buff + 4, buff + 3, strlen( buff + 2));
          buff[3] = ' ';    /* insert room for four-digit MPC codes */
@@ -260,23 +239,4 @@ int main( const int argc, const char **argv)
    if( ofile)
       fclose( ofile);
    free( rects);
-   qsort( codes, n_codes, sizeof( char *), code_compare);
-   ofile = fopen( "shortmpc.txt", "wb");
-   j = 0;
-   for( i = 0; i < n_codes; i++)
-      {
-      const int codes_per_line = 15;
-
-      codes[i][3] = '\0';
-      if( !i || strcmp( codes[i] + 4, codes[i - 1] + 4))
-         {
-         j = 0;
-         fprintf( ofile, "\n# %s\n", codes[i] + 4);
-         }
-      j++;
-      fprintf( ofile, "%s%s", codes[i], (j % codes_per_line ? " " : "\n"));
-      free( codes[i]);
-      }
-   free( codes);
-   fclose( ofile);
 }
