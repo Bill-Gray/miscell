@@ -11,8 +11,8 @@ int lat_alt_to_parallax( const double lat, const double ht_in_meters,
 double parallax_to_lat_alt( const double rho_cos_phi, const double rho_sin_phi,
                double *lat_out, const int planet_idx);
 double approx_parallax_to_lat_alt( const double x, const double y, double *lat);
-static double geocentric_to_geodetic( const double a, const double b,
-    const double rho_cos_phi, const double rho_sin_phi, double *alt);
+static double angle_to_ellipse( const double a, const double b,
+                                const double x, const double y, double *dist);
 
 /* Revise these next two functions if you're handling planets
 other than the earth.  I do that in much of my software,  but
@@ -237,38 +237,50 @@ References are to the _Explanatory Supplement_ and then the above URL.
 For example,  the equation for 'e' is given at 4.22-12 in the ES and
 as equation (6) at the above URL.    */
 
-static double geocentric_to_geodetic( const double a, const double b,
-    const double rho_cos_phi, const double rho_sin_phi, double *alt)
+static double angle_to_ellipse( const double a, const double b,
+                                const double x, const double y, double *dist)
 {
-   const double tval1 = fabs(b * rho_sin_phi);
-   const double c_squared = a * a - b * b;
-   const double e = (tval1 - c_squared) / (a * rho_cos_phi);       /* 4.22-12/6 */
-   const double f = (tval1 + c_squared) / (a * rho_cos_phi);       /* 4.22-13/7 */
-   const double p = (4. / 3.) * (e * f + 1.);                      /* 4.22-14/9 */
-   const double q = 2. * (e * e - f * f);                          /* 4.22-15/10 */
-   const double d = p * p * p + q * q;                             /* 4.22-16/12 */
-   double v, g, t, lat;
+   const double fy = fabs( y), fx = fabs( x);
+   double lat;
 
-   if( d >= 0.)
+   if( x == 0.)
       {
-      const double sqrt_d = sqrt( d);
-
-      v = cbrt( sqrt_d - q) - cbrt( sqrt_d + q);      /* 4.22-17/11a */
+      lat = PI / 2.;
+      if( dist)
+         *dist = fy - a;
       }
    else
       {
-      const double sqp = sqrt( -p);
-      const double temp_ang = acos( q / (sqp * p));
+      const double c_squared = a * a - b * b;
+      const double e = (b * fy - c_squared) / (a * fx);      /* 4.22-12/6 */
+      const double f = (b * fy + c_squared) / (a * fx);      /* 4.22-13/7 */
+      const double p = (4. / 3.) * (e * f + 1.);             /* 4.22-14/9 */
+      const double q = 2. * (e * e - f * f);                 /* 4.22-15/10 */
+      const double d = p * p * p + q * q;                    /* 4.22-16/12 */
+      double v, g, t;
 
-      v = 2. * sqp * cos( temp_ang / 3.);             /* 11b */
+      if( d >= 0.)
+         {
+         const double sqrt_d = sqrt( d);
+
+         v = cbrt( sqrt_d - q) - cbrt( sqrt_d + q);         /* 4.22-17/11a */
+         }
+      else
+         {
+         const double sqp = sqrt( -p);
+         const double temp_ang = acos( q / (sqp * p));
+
+         v = 2. * sqp * cos( temp_ang / 3.);                      /* 11b */
+         }
+      g = (sqrt( e * e + v) + e) * .5;                     /* 4.22-18/14 */
+      t = sqrt( g * g + (f - v * g) / (2. * g - e)) - g;   /* 4.22-19/13 */
+      lat = atan2( a * (1. - t * t), 2. * b * t);          /* 4.22-20/15a */
+      if( dist)                                            /* 4.22-21/15b */
+         *dist = (fx - a * t) * cos( lat) + (fy - b) * sin( lat);
       }
-   g = (sqrt( e * e + v) + e) * .5;                                /* 4.22-18/14 */
-   t = sqrt( g * g + (f - v * g) / (2. * g - e)) - g;              /* 4.22-19/13 */
-   lat = atan( a * (1 - t * t) / (2 * b * t));                     /* 4.22-20/15a */
-   if( alt)                                                        /* 4.22-21/15b */
-      *alt = (rho_cos_phi - a * t) * cos( lat)
-                     + (fabs( rho_sin_phi) - b) * sin( lat);
-   if( rho_sin_phi < 0.)
+   if( x < 0.)
+      lat = PI - lat;
+   if( y < 0.)
       lat = -lat;
    return( lat);
 }
@@ -330,7 +342,7 @@ int main( int argc, const char **argv)
             the method to apply to any ellipsoid. */
    printf( "Lat %.12f (Wepner 1982)\n",
             atan( (rho_sin_phi / rho_cos_phi) / (2 * axis_ratio - 1.)) * 180. / PI);
-   lat = geocentric_to_geodetic( 1., axis_ratio, rho_cos_phi, rho_sin_phi, &ht_in_meters);
+   lat = angle_to_ellipse( 1., axis_ratio, rho_cos_phi, rho_sin_phi, &ht_in_meters);
    ht_in_meters *= EARTH_MAJOR_AXIS;
    printf( "Lat = %.12f   alt %.12f (Borkowski method)\n",
                lat * 180. / PI, ht_in_meters);
