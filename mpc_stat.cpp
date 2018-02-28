@@ -6,8 +6,9 @@
 #include <math.h>
 
 #define PI 3.141592653589793
-#define EARTH_MAJOR_AXIS 6378140.
-#define EARTH_MINOR_AXIS 6356755.
+#define EARTH_MAJOR_AXIS 6378137.
+#define EARTH_MINOR_AXIS 6356752.314245
+         /* above are WGS84 ellipsoid constants */
 #define EARTH_AXIS_RATIO (EARTH_MINOR_AXIS / EARTH_MAJOR_AXIS)
 #define SWAP( A, B, TEMP) { TEMP = A; A = B; B = TEMP; }
 
