@@ -24,7 +24,7 @@ CURL=-lcurl
 all:   blunder$(EXE) clock1$(EXE) csv2txt$(EXE) ellip_pt$(EXE) fix_obs$(EXE) \
 	eop_proc$(EXE) gpl$(EXE) i2mpc$(EXE) jpl2mpc$(EXE) ktest$(EXE) mpcorbx$(EXE) \
 	mpecer$(EXE) mpc_extr$(EXE) mpc_sort$(EXE) \
-	mpc_stat$(EXE) my_wget$(EXE) nofs2mpc$(EXE) \
+	mpc_stat$(EXE) my_wget$(EXE) nofs2mpc$(EXE) peirce$(EXE) \
 	plot_orb$(EXE) radar$(EXE) si_print$(EXE) splottes$(EXE) vid_dump$(EXE) \
 	xfer2$(EXE) xfer3$(EXE) $(ADDED_EXES)
 
@@ -51,6 +51,7 @@ clean:
 	$(RM) my_wget$(EXE)
 	$(RM) neocp$(EXE)
 	$(RM) nofs2mpc$(EXE)
+	$(RM) peirce$(EXE)
 	$(RM) plot_orb$(EXE)
 	$(RM) radar$(EXE)
 	$(RM) si_print$(EXE)
@@ -126,6 +127,9 @@ neocp$(EXE): neocp.c
 
 nofs2mpc$(EXE): nofs2mpc.cpp
 	$(CC) $(CFLAGS) -o nofs2mpc$(EXE) nofs2mpc.cpp $(ADDED_MATH_LIB)
+
+peirce$(EXE): peirce.c
+	$(CC) $(CFLAGS) -o peirce$(EXE) peirce.c -DTEST_MAIN $(ADDED_MATH_LIB)
 
 plot_orb$(EXE): plot_orb.c
 	$(CC) $(CFLAGS) -o plot_orb$(EXE) plot_orb.c $(ADDED_MATH_LIB)
