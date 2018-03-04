@@ -16,6 +16,7 @@ int main( const int argc, const char **argv)
    char buff[200];
    unsigned n_written = 0;
    double jd0 = 0., step_size = 0., jd;
+   bool state_vectors = false;
 
    if( argc > 1 && !ifile)
       printf( "\nCouldn't open the Horizons file '%s'\n", argv[1]);
@@ -64,6 +65,8 @@ int main( const int argc, const char **argv)
                   atof( buff + 47));
          n_written++;
          }
+      else if( !memcmp( buff, "   VX    VY    VZ", 17))
+         state_vectors = true;
 
    fprintf( ofile, "\n\nCreated from Horizons data by 'jpl2mpc', ver %s\n",
                                         __DATE__);
@@ -142,7 +145,9 @@ horizons@ssd.jpl.nasa.gov, subject line JOB.
  OUT_UNITS  = 'AU-D'
 
 ! VECT_TABLE = 1 means XYZ only,  no velocity, light-time,
-! range, or range-rate.
+! range, or range-rate.  Use VECT_TABLE = 2 to also get the
+! velocity,  to produce state vector ephemerides resembling
+! those from Find_Orb :
  VECT_TABLE = '1'
 
 ! VECT_CORR selects level of correction: NONE=geometric states
