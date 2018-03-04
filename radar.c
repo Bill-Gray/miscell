@@ -81,8 +81,9 @@ int create_mpc_packed_desig( char *packed_desig, const char *obj_name)
          buff[j++] = obj_name[i];
    buff[j] = '\0';
 
-   for( i = 0; isdigit( buff[i]); i++)
-      ;
+   i = 0;
+   while( isdigit( buff[i]))
+      i++;
                /* If the name starts with four digits followed by an */
                /* uppercase letter,  it's a provisional designation: */
    if( buff[i] && i == 4 && isupper( buff[4]))
