@@ -22,7 +22,7 @@ ADDED_MATH_LIB=-lm
 CURL=-lcurl
 
 all:   blunder$(EXE) clock1$(EXE) csv2txt$(EXE) ellip_pt$(EXE) fix_obs$(EXE) \
-	eop_proc$(EXE) i2mpc$(EXE) jpl2mpc$(EXE) ktest$(EXE) mpcorbx$(EXE) \
+	eop_proc$(EXE) gpl$(EXE) i2mpc$(EXE) jpl2mpc$(EXE) ktest$(EXE) mpcorbx$(EXE) \
 	mpecer$(EXE) mpc_extr$(EXE) mpc_sort$(EXE) \
 	mpc_stat$(EXE) my_wget$(EXE) nofs2mpc$(EXE) \
 	plot_orb$(EXE) radar$(EXE) si_print$(EXE) splottes$(EXE) vid_dump$(EXE) \
@@ -37,6 +37,7 @@ clean:
 	$(RM) eop_proc$(EXE)
 	$(RM) fix_obs$(EXE)
 	$(RM) gmake2bsd$(EXE)
+	$(RM) gpl$(EXE)
 	$(RM) grab_mpc$(EXE)
 	$(RM) i2mpc$(EXE)
 	$(RM) jpl2mpc$(EXE)
@@ -83,6 +84,9 @@ fix_obs$(EXE): fix_obs.cpp
 
 gmake2bsd$(EXE): gmake2bsd.c
 	$(CC) $(CFLAGS) -o gmake2bsd$(EXE) gmake2bsd.c
+
+gpl$(EXE): gpl.c
+	$(CC) $(CFLAGS) -o gpl$(EXE) gpl.c
 
 grab_mpc$(EXE): grab_mpc.c
 	$(CC) $(CFLAGS) -o grab_mpc$(EXE) grab_mpc.c -DTEST_MAIN $(CURL) $(CURLI)
