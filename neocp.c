@@ -291,7 +291,6 @@ static unsigned n_valid_astrometry_lines( const char *buff)
 {
    size_t i, prev = 0;
    unsigned n_lines_found = 0;
-   const char *template = "2018 01 23.16282 05 22 27.2   21 25 08.8";
    const char *header = "<html><body><pre>\n";
    const char *trailer = "</pre></body></html>\n";
    const size_t header_len = 18;
@@ -305,9 +304,11 @@ static unsigned n_valid_astrometry_lines( const char *buff)
             {
             size_t j;
             bool is_mpc_line = true;
+            const char *example_line =
+                        "2018 01 23.16282 05 22 27.2   21 25 08.8";
 
-            for( j = 0; template[j]; j++)
-               if( isdigit( template[j]) && !isdigit( buff[prev + 16 + j]))
+            for( j = 0; example_line[j]; j++)
+               if( isdigit( example_line[j]) && !isdigit( buff[prev + 16 + j]))
                   is_mpc_line = false;
             if( is_mpc_line)
                n_lines_found++;
