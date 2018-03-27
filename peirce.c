@@ -187,7 +187,7 @@ int main( const int argc, const char **argv)
          {
          const double oval = find_peirce_limit( rayleigh, N, n, m);
 
-         printf( "%7.4lf", (show_squared ? oval * oval : oval));
+         printf( "%7.4f", (show_squared ? oval * oval : oval));
          }
       if( n < 11)          /* add a column heading */
          printf( "   n=%d", n);
