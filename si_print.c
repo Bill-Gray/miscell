@@ -163,7 +163,7 @@ int main( const int argc, const char **argv)
       }
    return( 0);
 }
-#endif      // #ifdef TEST_CODE
+#endif      /* #ifdef TEST_CODE     */
 
 /*
 3.141u

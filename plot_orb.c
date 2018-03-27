@@ -86,10 +86,10 @@ int main( const int argc, const char **argv)
 
          dx *= 3. / dist;
          dy *= 3. / dist;
-//       fprintf( ofile, "currentpoint\n");
+/*       fprintf( ofile, "currentpoint\n");     */
          fprintf( ofile, "%.1f %.1f rmoveto\n", dy, -dx);
          fprintf( ofile, "%.1f %.1f rlineto\n", -2. * dy, 2. * dx);
-//       fprintf( ofile, "moveto\n");
+/*       fprintf( ofile, "moveto\n");           */
          fprintf( ofile, "%.1f %.1f rmoveto\n", dy, -dx);
          }
       if( strlen( buff) > 111)

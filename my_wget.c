@@ -75,7 +75,7 @@ void *fetch_a_file( void *args)
    if( curl)
       {
       FILE *fp = fopen( f->filename, (f->flags & 1) ? "ab" : "wb");
-//    const long starting_loc = ftell( fp);
+/*    const long starting_loc = ftell( fp);   */
 
       if( !fp)
          {

@@ -41,7 +41,7 @@ static double erfc( const double x)
       }
    return( rval);
 }
-#endif         // #ifndef __GNUC__
+#endif         /* #ifndef __GNUC__ */
 
 /* Code to implement Peirce's method for rejecting/accepting outlying
    observations, for Gaussian or Rayleigh distributions.  (The latter
