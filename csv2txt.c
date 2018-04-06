@@ -106,9 +106,9 @@ int main( const int argc, const char **argv)
                }
             if( pass)
                printf( "\n");
-//          if( i > n_fields)
-//             n_fields = i;
-            }
+/*          if( i > n_fields)
+               n_fields = i;
+*/          }
          }
       }
    fclose( ifile);

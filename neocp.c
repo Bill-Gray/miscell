@@ -1,4 +1,4 @@
-// #define CURL_STATICLIB
+/* #define CURL_STATICLIB  */
 #include <stdio.h>
 #include <unistd.h>
 #include <stdbool.h>

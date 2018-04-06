@@ -123,7 +123,7 @@ static double kepler( const double ecc, double mean_anom)
    if( ecc > 1. && mean_anom / ecc > 3.)    /* hyperbolic, large-mean-anomaly case */
       {
       curr = log( mean_anom / ecc) + 0.85;
-//    curr = log( mean_anom / ecc) + (mean_anom < 4. ? 1. : 0.85);
+/*    curr = log( mean_anom / ecc) + (mean_anom < 4. ? 1. : 0.85);   */
       if( verbose)
          printf( "Highly hyperbolic: %f %f %f\n", ecc, mean_anom, curr);
       }

@@ -41,7 +41,7 @@ static double erfc( const double x)
       }
    return( rval);
 }
-#endif         // #ifndef __GNUC__
+#endif         /* #ifndef __GNUC__ */
 
 /* Code to implement Peirce's method for rejecting/accepting outlying
    observations, for Gaussian or Rayleigh distributions.  (The latter
@@ -187,7 +187,7 @@ int main( const int argc, const char **argv)
          {
          const double oval = find_peirce_limit( rayleigh, N, n, m);
 
-         printf( "%7.4lf", (show_squared ? oval * oval : oval));
+         printf( "%7.4f", (show_squared ? oval * oval : oval));
          }
       if( n < 11)          /* add a column heading */
          printf( "   n=%d", n);

@@ -32,7 +32,10 @@ original file.   */
 #include <stdbool.h>
 #include <assert.h>
 
-const char *copyright_notice =
+/* Copyright notice is broken up into two string literals,  each below
+the 509-character limit in C90.     */
+
+const char *copyright_notice_part_1 =
     "/* Copyright (C) 2018, Project Pluto\n"
     "\n"
     "This program is free software; you can redistribute it and/or\n"
@@ -41,7 +44,9 @@ const char *copyright_notice =
     "of the License, or (at your option) any later version.\n"
     "\n"
     "This program is distributed in the hope that it will be useful,\n"
-    "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+    "but WITHOUT ANY WARRANTY; without even the implied warranty of\n";
+
+const char *copyright_notice_part_2 =
     "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n"
     "GNU General Public License for more details.\n"
     "\n"
@@ -73,7 +78,8 @@ int main( const int argc, const char **argv)
 
          printf( "%s\n", argv[i]);
          assert( ofile);
-         fprintf( ofile, "%s", copyright_notice);
+         fprintf( ofile, "%s", copyright_notice_part_1);
+         fprintf( ofile, "%s", copyright_notice_part_2);
          fseek( ifile, 0L, SEEK_SET);
          while( fgets( buff, sizeof( buff), ifile))
             fwrite( buff, strlen( buff), 1, ofile);

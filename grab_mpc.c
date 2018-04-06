@@ -81,6 +81,7 @@ static int grab_file( const char *url, const char *object_name,
     if (curl) {
         FILE *fp = fopen( outfilename, (append ? "ab" : "wb"));
         const time_t t0 = time( NULL);
+        CURLcode res;
 
         if( !fp)
             return( FETCH_FOPEN_FAILED);
@@ -89,7 +90,7 @@ static int grab_file( const char *url, const char *object_name,
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-        CURLcode res = curl_easy_perform(curl);
+        res = curl_easy_perform(curl);
         curl_easy_cleanup(curl);
         fclose(fp);
         if( res)

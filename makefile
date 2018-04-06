@@ -22,8 +22,8 @@ ADDED_MATH_LIB=-lm
 CURL=-lcurl
 
 all:   blunder$(EXE) clock1$(EXE) csv2txt$(EXE) ellip_pt$(EXE) fix_obs$(EXE) \
-	eop_proc$(EXE) gpl$(EXE) i2mpc$(EXE) jpl2mpc$(EXE) ktest$(EXE) mpcorbx$(EXE) \
-	mpecer$(EXE) mpc_extr$(EXE) mpc_sort$(EXE) \
+	eop_proc$(EXE) gfc_xvt$(EXE) gpl$(EXE) i2mpc$(EXE) jpl2mpc$(EXE) \
+	ktest$(EXE) mpcorbx$(EXE) mpecer$(EXE) mpc_extr$(EXE) mpc_sort$(EXE) \
 	mpc_stat$(EXE) my_wget$(EXE) nofs2mpc$(EXE) peirce$(EXE) \
 	plot_orb$(EXE) radar$(EXE) si_print$(EXE) splottes$(EXE) vid_dump$(EXE) \
 	xfer2$(EXE) xfer3$(EXE) $(ADDED_EXES)
@@ -36,6 +36,7 @@ clean:
 	$(RM) ellip_pt$(EXE)
 	$(RM) eop_proc$(EXE)
 	$(RM) fix_obs$(EXE)
+	$(RM) gfc_xvt$(EXE)
 	$(RM) gmake2bsd$(EXE)
 	$(RM) gpl$(EXE)
 	$(RM) grab_mpc$(EXE)
@@ -82,6 +83,9 @@ eop_proc$(EXE): eop_proc.c
 
 fix_obs$(EXE): fix_obs.cpp
 	$(CC) $(CFLAGS) -o fix_obs$(EXE) fix_obs.cpp
+
+gfc_xvt$(EXE): gfc_xvt.c
+	$(CC) $(CFLAGS) -o gfc_xvt$(EXE) gfc_xvt.c
 
 gmake2bsd$(EXE): gmake2bsd.c
 	$(CC) $(CFLAGS) -o gmake2bsd$(EXE) gmake2bsd.c
