@@ -93,16 +93,25 @@ static double find_spacing( const double min_spacing)
    return( real_rval);     /* ...just to avoid warning message */
 }
 
+static bool is_between( const double x, const double lim1, const double lim2)
+{
+   const bool rval = ((x > lim1 && x < lim2) || (x > lim2 && x < lim1));
+
+   return( rval);
+}
+
 static void add_a_side( splot_t *splot, const double spacing, const int flags,
                   const double u1, const double usize,
                    const double xsize, const double ysize)
 {
    const double u_per_x = usize / xsize;
-   const double uspacing = find_spacing( spacing * fabs( u_per_x));
-   double u = ceil( u1 / uspacing) * uspacing;
+   double u, uspacing = find_spacing( spacing * fabs( u_per_x));
    FILE *ofile = (FILE *)splot->ofile;
 
-   while( u < u1 + usize)
+   if( usize < 0.)      /* descending axes */
+      uspacing = -uspacing;
+   u = ceil( u1 / uspacing) * uspacing;
+   while( is_between( u, u1, u1 + usize))
       {
       const double x = (u - u1) / u_per_x;
 
