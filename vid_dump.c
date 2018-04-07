@@ -119,6 +119,8 @@ static int find_histogram_point( const uint8_t *pixels, const int n_pixels,
    return( i);
 }
 
+#ifdef ADDING_ENTROPY_TO_SYSTEM_POOL
+
 #define N_POOLS      13
 #define POOLSIZE     128
 #define POOLMASK    (POOLSIZE - 1)
@@ -163,6 +165,7 @@ static void add_entropy( const void *idata, const size_t nbytes)
          }
       }
 }
+#endif     /* #ifdef ADDING_ENTROPY_TO_SYSTEM_POOL */
 
 int main( const int argc, const char **argv)
 {
