@@ -24,7 +24,7 @@ CURL=-lcurl
 all:   blunder$(EXE) clock1$(EXE) csv2txt$(EXE) ellip_pt$(EXE) fix_obs$(EXE) \
 	eop_proc$(EXE) gfc_xvt$(EXE) gpl$(EXE) i2mpc$(EXE) jpl2mpc$(EXE) \
 	ktest$(EXE) mpcorbx$(EXE) mpecer$(EXE) mpc_extr$(EXE) mpc_sort$(EXE) \
-	mpc_stat$(EXE) my_wget$(EXE) nofs2mpc$(EXE) peirce$(EXE) \
+	mpc_stat$(EXE) my_wget$(EXE) nofs2mpc$(EXE) peirce$(EXE) sr_plot$(EXE) \
 	plot_orb$(EXE) radar$(EXE) si_print$(EXE) splottes$(EXE) vid_dump$(EXE) \
 	xfer2$(EXE) xfer3$(EXE) $(ADDED_EXES)
 
@@ -57,6 +57,7 @@ clean:
 	$(RM) radar$(EXE)
 	$(RM) si_print$(EXE)
 	$(RM) splottes$(EXE)
+	$(RM) sr_plot$(EXE)
 	$(RM) vid_dump$(EXE)
 	$(RM) xfer2$(EXE)
 	$(RM) xfer3$(EXE)
@@ -146,6 +147,9 @@ si_print$(EXE): si_print.c
 
 splottes$(EXE): splottes.cpp splot.cpp
 	$(CC) $(CFLAGS) -o splottes$(EXE) splottes.cpp splot.cpp $(ADDED_MATH_LIB)
+
+sr_plot$(EXE): sr_plot.cpp splot.cpp
+	$(CC) $(CFLAGS) -o sr_plot$(EXE) sr_plot.cpp splot.cpp $(ADDED_MATH_LIB)
 
 vid_dump$(EXE): vid_dump.c
 	$(CC) $(CFLAGS) -o vid_dump$(EXE) vid_dump.c
