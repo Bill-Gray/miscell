@@ -33,7 +33,9 @@ csv2txt
 ellip_pt
 eop_proc
 fix_obs
+gfc_xvt
 gmake2bsd
+gpl
 grab_mpc
 i2mpc
 jpl2mpc
@@ -46,10 +48,12 @@ mpecer
 my_wget
 neocp
 nofs2mpc
+peirce
 plot_orb
 radar
 si_print
 splottes
+sr_plot
 vid_dump
 xfer2
 xfer3
