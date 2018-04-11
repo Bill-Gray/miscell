@@ -28,7 +28,6 @@ all:   blunder$(EXE) clock1$(EXE) csv2txt$(EXE) ellip_pt$(EXE) fix_obs$(EXE) \
 	plot_orb$(EXE) radar$(EXE) si_print$(EXE) splottes$(EXE) vid_dump$(EXE) \
 	xfer2$(EXE) xfer3$(EXE) $(ADDED_EXES)
 
-
 clean:
 	$(RM) blunder$(EXE)
 	$(RM) clock1$(EXE)
@@ -61,6 +60,17 @@ clean:
 	$(RM) vid_dump$(EXE)
 	$(RM) xfer2$(EXE)
 	$(RM) xfer3$(EXE)
+
+# Programs can be installed to ~/bin,  in which case only the current user
+# can use them;  or (with root privileges) you can install them to
+# /usr/local/bin for all to enjoy.
+
+install:
+ifdef GLOBAL
+	cp grab_mpc /usr/local/bin
+else
+	cp grab_mpc $(HOME)/bin
+endif
 
 CFLAGS=-Wextra -Wall -O3 -pedantic
 
