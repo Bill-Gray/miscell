@@ -85,8 +85,9 @@ typedef struct
    size_t loc, max_len;
 } curl_buff_t;
 
-size_t curl_buff_write( char *ptr, size_t size, size_t nmemb, curl_buff_t *context)
+size_t curl_buff_write( char *ptr, size_t size, size_t nmemb, void *context_ptr)
 {
+   curl_buff_t *context = (curl_buff_t *)context_ptr;
    size_t bytes_to_write = size * nmemb;
 
    if( bytes_to_write > context->max_len - context->loc)

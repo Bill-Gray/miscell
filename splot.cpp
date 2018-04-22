@@ -10,7 +10,7 @@ int splot_init( splot_t *splot, const char *output_filename)
       {
       const char *header =
                   "%!PS-Adobe-2.0\n"
-                  "%%Pages: 1\n"
+                  "%%Pages:    1\n"
                   "%%PageOrder: Ascend\n"
                   "%%Orientation: Portrait\n"
                   "%%Creator: splot\n"
@@ -22,7 +22,6 @@ int splot_init( splot_t *splot, const char *output_filename)
                   "%%BeginDefaults\n"
                   "%%PageResources: font Times-Roman\n"
                   "%%EndDefaults\n"
-                  "%%Page: 1 1\n"
                   "\n"
                   "/centershow {\n"
                   "  dup stringwidth pop\n"
@@ -42,6 +41,20 @@ int splot_init( splot_t *splot, const char *output_filename)
                   "/Times-Roman findfont 12 scalefont setfont\n";
 
       fprintf( (FILE *)splot->ofile, "%s", header);
+      fprintf( (FILE *)splot->ofile,
+                  "\n/draw_x {\n"
+                  "  currentpoint 0 5 rmoveto 0 -10 rlineto -5 5 rmoveto 10 0 rlineto\n"
+                  "} def\n\n"
+                  "/plus {\n"
+                  "  currentpoint 5 5 rmoveto -10 -10 rlineto 10 0 rmoveto -10 10 rlineto\n"
+                  "} def\n\n"
+                  "/diam {\n"
+                  "  currentpoint 5 0 rmoveto -5 -5 rlineto -5 5 rlineto 5 5 rlineto 5 -5 rlineto \n"
+                  "} def\n\n"
+                  "/box {\n"
+                  "  currentpoint 5 5 rmoveto -10 0 rlineto 0 -10 rlineto 10 0 rlineto 0 -10 rlineto \n"
+                  "} def\n\n"
+                  "%%Page: 1 1\n");
       }
    return( splot->ofile ? 0 : -1);
 }
@@ -93,16 +106,25 @@ static double find_spacing( const double min_spacing)
    return( real_rval);     /* ...just to avoid warning message */
 }
 
+static bool is_between( const double x, const double lim1, const double lim2)
+{
+   const bool rval = ((x > lim1 && x < lim2) || (x > lim2 && x < lim1));
+
+   return( rval);
+}
+
 static void add_a_side( splot_t *splot, const double spacing, const int flags,
                   const double u1, const double usize,
                    const double xsize, const double ysize)
 {
    const double u_per_x = usize / xsize;
-   const double uspacing = find_spacing( spacing * fabs( u_per_x));
-   double u = ceil( u1 / uspacing) * uspacing;
+   double u, uspacing = find_spacing( spacing * fabs( u_per_x));
    FILE *ofile = (FILE *)splot->ofile;
 
-   while( u < u1 + usize)
+   if( usize < 0.)      /* descending axes */
+      uspacing = -uspacing;
+   u = ceil( u1 / uspacing) * uspacing;
+   while( is_between( u, u1, u1 + usize))
       {
       const double x = (u - u1) / u_per_x;
 
@@ -188,9 +210,9 @@ void splot_symbol( splot_t *splot, const int symbol_id, const char *text)
    FILE *ofile = (FILE *)splot->ofile;
 
    if( symbol_id)
-      fprintf( ofile, "currentpoint 0 5 rmoveto 0 -10 rlineto -5 5 rmoveto 10 0 rlineto\n");
+      fprintf( ofile, "draw_x\n");
    else
-      fprintf( ofile, "currentpoint 5 5 rmoveto -10 -10 rlineto 10 0 rmoveto -10 10 rlineto\n");
+      fprintf( ofile, "plus\n");
    if( text)
       fprintf( ofile, "(%s) show moveto\n", text);
    else
