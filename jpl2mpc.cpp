@@ -48,8 +48,10 @@ int main( const int argc, const char **argv)
    while( fgets( buff, sizeof( buff), ifile))
       if( (jd = atof( buff)) > 2000000. && jd < 3000000. &&
                strlen( buff) > 54 && !memcmp( buff + 17, " = A.D.", 7)
-               && !memcmp( buff + 42, ":00.0000 (TDB)", 14))
+               && !memcmp( buff + 42, ":00.0000 TDB", 12))
          {
+         int xloc = 1, yloc = 24, zloc = 47;
+
          if( !fgets( buff, sizeof( buff), ifile))
             {
             printf( "Failed to get data from input file\n");
@@ -59,10 +61,26 @@ int main( const int argc, const char **argv)
             jd0 = jd;
          else if( n_written == 1)
             step_size = jd - jd0;
-         fprintf( ofile, "%13.5f%16.10f%16.10f%16.10f\n", jd,
-                  atof( buff +  1),
-                  atof( buff + 24),
-                  atof( buff + 47));
+         if( buff[1] == 'X')     /* quantities are labelled */
+            {
+            xloc = 4;
+            yloc = 30;
+            zloc = 56;
+            }
+         fprintf( ofile, "%13.5f%16.10f%16.10f%16.10f", jd,
+                  atof( buff + xloc), atof( buff + yloc), atof( buff + zloc));
+         if( !state_vectors)
+            printf( "\n");
+         else
+            {
+            if( !fgets( buff, sizeof( buff), ifile))
+               {
+               printf( "Failed to get data from input file\n");
+               return( -2);
+               }
+            fprintf( ofile, " %16.12f%16.12f%16.12f\n",
+                  atof( buff + xloc), atof( buff + yloc), atof( buff + zloc));
+            }
          n_written++;
          }
       else if( !memcmp( buff, "   VX    VY    VZ", 17))
