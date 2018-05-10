@@ -17,6 +17,7 @@ int main( const int argc, const char **argv)
    unsigned n_written = 0;
    double jd0 = 0., step_size = 0., jd;
    bool state_vectors = false;
+   const char *header_fmt = "%13.5f %14.10f %4u\n";
 
    if( argc > 1 && !ifile)
       printf( "\nCouldn't open the Horizons file '%s'\n", argv[1]);
@@ -44,7 +45,7 @@ int main( const int argc, const char **argv)
       }
 
    fseek( ifile, 0L, SEEK_SET);
-   fprintf( ofile, "%13.5f %10.6f %4u\n", 0., 0., 0);
+   fprintf( ofile, header_fmt, 0., 0., 0);
    while( fgets( buff, sizeof( buff), ifile))
       if( (jd = atof( buff)) > 2000000. && jd < 3000000. &&
                strlen( buff) > 54 && !memcmp( buff + 17, " = A.D.", 7)
@@ -95,7 +96,7 @@ int main( const int argc, const char **argv)
 
                      /* Seek back to start of file & write corrected hdr: */
    fseek( ofile, 0L, SEEK_SET);
-   fprintf( ofile, "%13.5f %10.6f %4u\n", jd0, step_size, n_written);
+   fprintf( ofile, header_fmt, jd0, step_size, n_written);
 
    fclose( ifile);
 // fprintf( ofile, "Ephemeris from JPL Horizons output\n");
