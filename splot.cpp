@@ -1,3 +1,21 @@
+/* splot.cpp:  simple PostScript plot routines
+Copyright (C) 2018, Project Pluto
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+02110-1301, USA.    */
+
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -124,6 +142,8 @@ static void add_a_side( splot_t *splot, const double spacing, const int flags,
    if( usize < 0.)      /* descending axes */
       uspacing = -uspacing;
    u = ceil( u1 / uspacing) * uspacing;
+   if( !is_between( u, u1, u1 + usize))
+      u += uspacing;
    while( is_between( u, u1, u1 + usize))
       {
       const double x = (u - u1) / u_per_x;
@@ -150,6 +170,10 @@ static void add_a_side( splot_t *splot, const double spacing, const int flags,
       u += uspacing;
       }
 }
+
+/* Note that we really only have a labelling routine (most of it in the
+preceding function) for horizontal axes.  When we need to plot vertical
+axes,  we rotate by 90 degrees,  add "horizontal" axes,  and rotate back. */
 
 void splot_add_ticks_labels( splot_t *splot, const double spacing,
                                              const int flags)
@@ -234,3 +258,10 @@ void splot_display( splot_t *splot)
    fclose( ofile);
 }
 
+void splot_setrgbcolor( splot_t *splot, const double red, const double green,
+                                                          const double blue)
+{
+   FILE *ofile = (FILE *)splot->ofile;
+
+   fprintf( ofile, "stroke %.3f %.3f %.3f setrgbcolor\n", red, green, blue);
+}
