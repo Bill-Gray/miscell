@@ -146,6 +146,9 @@ nofs2mpc$(EXE): nofs2mpc.cpp
 peirce$(EXE): peirce.c
 	$(CC) $(CFLAGS) -o peirce$(EXE) peirce.c -DTEST_MAIN $(ADDED_MATH_LIB)
 
+plot_els$(EXE): plot_els.c splot.cpp
+	$(CC) $(CFLAGS) -o plot_els$(EXE) plot_els.c splot.cpp $(ADDED_MATH_LIB)
+
 plot_orb$(EXE): plot_orb.c
 	$(CC) $(CFLAGS) -o plot_orb$(EXE) plot_orb.c $(ADDED_MATH_LIB)
 
