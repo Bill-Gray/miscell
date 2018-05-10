@@ -27,7 +27,14 @@ ftp://podaac.jpl.nasa.gov/pub/grace/GGM03
 http://icgem.gfz-potsdam.de/home
 
    The latter site is to be preferred,  as it gives a _lot_ of different
-models and includes the non-Earth ones.
+models and includes the non-Earth ones.  Note also that a variety of models,
+including some for Mercury and Vesta,  are available at
+
+http://pds-geosciences.wustl.edu/dataserv/gravity_models.htm
+
+   (though not in .gfc format... still,  conversion looks as if it would
+be easy.  The PDS .sha format appears to have the same numbers,  just
+formatted a little differently.)
 
    See 'geo_pot.cpp' in the Find_Orb project for an example of the use
 of the output from this code.   */
