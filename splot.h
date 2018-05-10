@@ -1,4 +1,27 @@
-/* Simple plot */
+#ifndef SPLOT_H_INCLUDED
+#define SPLOT_H_INCLUDED
+
+/* splot.h: header file for simple PostScript plot routines
+Copyright (C) 2018, Project Pluto
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+02110-1301, USA.    */
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* #ifdef __cplusplus */
 
 typedef struct
    {
@@ -18,6 +41,8 @@ void splot_label( splot_t *splot, const unsigned flags,
                    const int line, const char *text);
 void splot_moveto( splot_t *splot, const double u, const double v, const bool pen_down);
 void splot_symbol( splot_t *splot, const int symbol_id, const char *text);
+void splot_setrgbcolor( splot_t *splot, const double red, const double green,
+                                                          const double blue);
 void splot_endplot( splot_t *splot);
 void splot_display( splot_t *splot);
 
@@ -35,3 +60,8 @@ void splot_display( splot_t *splot);
 #define SPLOT_MOVETO               0
 #define SPLOT_LINETO               1
 #define SPLOT_DASHED               2
+
+#ifdef __cplusplus
+}
+#endif  /* #ifdef __cplusplus */
+#endif  /* #ifndef SPLOT_H_INCLUDED */
