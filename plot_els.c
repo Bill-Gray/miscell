@@ -32,7 +32,8 @@ and I needed a plot to explain what was going on. */
 
 #define JD_TO_YEAR( jd) (2000. + ((jd) - 2451545.) / 365.25)
 
-int main( const int argc, const char **argv)
+int main( const int argc __attribute__ ((unused)),
+          const char **argv __attribute__ ((unused)))
 {
    splot_t splot;
    char buff[200], *tptr;
@@ -54,7 +55,10 @@ int main( const int argc, const char **argv)
       return( 0);
       }
    splot_newplot( &splot, 70, 460, 100, 600);
-   splot_set_limits( &splot, year0, year1 - year0, 20., 90. - 20.);
+   if( year0 < year1)
+      splot_set_limits( &splot, year0, year1 - year0, 0., 90.);
+   else
+      splot_set_limits( &splot, year1, year0 - year1, 0., 90.);
    splot_add_ticks_labels( &splot, 60., SPLOT_ALL_EDGES | SPLOT_LIGHT_GRID);
    splot_add_ticks_labels( &splot, 20., SPLOT_HORIZONTAL_EDGES);
    splot_add_ticks_labels( &splot, 60., SPLOT_BOTTOM_EDGE | SPLOT_ADD_LABELS);
@@ -62,7 +66,9 @@ int main( const int argc, const char **argv)
    splot_add_ticks_labels( &splot, 100., SPLOT_LEFT_EDGE | SPLOT_ADD_LABELS);
    splot_label( &splot, SPLOT_BOTTOM_EDGE, 1, "Year");
    splot_label( &splot, SPLOT_LEFT_EDGE, 1, "Incl (deg)");
-   splot_label( &splot, SPLOT_TOP_EDGE, 1, "2010-050B inclination/perigee");
+   tptr = strstr( buff, ": ");      /* top line also gives object name, */
+   assert( tptr);                   /* which we use to label top of plot */
+   splot_label( &splot, SPLOT_TOP_EDGE, 1, tptr + 1);
 
    while( fgets( buff, sizeof( buff), ifile))
       if( (tptr = strstr( buff, "Incl.")) != NULL)
@@ -89,7 +95,10 @@ int main( const int argc, const char **argv)
       return( -1);
    sscanf( buff, "%lf %lf", &jd, &jd_step);
    splot_setrgbcolor( &splot, 1., 0., 0.);
-   splot_set_limits( &splot, year0, year1 - year0, 0., max_q);
+   if( year0 < year1)
+      splot_set_limits( &splot, year0, year1 - year0, 0., max_q);
+   else
+      splot_set_limits( &splot, year1, year0 - year1, 0., max_q);
    splot_add_ticks_labels( &splot, 15., SPLOT_RIGHT_EDGE);
    splot_label( &splot, SPLOT_RIGHT_EDGE, 1, "q (km)");
    splot_add_ticks_labels( &splot, 100., SPLOT_RIGHT_EDGE | SPLOT_ADD_LABELS);
