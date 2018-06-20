@@ -44,6 +44,7 @@ of the output from this code.   */
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
+#include <assert.h>
 
 #define MIN_TERMS 3
 
@@ -71,20 +72,27 @@ int main( const int argc, const char **argv)
    printf( "   const double ");
    for( i = 0; argv[1][i] && argv[1][i] != '.'; i++)
       printf( "%c", tolower( argv[1][i]));
-   printf( "_terms[] = {");
+   printf( "_terms[] = {\n");
+   printf( "      /*       C term                    S term                 L M */");
    while( fgets( buff, sizeof( buff), ifile))
       if( !memcmp( buff, "gfc ", 4) && atoi( buff + 3) <= max_l)
          {
-         const int l = atoi( buff + 5);
-         const int m = atoi( buff + 9);
+         int l, m, n_scanned;
+         char c_term[40], s_term[40];
+         char *tptr;
 
-         buff[13] = buff[33] = buff[53] = '\0';
-         buff[29] = buff[49] = 'E';
+         n_scanned = sscanf( buff + 4, "%d %d %40s %40s", &l, &m, c_term, s_term);
+         assert( n_scanned == 4);
+                  /* If 'D' is used to indicate an exponent, replace w/'E': */
+         if( (tptr = strchr( c_term, 'D')) != NULL)
+            *tptr = 'E';
+         if( (tptr = strchr( s_term, 'D')) != NULL)
+            *tptr = 'E';
          if( m == 0)
             printf( (l < MIN_TERMS) ? "\n" : "#if( N_TERMS >= %d)\n", l);
-         printf( "     %c %s, %s%c   /\x2a %d %d \x2a/\n",
+         printf( "     %c %24s, %24s%c   /\x2a %d %d \x2a/\n",
                 ((m == 0 && l >= MIN_TERMS) ? ',' : ' '),
-                buff + 14, buff + 34,
+                c_term, s_term,
                 ((m == l && l >= MIN_TERMS - 1) ? ' ' : ','),
                 l, m);
          if( m == l && l >= MIN_TERMS)
