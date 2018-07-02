@@ -90,6 +90,7 @@ static int grab_file( const char *url, const char *object_name,
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
         res = curl_easy_perform(curl);
         curl_easy_cleanup(curl);
         fclose(fp);
@@ -102,6 +103,37 @@ static int grab_file( const char *url, const char *object_name,
 
 #define BASE_MPC_URL "https://www.minorplanetcenter.net"
 
+/* After getting the MPC database search summary for an object,  we can dig
+through it and (we hope) find the URL for the file containing the actual
+astrometry.  I used to just generate this from the object name.  The problem
+is that if the object has been redesignated,  we can get the summary through
+HTML redirection;  for the astrometry,  we need the actual name as it
+appears on MPC's servers.     */
+
+static bool look_for_link_to_astrometry( const char *filename, char *url)
+{
+   FILE *ifile = fopen( filename, "rb");
+   bool got_it = false;
+   char buff[200], *tptr;
+
+   if( ifile)
+      {
+      while( !got_it &&  fgets( buff, sizeof( buff), ifile))
+         if( (tptr = strstr( buff, "../tmp/")) != NULL)
+            {
+            tptr += 2;
+            strcpy( url, BASE_MPC_URL);
+            url += strlen( url);
+            while( *tptr && *tptr != '"')
+               *url++ = *tptr++;
+            *url = '\0';
+            got_it = true;
+            }
+      fclose( ifile);
+      }
+   return( got_it);
+}
+
 static int fetch_astrometry_from_mpc( const char *output_filename,
             const char *object_name, const bool append)
 {
@@ -112,6 +144,8 @@ static int fetch_astrometry_from_mpc( const char *output_filename,
    for( i = 38; url2[i]; i++)
       if( url2[i] == ' ' || url2[i] == '/')
          url2[i] = '_';
+   if( verbose)
+      printf( "Temp file name '%s'\n", url2);
    if( check_for_existing( url2, output_filename))
       return( 0);
 
@@ -126,7 +160,12 @@ static int fetch_astrometry_from_mpc( const char *output_filename,
       else if( url[i] == ' ')
          url[i] = '+';
    strcat( url, "&btnG=MPC+Database+Search");
+   if( verbose)
+      printf( "Grabbing '%s''\n", url);
    rval = grab_file( url, object_name, "zzzz", 0);
+   look_for_link_to_astrometry( "zzzz", url2);
+   if( verbose)
+      printf( "Revised URL: '%s'\n", url2);
    unlink( "zzzz");
    if( rval)
       return( rval);
