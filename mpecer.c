@@ -85,6 +85,9 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
    double eccentricity = 0.;
    double perihelion_dist = 0.;
    double earth_moid = 0.;
+   char stns[100];
+   int n_stns_found = 0;
+   bool is_daily_orbit_update = false;
 
    sprintf( url, "https://www.minorplanetcenter.net/mpec/%s/%s%cx%d.html",
                         year, year, half_month, mpec_no % 10);
@@ -106,6 +109,8 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
          *tptr = '\0';
          fprintf( ofile, "<a href=\"%s\"> %s </a>", url, buff + 4);
          printf( "%s\n", buff + 4);
+         if( strstr( buff + 4, "DAILY ORBIT"))
+            is_daily_orbit_update = true;
          found_name = 1;
          }
       else if( (tptr = strstr( buff, "Issued")) != NULL)
@@ -124,6 +129,7 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
          fprintf( ofile, "%s", tptr + 6);
          rval = 0;
          }
+   *stns = '\0';
    if( !rval)
       while( fgets( buff, sizeof( buff), ifile))
          if( !memcmp( buff, "Orbital elements:", 17))
@@ -165,9 +171,34 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
             if( n_written && earth_moid)
                fprintf( ofile, " MOID=%.4f", earth_moid);
             if( n_written)
-               fprintf( ofile, ")");
+               fprintf( ofile, ") %s", stns);
             fseek( ifile, 0L, SEEK_END);
             }
+         else if( strlen( buff) == 81 && (buff[44] == '+' || buff[44] == '-')
+                        && !is_daily_orbit_update)
+            {
+            buff[80] = '\0';
+            if( !strstr( stns, buff + 77) && n_stns_found < 4)
+               {
+               if( stns[0])
+                  strcat( stns, " ");
+               strcat( stns, buff + 77);
+               n_stns_found++;
+               }
+            if( buff[12] == '*')   /* show discovery stn in bold */
+               {
+               char *tptr = strstr( stns, buff + 77);
+
+               if( tptr)
+                  {
+                  memmove( tptr + 7, tptr + 3, strlen( tptr + 2));
+                  memcpy( tptr + 3, "</b>", 4);
+                  memmove( tptr + 3, tptr, strlen( tptr) + 1);
+                  memcpy( tptr, "<b>", 3);
+                  }
+               }
+            }
+
    if( !rval)
       fprintf( ofile, "<br>\n");
    fclose( ifile);
