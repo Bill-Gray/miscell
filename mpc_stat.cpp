@@ -1,3 +1,8 @@
+/* NOTE: This code to read the MPC observatory file and output it with
+atitudes,  altitudes,  and country/area names is essentially obsolete.
+Use 'mpc_code.cpp' from the 'lunar' repository instead.  It replaces
+and improves upon the following. */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,7 +10,7 @@
 #include <errno.h>
 #include <math.h>
 
-#define PI 3.141592653589793
+#define PI 3.1415926535897932384626433832795028841971693993751058209749445923
 #define EARTH_MAJOR_AXIS 6378137.
 #define EARTH_MINOR_AXIS 6356752.314245
          /* above are WGS84 ellipsoid constants */
