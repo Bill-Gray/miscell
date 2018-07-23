@@ -7,7 +7,26 @@
 
 /* Code to convert an ephemeris gathered from JPL's _Horizons_ system into
 the format used by MPC's DASO service.  Based largely on code I'd already
-written to import _Horizons_ data to the .b32 format used in Guide.   */
+written to import _Horizons_ data to the .b32 format used in Guide.
+
+   The following looks up a couple of JPL identifiers to get human-readable
+names.  If a name is set properly,  it can be used automatically when
+'eph2tle' tries to fit Two-Line Elements,  and that program will spot the
+international and NORAD designations.  At present,  the only object for
+which that actually matters is TESS.  But we _could_,  and probably will,
+add others as the need arises.  And I may do things with Gaia at some point.
+*/
+
+static const char *look_up_name( const int idx)
+{
+   if( idx == -95)
+      return( "TESS = 2018-038A = NORAD 43435");
+   if( idx == -151)
+      return( "Chandra = 1999-040B = NORAD 25867");
+   if( idx == -139479)
+      return( "Gaia = 2013-074A = NORAD 39479");
+   return( "");
+}
 
 int main( const int argc, const char **argv)
 {
@@ -15,9 +34,11 @@ int main( const int argc, const char **argv)
    FILE *ofile = (argc > 2 ? fopen( argv[2], "wb") : stdout);
    char buff[200];
    unsigned n_written = 0;
-   double jd0 = 0., step_size = 0., jd;
-   bool state_vectors = false;
-   const char *header_fmt = "%13.5f %14.10f %4u\n";
+   double jd0 = 0., step_size = 0., jd, frac_jd0 = 0.;
+   int int_jd0 = 0;
+   bool state_vectors = false, is_equatorial = false;
+   const char *header_fmt = "%13.5f %14.10f %4u";
+   const char *object_name = "";
 
    if( argc > 1 && !ifile)
       printf( "\nCouldn't open the Horizons file '%s'\n", argv[1]);
@@ -53,15 +74,29 @@ int main( const int argc, const char **argv)
          {
          int xloc = 1, yloc = 24, zloc = 47;
 
+         if( !is_equatorial)
+            {
+            printf( "Input coordinates must be in the Earth mean equator and equinox\n");
+            return( -1);
+            }
+         if( !n_written)
+            {
+            jd0 = jd;
+            int_jd0 = atoi( buff);
+            frac_jd0 = atof( buff + 7);
+            if( *object_name)
+               fprintf( ofile, " (500) Geocentric: %s\n", object_name);
+            else
+               fprintf( ofile, "\n");
+            }
+         else if( n_written == 1)
+            step_size = (atof( buff + 7) - frac_jd0)
+                                  + (double)( atoi( buff) - int_jd0);
          if( !fgets( buff, sizeof( buff), ifile))
             {
             printf( "Failed to get data from input file\n");
             return( -2);
             }
-         if( !n_written)
-            jd0 = jd;
-         else if( n_written == 1)
-            step_size = jd - jd0;
          if( buff[1] == 'X')     /* quantities are labelled */
             {
             xloc = 4;
@@ -86,6 +121,10 @@ int main( const int argc, const char **argv)
          }
       else if( !memcmp( buff, "   VX    VY    VZ", 17))
          state_vectors = true;
+      else if( strstr( buff, "Earth Mean Equator and Equinox"))
+         is_equatorial = true;
+      else if( !memcmp( buff, " Revised:", 9))
+         object_name = look_up_name( atoi( buff + 72));
 
    fprintf( ofile, "\n\nCreated from Horizons data by 'jpl2mpc', ver %s\n",
                                         __DATE__);
