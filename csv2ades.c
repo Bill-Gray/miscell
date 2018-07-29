@@ -11,6 +11,7 @@ http://cdn.gea.esac.esa.int/Gaia/gdr2/sso_observation/csv/
 Toutatis.  The first would output all of the observations. */
 
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -64,6 +65,19 @@ static void csv_to_ades( const char *ibuff, const char *perm_ID)
       printf( "    <rmsRA>%f</rmsRA>\n",     atof( get_csv( tbuff, ibuff, 12)) / 1000.);
       printf( "    <rmsDec>%f</rmsDec>\n",   atof( get_csv( tbuff, ibuff, 13)) / 1000.);
       printf( "    <rmsCorr>%s</rmsCorr>\n", get_csv( tbuff, ibuff, 14));
+      get_csv( tbuff, ibuff, 15);
+      if( *tbuff)
+         {
+         double g_flux, g_flux_sigma;
+
+         printf( "    <mag>%s</mag>\n", tbuff);
+         g_flux       = atof( get_csv( tbuff, ibuff, 16));
+         g_flux_sigma = atof( get_csv( tbuff, ibuff, 17));
+         printf( "    <band>G</band>\n");
+         printf( "    <rmsMag>%.3f</rmsMag>\n",
+                           (g_flux_sigma / g_flux) / log( 2.512));
+         printf( "    <photCat>Gaia2</photCat>\n");
+         }
       printf( "    <astCat>Gaia2</astCat>\n");
       printf( "   </optical>\n");
       }
@@ -76,6 +90,7 @@ int main( const int argc, const char **argv)
    const char *perm_ID = NULL;
    int i;
 
+   assert( hdr_file);
    while( fgets( buff, sizeof( buff), hdr_file))
       if( *buff != '*')
          printf( "%s", buff);
@@ -117,11 +132,11 @@ int main( const int argc, const char **argv)
     <remarks>TCB=2016-02-27T15:46:49.938Z, transitId=47101903417545381, observationId=471019034175453811, rmsRaSyst=0.00848502 as, rmsDecSyst=0.00394375 as, rmsCorrSyst=0.88192202, positionScanAngle=300.348 deg</remarks>
    </optical>
 
-solution_id,source_id,observation_id,number_mp,
-epoch,epoch_err,epoch_utc,ra,
-dec,ra_error_systematic,dec_error_systematic,ra_dec_correlation_systematic,
-ra_error_random,dec_error_random,ra_dec_correlation_random,g_mag,
-g_flux,g_flux_error,x_gaia,y_gaia,
-z_gaia,vx_gaia,vy_gaia,vz_gaia,
-position_angle_scan,level_of_confidence
+solution_id,source_id,observation_id,number_mp,         0-3
+epoch,epoch_err,epoch_utc,ra,                           4-7
+dec,ra_error_systematic,dec_error_systematic,ra_dec_correlation_systematic,   8-11
+ra_error_random,dec_error_random,ra_dec_correlation_random,g_mag,           12-15
+g_flux,g_flux_error,x_gaia,y_gaia,                                          16-19
+z_gaia,vx_gaia,vy_gaia,vz_gaia,                                             20-23
+position_angle_scan,level_of_confidence                                     24-26
 */
