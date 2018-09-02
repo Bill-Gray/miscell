@@ -108,6 +108,7 @@ static unsigned fetch_a_file( const char *url, char *obuff,
       {
       CURLcode res;
       curl_buff_t context;
+      char errbuf[CURL_ERROR_SIZE];
 
       context.loc = 0;
       context.obuff = obuff;
@@ -115,6 +116,8 @@ static unsigned fetch_a_file( const char *url, char *obuff,
       curl_easy_setopt( curl, CURLOPT_URL, url);
       curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, curl_buff_write);
       curl_easy_setopt( curl, CURLOPT_WRITEDATA, &context);
+      curl_easy_setopt( curl, CURLOPT_ERRORBUFFER, errbuf);
+      *errbuf = '\0';
 #ifdef NOT_CURRENTLY_USED
       if( flags & 2)
          {
@@ -125,7 +128,9 @@ static unsigned fetch_a_file( const char *url, char *obuff,
       res = curl_easy_perform( curl);
       if( res)
          {
-         printf( "libcurl error %d occurred\n", res);
+         fprintf( stderr, "libcurl error %d occurred\n", res);
+         fprintf( stderr, "%s\n",
+                       (*errbuf ? errbuf : curl_easy_strerror( res)));
          printf( "url %s\n", url);
          exit( -1);
          }
