@@ -8,7 +8,19 @@ http://cdn.gea.esac.esa.int/Gaia/gdr2/sso_observation/csv/
 ./csv2ades -4179 input_file.csv > output.ades
 
    The second example would output only observations for object (4179)
-Toutatis.  The first would output all of the observations. */
+Toutatis.  The first would output all of the observations.
+
+   Further notes : there are four GZIPped files in the above directory,
+ranging from about 50 to 78 MBytes compressed and expanding to 150 to
+230 MBytes uncompressed.  Each contains astrometry for a specific range
+of numbered minor planets;  for example,  the first has data for objects
+(8) Flora to (4435) Holt.
+
+SsoObservation_-4284967216_-4284922946.csv.gz          8 - 4435
+SsoObservation_-4284922936_-4284857966.csv.gz       4436 - 10933
+SsoObservation_-4284857946_-4284702156.csv.gz      10935 - 26514
+SsoObservation_-4284702096_-4283326086.csv.gz      26520 - 164121
+*/
 
 #include <stdio.h>
 #include <math.h>
