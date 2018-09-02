@@ -12,7 +12,11 @@ http://www.satobs.org/position/IODformat.html
    The '-f' flag causes the date/time to be output in MPC 'standard'
 format,  to a precision of 0.000001 day = 86.4 milliseconds.  By
 default,  it's output in the form show above,  to millisecond
-precision.  But only Find_Orb will understand that format.   */
+precision.  But only Find_Orb will understand that format.
+
+   Note that there are a _lot_ of satellite observer sites listed at
+
+https://github.com/cbassa/sattools/blob/master/data/sites.txt  */
 
 int main( const int argc, const char **argv)
 {
@@ -33,6 +37,7 @@ int main( const int argc, const char **argv)
          "4355 Cro",    /* Cronesteyn 52.13878 N 4.49947 E -2 meters ASL */
          "4541 Ran",    /* Alberto Rango */
          "4553 SOb",    /* Unknown sat observer: 53.3199N, 2.24377W, 86 m */
+         "7778 E12",    /* Siding Spring */
          "8049 ScT",    /* Roberts Creek 1 (Scott Tilley) */
          "8335 Tu2",    /* Tulsa-2 (Oklahoma) +35.8311  -96.1411 1083ft, 330m */
          "8336 Tu1",    /* Tulsa-1 (Oklahoma) +36.139208,-95.983429 660ft, 201m */
