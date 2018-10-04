@@ -70,7 +70,8 @@ int main( const int argc, const char **argv)
    while( fgets( buff, sizeof( buff), ifile))
       if( (jd = atof( buff)) > 2000000. && jd < 3000000. &&
                strlen( buff) > 54 && !memcmp( buff + 17, " = A.D.", 7)
-               && !memcmp( buff + 42, ":00.0000 TDB", 12))
+               && buff[42] == ':' && buff[45] == '.'
+               && !memcmp( buff + 50, " TDB", 4))
          {
          int xloc = 1, yloc = 24, zloc = 47;
 
