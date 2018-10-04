@@ -88,6 +88,7 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
    char stns[100];
    int n_stns_found = 0;
    bool is_daily_orbit_update = false;
+   bool discovery_found = false;
 
    sprintf( url, "https://www.minorplanetcenter.net/mpec/%s/%s%cx%d.html",
                         year, year, half_month, mpec_no % 10);
@@ -131,6 +132,7 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
          }
    *stns = '\0';
    if( !rval)
+      {
       while( fgets( buff, sizeof( buff), ifile))
          if( !memcmp( buff, "Orbital elements:", 17))
             {
@@ -185,8 +187,8 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
                strcat( stns, buff + 77);
                n_stns_found++;
                }
-            if( buff[12] == '*')   /* show discovery stn in bold */
-               {
+            if( buff[12] == '*' && !discovery_found)
+               {                       /* show discovery stn in bold */
                char *tptr = strstr( stns, buff + 77);
 
                if( tptr)
@@ -195,9 +197,11 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
                   memcpy( tptr + 3, "</b>", 4);
                   memmove( tptr + 3, tptr, strlen( tptr) + 1);
                   memcpy( tptr, "<b>", 3);
+                  discovery_found = true;
                   }
                }
             }
+      }
 
    if( !rval)
       fprintf( ofile, "<br>\n");
