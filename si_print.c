@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <stdbool.h>
 #include <math.h>
 
 /* MS only got around to adding 'isfinite',  asinh in VS2013 : */
@@ -20,6 +21,21 @@ or more characters in which to display the number.  If there are only two,
 the numerical part is kept between .1 and 100,  resulting in "non-standard"
 output such as .3G instead of the "correct" 300M.
 
+   If the SI_PRINTF_NO_LOWER_PREFIXES flag is set, the lower prefixes m,
+u, n, etc. will not be used.  Numbers that would normally be shown using
+those prefixes will instead be shown with leading zeroes,  and eventually
+as just zeroes.
+
+   If the SI_PRINTF_EXTENDED_PREFIXES flag is set, the 'usual' set of SI
+prefixes is extended to include 17 more letters in each direction, for a
+range of 10^51 each way.  Since the 'usual' sets end with z/Z or y/Y,
+the 'extended' sets simply continue backward through the alphabet,
+omitting letters already used elsewhere.  See the 'lower_prefixes' and
+'upper_prefixes' variables.
+
+   If the SI_PRINTF_FORCE_SIGN flag is set,  positive numbers will be
+shown with a leading '+'.
+
    Accurate results should be given for positive values if n_places >= 3,
 and for negative values if n_places >= 4,  _and_ you don't go outside the
 realm of yocto/yotta.  If you do that,  we try to use "standard" N.NNe+NN
@@ -29,11 +45,18 @@ tells you the order of magnitude of the number.  If there aren't even
 enough places to do _that_,  we just show "Huge" or "Low" (again,  examples
 shown at bottom of this file.)            */
 
-void si_sprintf( char *buff, double ival, int n_places)
+#define SI_PRINTF_NO_LOWER_PREFIXES                1
+#define SI_PRINTF_EXTENDED_PREFIXES                2
+#define SI_PRINTF_FORCE_SIGN                       4
+
+void si_sprintf( char *buff, double ival, int n_places, const int flags)
 {
    int i;
    char prefix = '#';
    const char *err_msg = NULL;
+   const bool use_si_prefixes = !(flags & SI_PRINTF_NO_LOWER_PREFIXES);
+   const bool use_extended_prefixes = (flags & SI_PRINTF_EXTENDED_PREFIXES);
+   const double extender = (use_extended_prefixes ? 1e+51 : 1);
 
    assert( n_places > 1);
    assert( n_places < 25);
@@ -43,6 +66,11 @@ void si_sprintf( char *buff, double ival, int n_places)
       n_places--;
       ival = -ival;
       }
+   else if( flags & SI_PRINTF_FORCE_SIGN)
+      {
+      *buff++ = '+';
+      n_places--;
+      }
    buff[n_places] = '\0';
    if( !ival)
       sprintf( buff, "%*d", n_places, 0);
@@ -50,9 +78,10 @@ void si_sprintf( char *buff, double ival, int n_places)
       err_msg = "NaN!";
    else if( !isfinite( ival))
       err_msg = "inf!";
-   else if( ival > 999.39e+24 || (ival > 99.39e+24 && n_places == 3)
-                           || (ival > 9.939e+24 && n_places == 2)
-                           || ival < 1.01e-24)
+   else if( ival > 999.39e+24 * extender
+                   || (ival > 99.39e+24 * extender && n_places == 3)
+                   || (ival > 9.939e+24 * extender && n_places == 2)
+                   || (ival < 1.01e-24 / extender && use_si_prefixes))
       {
       char tbuff[100], *tptr;
       int len;
@@ -74,11 +103,9 @@ void si_sprintf( char *buff, double ival, int n_places)
       if( ival)
          err_msg = (ival < 1. ? "Low!" : "Huge");
       }
-   else if( ival < .011)
+   else if( ival < .011 && use_si_prefixes)
       {
-      const char *lower_prefixes = " munpfazy";
-/*    const char *lower_prefixes = " munpfazyxwvtsrqoljihgedcb";
-               Above include non-standard "extended" SI prefixes */
+      const char *lower_prefixes = " munpfazyxwvtsrqoljihgedcb";
       const double limit = (n_places > 3 ? .9994 : .0994);
 
       for( i = 0; lower_prefixes[i] && ival < limit; i++)
@@ -93,9 +120,7 @@ void si_sprintf( char *buff, double ival, int n_places)
          top_val *= 10.;
       if( i > n_places)
          {
-         const char *prefixes = " kMGTPEZY";
-/*       const char *prefixes = " kMGTPEZYXWVUSRQONLJIHFDCBA";
-               Above include non-standard "extended" SI prefixes */
+         const char *prefixes = " kMGTPEZYXWVUSRQONLJIHFDCBA";
          const double limit = (n_places > 3 ? 999.4 : 99.4);
 
          for( i = 0; ival > limit && prefixes[i]; i++)
@@ -145,18 +170,27 @@ void si_sprintf( char *buff, double ival, int n_places)
 int main( const int argc, const char **argv)
 {
    char buff[12];
-   int i, n_places, range = 10;
+   int i, n_places, range = 10, flags = 0;
    const double ival = (argc == 1 ? -3.141592653589793 : atof( argv[1]));
 
-   if( argc > 2)
-      range = atoi( argv[2]);
+   for( i = 2; i < argc; i++)
+      if( argv[i][0] == '-')
+         switch( argv[i][1])
+            {
+            case 'r':
+               range = atoi( argv[i] + 2);
+               break;
+            case 'f':
+               flags = atoi( argv[i] + 2);
+               break;
+            }
    for( i = -range; i <= range; i++)
       {
       memset( buff, '&', sizeof( buff));
       printf( "%3d: ", i);
       for( n_places = 3; n_places < 12; n_places++)
          {
-         si_sprintf( buff, ival * pow( 10., (double)i), n_places);
+         si_sprintf( buff, ival * pow( 10., (double)i), n_places, flags);
          printf (" %s", buff);
          }
       printf( "  %3d\n", i);
