@@ -109,7 +109,7 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
             fprintf( ofile, "<br>\n<a name=\"%c\"> </a>\n", half_month);
          *tptr = '\0';
          fprintf( ofile, "<a href=\"%s\"> %s </a>", url, buff + 4);
-         printf( "%s\n", buff + 4);
+         printf( "%s ", buff + 4);
          if( strstr( buff + 4, "DAILY ORBIT"))
             is_daily_orbit_update = true;
          found_name = 1;
@@ -137,7 +137,9 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
          if( !memcmp( buff, "Orbital elements:", 17))
             {
             int n_written = 0, j;
+            char tbuff[100];
 
+            *tbuff = '\0';
             for( i = 0; i < 9 && fgets( buff, sizeof( buff), ifile); i++)
                {
                tptr = strstr( buff, "MOID</a>");
@@ -148,7 +150,7 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
                   j = 1;
                   while( buff[j] == ' ')
                      j++;
-                  n_written += fprintf( ofile, " %s%c=%.5s",
+                  n_written += sprintf( tbuff + strlen( tbuff), " %s%c=%.5s",
                               (n_written ? "" : "("), *buff, buff + j);
                   if( *buff == 'a')
                      semimajor_axis = atof( buff + j);
@@ -158,22 +160,24 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
                      perihelion_dist = atof( buff + j);
                   }
                if( !memcmp( buff + 19, "Incl.", 5))
-                  n_written += fprintf( ofile, " %si=%.5s",
+                  n_written += sprintf( tbuff + strlen( tbuff), " %si=%.5s",
                               (n_written ? "" : "("), buff + 26);
                if( !memcmp( buff + 19, "H   ", 4))
-                  n_written += fprintf( ofile, " %sH=%.4s",
+                  n_written += sprintf( tbuff + strlen( tbuff), " %sH=%.4s",
                               (n_written ? "" : "("), buff + 23);
                memset( buff, 0, sizeof( buff));
                }
             if( semimajor_axis && eccentricity && !perihelion_dist)
                {
                perihelion_dist = semimajor_axis * (1. - eccentricity);
-               fprintf( ofile, " q=%.3f", perihelion_dist);
+               sprintf( tbuff + strlen( tbuff), " q=%.3f", perihelion_dist);
                }
             if( n_written && earth_moid)
-               fprintf( ofile, " MOID=%.4f", earth_moid);
+               sprintf( tbuff + strlen( tbuff), " MOID=%.4f", earth_moid);
             if( n_written)
-               fprintf( ofile, ") %s", stns);
+               sprintf( tbuff + strlen( tbuff), ") %s", stns);
+            fprintf( ofile, "%s", tbuff);
+            printf( "%s", tbuff);
             fseek( ifile, 0L, SEEK_END);
             }
          else if( strlen( buff) == 81 && (buff[44] == '+' || buff[44] == '-')
@@ -204,7 +208,10 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
       }
 
    if( !rval)
+      {
       fprintf( ofile, "<br>\n");
+      printf( "\n");
+      }
    fclose( ifile);
    return( rval);
 }
