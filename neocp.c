@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
+#include <time.h>
 #include <curl/curl.h>
 #include <curl/easy.h>
 #if defined( __linux__) || defined( __unix__) || defined( __APPLE__)
@@ -77,6 +78,65 @@ static FILE *err_fopen( const char *filename, const char *permits)
       exit( -1);
       }
    return( rval);
+}
+
+static char mutant_hex( const int ival)
+{
+   const char *buff =
+        "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+   assert( ival >=0 && ival <= 61);
+   return( buff[ival]);
+}
+
+/* When we download 'new' NEOCP data,  we check to see if it exists in
+the data we've already got.  If it doesn't,  we put a time tag in the
+normally unused bytes 58-62 so that in the future,  we'll know when we
+first saw it.  This is to help in situations (which happen a fair bit)
+where I'm wondering when something first showed up on NEOCP.
+
+If it didn't already exist,  and we've already got that particular
+observation,  we copy the time tag into the 'new' data.  */
+
+static void set_time_downloaded( char *iline)
+{
+   static char *old_lines = NULL;
+   size_t i;
+   time_t t0;
+   struct tm tm;
+
+   if( iline[14] == 's' || iline[14] == 'v')
+      return;     /* skip second lines */
+   if( !old_lines)
+      {
+      FILE *ifile = err_fopen( "neocp.txt", "rb");
+      long size, bytes_read;
+
+      fseek( ifile, 0L, SEEK_END);
+      size = ftell( ifile);
+      old_lines = (char *)calloc( size + 1, 1);
+      assert( old_lines);
+      fseek( ifile, 0L, SEEK_SET);
+      bytes_read = fread( old_lines, 1, size, ifile);
+      assert( bytes_read == size);
+      fclose( ifile);
+      old_lines[size] = '\0';
+      }
+   for( i = 0; old_lines[i]; i++)
+      if( !i || old_lines[i - 1] == 10)
+         if( !memcmp( old_lines + i, iline, 57) &&
+                  !memcmp( old_lines + i + 65, iline + 65, 15))
+            {
+            memcpy( iline + 59, old_lines + i + 59, 5);
+            return;
+            }
+   t0 = time( NULL);
+   gmtime_r( &t0, &tm);
+   iline[59] = '~';
+   iline[60] = mutant_hex( tm.tm_mon + 1);
+   iline[61] = mutant_hex( tm.tm_mday);
+   iline[62] = mutant_hex( tm.tm_hour);
+   iline[63] = mutant_hex( tm.tm_min);
 }
 
 typedef struct
@@ -293,6 +353,25 @@ when counting observations.   */
 #define WRONG_HEADER                             4
 #define WRONG_TRAILER                            8
 
+static bool is_valid_astrometry_line( const char *buff)
+{
+   bool is_mpc_line = true;
+
+   if( buff[80] == 10)
+      {
+      size_t j;
+      const char *example_line =
+                  "0000 00 00.00000 00 00 00.0   00 00 00.0";
+
+      for( j = 0; example_line[j] && is_mpc_line; j++)
+         if( example_line[j] == '0' && !isdigit( buff[j + 15]))
+            is_mpc_line = false;
+      }
+   else
+      is_mpc_line = false;
+   return( is_mpc_line);
+}
+
 static unsigned n_valid_astrometry_lines( const char *buff)
 {
    size_t i, prev = 0;
@@ -307,18 +386,8 @@ static unsigned n_valid_astrometry_lines( const char *buff)
       if( buff[i] == 10)
          {
          if( i == prev + 81)     /* yes,  it's an 80-column line */
-            {
-            size_t j;
-            bool is_mpc_line = true;
-            const char *example_line =
-                        "2018 01 23.16282 05 22 27.2   21 25 08.8";
-
-            for( j = 0; example_line[j]; j++)
-               if( isdigit( example_line[j]) && !isdigit( buff[prev + 16 + j]))
-                  is_mpc_line = false;
-            if( is_mpc_line)
+            if( is_valid_astrometry_line( buff + prev + 1))
                n_lines_found++;
-            }
          prev = i;
          if( (i % 81) != header_len - 1 && buff[i + 1])
             errors_found |= CR_IN_WRONG_PLACE;
@@ -425,6 +494,10 @@ static void show_differences( void)
             n_lines_actually_read = n_valid_astrometry_lines( tbuff);
             if( n_lines_actually_read != after[i].n_obs)
                printf( "!!! %u obs read\n", n_lines_actually_read);
+            for( k = 0; k < bytes_read - 79; k++)
+               if( !k || tbuff[k - 1] == 10)
+                  if( is_valid_astrometry_line( tbuff + k))
+                     set_time_downloaded( tbuff + k);
             if( bytes_read)
                {
                if( !new_fp)
