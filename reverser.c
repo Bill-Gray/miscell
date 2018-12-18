@@ -11,7 +11,7 @@ between days and thicker lines between half-months.       */
 
 int main( const int argc, const char **argv)
 {
-   FILE *ifile = fopen( argv[1], "rb");
+   FILE *ifile = (argc == 2 ? fopen( argv[1], "rb") : NULL);
    FILE *ofile = stdout;
    char buff[300];
 
