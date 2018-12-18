@@ -107,7 +107,7 @@ int main( const int argc, const char **argv)
          fprintf( ofile, "%13.5f%16.10f%16.10f%16.10f", jd,
                   atof( buff + xloc), atof( buff + yloc), atof( buff + zloc));
          if( !state_vectors)
-            printf( "\n");
+            fprintf( ofile, "\n");
          else
             {
             if( !fgets( buff, sizeof( buff), ifile))
