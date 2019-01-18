@@ -142,7 +142,7 @@ static int fetch_astrometry_from_mpc( const char *output_filename,
    char url[300], url2[300];
    int i, rval;
 
-   sprintf( url2, BASE_MPC_URL "/tmp/%s.txt", object_name);
+   snprintf( url2, sizeof( url2), BASE_MPC_URL "/tmp/%s.txt", object_name);
    for( i = 38; url2[i]; i++)
       if( url2[i] == ' ' || url2[i] == '/')
          url2[i] = '_';
@@ -151,7 +151,7 @@ static int fetch_astrometry_from_mpc( const char *output_filename,
    if( check_for_existing( url2, output_filename))
       return( 0);
 
-   sprintf( url, BASE_MPC_URL "/db_search/show_object?object_id=%s",
+   snprintf( url, sizeof( url), BASE_MPC_URL "/db_search/show_object?object_id=%s",
                object_name);
    for( i = 66; url[i]; i++)
       if( url[i] == '/')
@@ -204,7 +204,7 @@ static void abort_message( void)
 
 int main( const int argc, char **argv)
 {
-   char obj_name[300];
+   char obj_name[100];
    int i, rval;
    bool append = false;
    const char *output_filename = argv[1];
