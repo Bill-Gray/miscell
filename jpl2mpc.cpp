@@ -28,6 +28,31 @@ static const char *look_up_name( const int idx)
    return( "");
 }
 
+static int get_coords_from_buff( double *coords, const char *buff, const bool is_ecliptical)
+{
+   int xloc = 1, yloc = 24, zloc = 47;
+
+   if( buff[1] == 'X' || buff[2] == 'X')     /* quantities are labelled */
+      {
+      xloc = 4;
+      yloc = 30;
+      zloc = 56;
+      }
+   coords[0] = atof( buff + xloc);
+   coords[1] = atof( buff + yloc);
+   coords[2] = atof( buff + zloc);
+   if( is_ecliptical)         /* rotate to equatorial */
+      {
+      static const double sin_obliq_2000 = 0.397777155931913701597179975942380896684;
+      static const double cos_obliq_2000 = 0.917482062069181825744000384639406458043;
+      const double temp    = coords[2] * cos_obliq_2000 + coords[1] * sin_obliq_2000;
+
+      coords[1] = coords[1] * cos_obliq_2000 - coords[2] * sin_obliq_2000;
+      coords[2] = temp;
+      }
+   return( 0);
+}
+
 int main( const int argc, const char **argv)
 {
    FILE *ifile = (argc > 1 ? fopen( argv[1], "rb") : NULL);
@@ -37,6 +62,7 @@ int main( const int argc, const char **argv)
    double jd0 = 0., step_size = 0., jd, frac_jd0 = 0.;
    int int_jd0 = 0;
    bool state_vectors = false, is_equatorial = false;
+   bool is_ecliptical = false;
    const char *header_fmt = "%13.5f %14.10f %4u";
    const char *object_name = "";
 
@@ -73,11 +99,12 @@ int main( const int argc, const char **argv)
                && buff[42] == ':' && buff[45] == '.'
                && !memcmp( buff + 50, " TDB", 4))
          {
-         int xloc = 1, yloc = 24, zloc = 47;
+         double coords[3];
 
-         if( !is_equatorial)
+         if( is_equatorial == is_ecliptical)       /* should be one or the other */
             {
             printf( "Input coordinates must be in the Earth mean equator and equinox\n");
+            printf( "or in J2000 ecliptic coordinates\n");
             return( -1);
             }
          if( !n_written)
@@ -98,14 +125,9 @@ int main( const int argc, const char **argv)
             printf( "Failed to get data from input file\n");
             return( -2);
             }
-         if( buff[1] == 'X')     /* quantities are labelled */
-            {
-            xloc = 4;
-            yloc = 30;
-            zloc = 56;
-            }
+         get_coords_from_buff( coords, buff, is_ecliptical);
          fprintf( ofile, "%13.5f%16.10f%16.10f%16.10f", jd,
-                  atof( buff + xloc), atof( buff + yloc), atof( buff + zloc));
+                  coords[0], coords[1], coords[2]);
          if( !state_vectors)
             fprintf( ofile, "\n");
          else
@@ -115,8 +137,9 @@ int main( const int argc, const char **argv)
                printf( "Failed to get data from input file\n");
                return( -2);
                }
+            get_coords_from_buff( coords, buff, is_ecliptical);
             fprintf( ofile, " %16.12f%16.12f%16.12f\n",
-                  atof( buff + xloc), atof( buff + yloc), atof( buff + zloc));
+                  coords[0], coords[1], coords[2]);
             }
          n_written++;
          }
@@ -124,6 +147,8 @@ int main( const int argc, const char **argv)
          state_vectors = true;
       else if( strstr( buff, "Earth Mean Equator and Equinox"))
          is_equatorial = true;
+      else if( strstr( buff, "Ecliptic and Mean Equinox of Reference Epoch"))
+         is_ecliptical = true;
       else if( !memcmp( buff, " Revised:", 9))
          object_name = look_up_name( atoi( buff + 72));
 
