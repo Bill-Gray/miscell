@@ -237,7 +237,7 @@ static struct neocp_summary *get_neocp_summary( const char *filename,
    if( !ifile)
       {
       *n_objs_found = 0;
-      printf( "'%s' not found\n", filename);
+      fprintf( stderr, "'%s' not found\n", filename);
       return( rval);
       }
    printf( "Getting %s\n", filename);
@@ -261,7 +261,7 @@ static struct neocp_summary *get_neocp_summary( const char *filename,
          assert( n_found < MAX_OBJS);
          }
       else
-         printf( "!!! Bad NEOCP list line\n%s\n", buff);
+         fprintf( stderr, "!!! Bad NEOCP list line\n%s\n", buff);
     printf( "Got %d\n", n_found);
     memset( rval + n_found, 0, sizeof( struct neocp_summary));
     fclose( ifile);
@@ -400,7 +400,7 @@ static unsigned n_valid_astrometry_lines( const char *buff)
    if( i < trailer_len || memcmp( buff + i - trailer_len, trailer, trailer_len))
       errors_found |= WRONG_HEADER;
    if( errors_found)
-      printf( "!!! Errors %d (see 'neocp.c' for meaning)\n", errors_found);
+      fprintf( stderr, "!!! Errors %d (see 'neocp.c' for meaning)\n", errors_found);
    return( n_lines_found);
 }
 
@@ -490,10 +490,19 @@ static void show_differences( void)
             strcat( url, after[i].desig);
             strcat( url, "&obs=y");
             bytes_read = fetch_a_file( url, tbuff, MAX_ILEN - 1);
+            if( bytes_read < 79)
+               {
+               fprintf( stderr, "ERROR: only %u bytes read\n", bytes_read);
+               fprintf( stderr, "See 'neocp.c' for meaning\n");
+               exit( -1);
+               }
             tbuff[bytes_read] = '\0';
             n_lines_actually_read = n_valid_astrometry_lines( tbuff);
             if( n_lines_actually_read != after[i].n_obs)
                printf( "!!! %u obs read\n", n_lines_actually_read);
+                        /* Note that differences between the number of */
+                        /* lines reported in neocplst.txt and the number */
+                        /* actually read are common and not a concern.   */
             for( k = 0; k < bytes_read - 79; k++)
                if( !k || tbuff[k - 1] == 10)
                   if( is_valid_astrometry_line( tbuff + k))
