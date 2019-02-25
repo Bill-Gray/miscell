@@ -93,6 +93,7 @@ int main( const int argc, const char **argv)
 
    fseek( ifile, 0L, SEEK_SET);
    fprintf( ofile, header_fmt, 0., 0., 0);
+   fprintf( ofile, " 0,1,1");  /* i.e.,  ecliptic J2000 in AU and days */
    while( fgets( buff, sizeof( buff), ifile))
       if( (jd = atof( buff)) > 2000000. && jd < 3000000. &&
                strlen( buff) > 54 && !memcmp( buff + 17, " = A.D.", 7)
