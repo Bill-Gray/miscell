@@ -22,9 +22,8 @@ error-proof a manner as reasonably possible.
 
 https://www.minorplanetcenter.net/iau/NEO/neocp.txt
 
-   and storing it as 'neocplst.tmp'.  This file contains a 102-byte
-line for each object;  if the file isn't a multiple of 102 bytes,
-the program assumes something went wrong and bombs out.
+   and storing it as 'neocplst.tmp'.  We do some basic format
+checking.  If that fails,  we emit an error and bomb out.
 
     If the file looks good,  we compare it to the previously
 downloaded list,  'neocplst.txt',  and look for objects which
@@ -200,15 +199,19 @@ static unsigned fetch_a_file( const char *url, char *obuff,
    return( rval);
 }
 
-/* Lines in 'neocp.txt' (plaintext summary of which objects are currently
-   on NEOCP) have certain fixed traits,  such as always being 95 bytes.
-   (Up to 2015 June 4,  when they switched to being 102 bytes.)  */
+/* Lines in the MPC's plaintext summary of which objects are currently on
+   NEOCP,  https://www.minorplanetcenter.net/iau/NEO/neocp.txt,  have
+   certain fixed traits.  In recent years,  they have always been 102
+   bytes long.  (Unless it's been over 99 days since the last observation,
+   in which case you get an extra byte.)  We do some further rudimentary
+   sanity checking to avoid going too far with bogus data.  */
 
 #define NEOCPLST_LINE_LEN  102
 
 static bool is_valid_neocplst_line( const char *buff)
 {
-   const bool is_valid = (strlen( buff) == NEOCPLST_LINE_LEN
+   const size_t len = strlen( buff);
+   const bool is_valid = ((len == NEOCPLST_LINE_LEN || len == NEOCPLST_LINE_LEN + 1)
             && (!memcmp( buff + 48, "Updated ", 8) || !memcmp( buff + 48, "Added ", 6))
             && !memcmp( buff + 11, " 20", 3) && buff[37] == '.');
 
@@ -261,7 +264,10 @@ static struct neocp_summary *get_neocp_summary( const char *filename,
          assert( n_found < MAX_OBJS);
          }
       else
+         {
          fprintf( stderr, "!!! Bad NEOCP list line\n%s\n", buff);
+         exit( -1);
+         }
     printf( "Got %d\n", n_found);
     memset( rval + n_found, 0, sizeof( struct neocp_summary));
     fclose( ifile);
@@ -622,15 +628,6 @@ int main( const int argc, const char **argv)
     tbuff = (char *)malloc( MAX_ILEN);
     bytes_read = fetch_a_file( neocp_text_summary, tbuff, MAX_ILEN);
     printf( "%u objects to load\n", bytes_read / (unsigned)NEOCPLST_LINE_LEN);
-            /* file should be an even multiple of NEOCPLST_LINE_LEN bytes long : */
-    if( bytes_read % (unsigned)NEOCPLST_LINE_LEN)
-       {
-       printf( "WARNING: bytes_read = %u\n", bytes_read);
-       printf( "File is supposed to be a multiple of %d bytes long.  It isn't.\n",
-                           NEOCPLST_LINE_LEN);
-       free( tbuff);
-       return( -1);
-       }
     ofile = fopen( "neocplst.tmp", "wb");
     assert( ofile);
     fwrite( tbuff, bytes_read, 1, ofile);
