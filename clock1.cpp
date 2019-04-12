@@ -16,11 +16,11 @@
 /* in everything else.  But note that "true" nanosecond precision is      */
 /* possible,  if actually desired,  on Linux,  OS/X,  and BSD.            */
 /*    The range of a 64-bit signed integer is large enough to enable      */
-/* this function to work until Friday, 2262 Apr 11 23:47:16.  We can get  */
-/* another 292 years by using unsigned 64-bit integers,  but it may be    */
-/* better to switch to 128-bit integers.                                  */
+/* this function to work until Friday, 2262 Apr 11 23:47:16.854775808.    */
+/* We can get another 292 years by using unsigned 64-bit integers,  but   */
+/* it may be better to switch to 128-bit integers.                        */
 /*    Note that the usual limitations apply:  no leap seconds,  and if    */
-/* he computer's time is adjusted by NTP or the user,  the result may     */
+/* the computer's time is adjusted by NTP or the user,  the result may    */
 /* actually go backward.                                  */
 
 #ifdef _WIN32
