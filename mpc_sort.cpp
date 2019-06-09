@@ -2,65 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* This reads in UnnObs.txt (MPC file of astrometry for unnumbered objects)
-and the list of identifications and list of double designations,  available at
-
-http://www.minorplanetcenter.net/iau/ECS/MPCAT-OBS/MPCAT-OBS.html
-http://www.minorplanetcenter.net/iau/ECS/MPCAT/MPCAT.html
-
-   the input files being named 'UnnObs.txt',  'ids.txt',  and 'dbl.txt'.
-
-   It outputs 'UnnObs2.txt',  in which the ID files are used to "correct"
-UnnObs.txt.  For example,  the line in ids.txt reading
-
-J81E35NK14F21N
-
-   tells us that J81E35N = 1981 EN35 and K14F21N = 2014 FN21 are the same
-object.  'fix_obs' will find all instances of K14F21N and mark them to
-be changed to J81E35N.  After we've gone through all lines in 'ids.txt'
-and 'dbl.txt', we go back and actually revise such instances to J81E35N.
-(We can't revise them as we go.  The code that finds all instances of
-K14F21N uses a binary search -- look at 'fix_desig' below;  if we altered
-the input data,  the data wouldn't be sorted anymore and the next binary
-search might fail.  So the actual replacement has to be a final step.)
-
-   The result is sorted out by designation and date (i.e.,  same sort
-order as the original 'UnnObs.txt') and written out to UnnObs2.txt.
-
-   The resulting file can be used much as UnnObs.txt was,  but objects
-will be "correctly" identified instead of being left with their old
-designations.
-
-   Compile the program with either g++ or clang :
-
-g++ -Wall -O3 -pedantic -o fix_obs fix_obs.cpp
-clang -Wall -O3 -pedantic -o fix_obs fix_obs.cpp
-
-   You can run with the command line argument '-x' to have the old
-designations saved in columns 57 to 63 (they're usually blank and
-ignored anyway).  */
-
-/* Some notes on the sort order for the MPC files:
-
-   -- Bill Zielenbach pointed out that the comparison goes beyond just the
-designation and the date/time.  If those are identical,  you need to look
-at the observation type (in column 15);  otherwise,  two-line observations
-(radar,  roving observer,  satellite) won't get sorted.  Also,  it does
-sometimes happen that the same object is observed simultaneously at two
-stations,  so the MPC code has to be compared.
-
-   -- 2001 QW322 is an unusual case.  It's the only binary TNO in the file,
-and has an a and a b component,  with the letter stuck between the year and
-month.  That gets you input such as
-
-     K01QW2W 5C2003a10 28.01437 20 40 46.15 -18 41 48.2                 k3026309
-     K01QW2W 5C2003b10 28.01437 20 40 45.98 -18 41 46.5                 k3026309
-
-   -- This works with UnnObs.txt (I wrote a bit of test code that verified
-that compared records looking for incorrect ordering).  It fails with CmtObs.txt
-and SatObs.txt.  Those involve some additional rules.  I'll probably fix this --
-you'll see that I did some work to deal with comet ordering -- but my priority
-was getting it to work for UnnObs.txt.                   */
+/* Based largely on 'fix_obs',  but the _only_ thing it does is to test
+out the comparison function to make sure the input file is properly sorted.
+See notes from 'fix_obs.cpp'.  */
 
 static int mpc_compare( const void *aptr, const void *bptr)
 {
