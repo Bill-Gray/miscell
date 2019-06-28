@@ -145,6 +145,9 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
                tptr = strstr( buff, "MOID</a>");
                if( tptr)
                   earth_moid = atof( tptr + 11);
+               tptr = strstr( buff, "Earth MOID = ");
+               if( tptr)
+                  earth_moid = atof( tptr + 13);
                if( strchr( "aeq", *buff) && buff[1] == ' ')
                   {
                   j = 1;
