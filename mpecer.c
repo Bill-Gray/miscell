@@ -59,15 +59,17 @@ static int grab_file( const char *url, const char *outfilename,
     if (curl) {
         FILE *fp = fopen( outfilename, (append ? "ab" : "wb"));
         CURLcode res;
+        char errbuff[CURL_ERROR_SIZE];
 
         assert( fp);
         curl_easy_setopt( curl, CURLOPT_URL, url);
         curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, write_data);
         curl_easy_setopt( curl, CURLOPT_WRITEDATA, fp);
         curl_easy_setopt( curl, CURLOPT_RANGE, "0-20000");
+        curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuff);
         res = curl_easy_perform(curl);
         if( res)
-           printf( "res = %d\n", res);
+           fprintf( stderr, "res = %d (%s)\n", res, errbuff);
         assert( !res);
         curl_easy_cleanup(curl);
         fclose(fp);
