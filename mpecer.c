@@ -77,6 +77,14 @@ static int grab_file( const char *url, const char *outfilename,
     return 0;
 }
 
+static bool is_observation_line( const char *buff)
+{
+   const bool rval = ( strlen( buff) == 81
+               && (buff[44] == '+' || buff[44] == '-')
+               && buff[25] == '.' && buff[22] == ' ' && buff[40] == '.');
+
+   return( rval);
+}
 
 static int grab_mpec( FILE *ofile, const char *year, const char half_month, const int mpec_no)
 {
@@ -185,8 +193,7 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
             printf( "%s", tbuff);
             fseek( ifile, 0L, SEEK_END);
             }
-         else if( strlen( buff) == 81 && (buff[44] == '+' || buff[44] == '-')
-                        && !is_daily_orbit_update)
+         else if( is_observation_line( buff) && !is_daily_orbit_update)
             {
             buff[80] = '\0';
             if( !strstr( stns, buff + 77) && n_stns_found < 4)
