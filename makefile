@@ -3,13 +3,15 @@ UNAME=$(shell qqame)
 ifdef MSWIN
 	EXE=.exe
 	RM=del
-	PREFIX  = x86_64-w64-mingw32-
+	PREFIX  = x86_64-w64-mingw32-g
 	ADDED_EXES =
+	CURL = -lurlmon
 else
 	EXE=
 	RM=rm -f
 	PREFIX  =
 	ADDED_EXES = grab_mpc neocp gmake2bsd
+	CURL=-lcurl
 endif
 
 ifdef CLANG
@@ -19,9 +21,9 @@ CC=$(PREFIX)cc
 endif
 
 ADDED_MATH_LIB=-lm
-CURL=-lcurl
 
-all:   blunder$(EXE) clock1$(EXE) csv2txt$(EXE) ellip_pt$(EXE) fix_obs$(EXE) \
+all:   blunder$(EXE) clock1$(EXE) css_art$(EXE) \
+	csv2txt$(EXE) ellip_pt$(EXE) fix_obs$(EXE) \
 	eop_proc$(EXE) gfc_xvt$(EXE) gpl$(EXE) i2mpc$(EXE) jpl2mpc$(EXE) \
 	ktest$(EXE) mpcorbx$(EXE) mpecer$(EXE) mpc_extr$(EXE) mpc_sort$(EXE) \
 	mpc_stat$(EXE) my_wget$(EXE) nofs2mpc$(EXE) peirce$(EXE) sr_plot$(EXE) \
@@ -32,6 +34,7 @@ all:   blunder$(EXE) clock1$(EXE) csv2txt$(EXE) ellip_pt$(EXE) fix_obs$(EXE) \
 clean:
 	$(RM) blunder$(EXE)
 	$(RM) clock1$(EXE)
+	$(RM) css_art$(EXE)
 	$(RM) csv2txt$(EXE)
 	$(RM) ellip_pt$(EXE)
 	$(RM) eop_proc$(EXE)
