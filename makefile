@@ -6,12 +6,14 @@ ifdef MSWIN
 	PREFIX  = x86_64-w64-mingw32-g
 	ADDED_EXES =
 	CURL = -lurlmon
+	LUNAR_LIB = -L ~/win_lib -llunar
 else
 	EXE=
 	RM=rm -f
 	PREFIX  =
 	ADDED_EXES = grab_mpc neocp gmake2bsd
 	CURL=-lcurl
+	LUNAR_LIB = -L ~/lib -llunar
 endif
 
 ifdef CLANG
@@ -87,6 +89,9 @@ blunder$(EXE): blunder.cpp
 clock1$(EXE): clock1.cpp
 	$(CC) $(CFLAGS) -o clock1$(EXE) clock1.cpp
 
+css_art$(EXE): css_art.c
+	$(CC) $(CFLAGS) -o css_art$(EXE) css_art.c
+
 csv2txt$(EXE): csv2txt.c
 	$(CC) $(CFLAGS) -o csv2txt$(EXE) csv2txt.c
 
@@ -157,7 +162,7 @@ plot_orb$(EXE): plot_orb.c
 	$(CC) $(CFLAGS) -o plot_orb$(EXE) plot_orb.c $(ADDED_MATH_LIB)
 
 radar$(EXE): radar.c
-	$(CC) $(CFLAGS) -o radar$(EXE) radar.c
+	$(CC) $(CFLAGS) -o radar$(EXE) -I ~/include radar.c $(LUNAR_LIB) $(ADDED_MATH_LIB)
 
 si_print$(EXE): si_print.c
 	$(CC) $(CFLAGS) -o si_print$(EXE) si_print.c -DTEST_CODE $(ADDED_MATH_LIB)
