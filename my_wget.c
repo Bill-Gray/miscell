@@ -48,6 +48,7 @@ typedef struct
             /* 'n_bytes' = if >0,  number of bytes to download       */
    long offset, n_bytes;
    size_t ultotal, ulnow;
+   const char *password;
 } file_fetch_t;
 
 /* Older cURL libraries don't have a progress function option  */
@@ -91,6 +92,8 @@ void *fetch_a_file( void *args)
          curl_easy_setopt( curl, CURLOPT_URL, f->url);
          curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, fwrite);
          curl_easy_setopt( curl, CURLOPT_WRITEDATA, fp);
+         if( f->password)
+            curl_easy_setopt( curl, CURLOPT_USERPWD, f->password);
          curl_easy_setopt( curl, CURLOPT_NOPROGRESS, 0);
 #if defined( CURLOPT_XFERINFOFUNCTION) && defined( CURLOPT_XFERINFODATA)
          curl_easy_setopt( curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
@@ -139,20 +142,33 @@ static int threaded_fetch_a_file( file_fetch_t *f)
 int main( const int argc, const char **argv)
 {
    file_fetch_t f;
+   int i;
 
    avoid_runaway_process( 60);
    assert( argc >= 3);
    f.url = argv[1];
    f.filename = argv[2];
-   if( argc > 3)
-      f.offset = atol( argv[3]);
-   else
-      f.offset = 0;
-   if( argc > 4)
-      f.n_bytes = atol( argv[4]);
-   else
-      f.n_bytes = 0;
+   f.n_bytes = f.offset = 0;
    f.flags = false;
+   f.password = NULL;
+   for( i = 3; i < argc; i++)
+      if( argv[i][0] == '-')
+         {
+         const char *arg = argv[i] + 2;
+
+         switch( argv[i][1])
+            {
+            case 'o':
+               f.offset = atol( arg);
+               break;
+            case 's':
+               f.n_bytes = atol( arg);
+               break;
+            case 'p':
+               f.password = arg;
+               break;
+            }
+         }
    threaded_fetch_a_file( &f);
    while( !f.is_done)
       {
