@@ -246,6 +246,7 @@ static FILE *err_fopen( const char *filename, const char *permits)
 int main( const int argc, const char **argv)
 {
    int half_month = 'A', mpec_no = 1, year, i;
+   int n_to_get = 10000;      /* basically 'infinite' */
    FILE *ifile, *ofile;
    char filename[100];
    char buff[200];
@@ -262,13 +263,18 @@ int main( const int argc, const char **argv)
             case 'v':
                verbose = 1 + atoi( argv[i] + 2);
                break;
+            case 'n':
+               n_to_get = atoi( argv[i] + 2);
+               break;
             default:
                printf( "Unrecognized command line option '%s'\n", argv[i]);
                return( -1);
             }
    if( argc < 2)
       {
-      printf( "'mpecer' needs the (four-digit) year as a command line argument\n");
+      printf( "'mpecer' needs the (four-digit) year as a command line argument\n"
+              "Options are -n(number) to set a maximum number of MPECs to check,\n"
+              "and -v(number) to set verbose output\n");
       return( -1);
       }
    year = atoi( argv[1]);
@@ -302,11 +308,14 @@ int main( const int argc, const char **argv)
       }
    assert( found_end);
    sprintf( mpcized_year, "%c%02d", 'A' + year / 100 - 10, year % 100);
-   for( ; half_month <= 'Y'; half_month++)
+   for( ; n_to_get && half_month <= 'Y'; half_month++)
       if( half_month != 'I')
          {
-         while( !grab_mpec( ofile, mpcized_year, half_month, mpec_no))
+         while( n_to_get && !grab_mpec( ofile, mpcized_year, half_month, mpec_no))
+            {
+            n_to_get--;
             mpec_no++;
+            }
          if( mpec_no == 1)         /* didn't find anything for this  */
             half_month = 'Y';       /* half-month; we're done */
          mpec_no = 1;
