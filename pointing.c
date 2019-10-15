@@ -38,7 +38,14 @@ which an image was taken,  nor the limiting magnitude.  I've sort of
 worked that out for the MPC code,  which presumably can just be set
 on the command line,  but the limiting magnitude will vary from image
 to image.  If you have a FITS keyword you use to specify that value,
-let me know,  and I'll tweak the code to make use of it.    */
+let me know,  and I'll tweak the code to make use of it.
+
+   (5) I've found three keywords thus far for the exposure time.
+The full FITS-formatted time of observation is usually given by
+DATE-OBS,  but this cannot be relied upon;  sometimes that's just
+the date,  and you have to concatenate a T and then TIME-OBS.  I'm
+sure other variants will crop up and need to be handled... the 'S'
+part of 'FITS' is a rather poor joke.        */
 
 const char *mpc_code = "703";
 
@@ -70,11 +77,24 @@ static int output_pointing_data( const char *filename)
    printf( "   \"mode\": \"survey\",\n");
    printf( "   \"mpcCode\": \"%s\",\n", mpc_code);
    if( hgets( header, "DATE-OBS", sizeof( str), str))
-      printf( "   \"time\": \"%s\",\n", str);
+      {
+      if( strlen( str) < 10)
+         fprintf( stderr, "Non-standard DATE-OBS '%s' fund in '%s'\n", str, filename);
+      else
+         {
+         if( strlen( str) < 14)
+            {
+            str[10] = 'T';
+            hgets( header, "TIME-OBS", sizeof( str) - 11, str + 11);
+            }
+         printf( "   \"time\": \"%s\",\n", str);
+         }
+      }
    else
       fprintf( stderr, "No DATE-OBS found in '%s'\n", filename);
    if( hgets( header, "EXPOSURE", sizeof( str), str)
-            || hgets( header, "EXP-TIME", sizeof( str), str))
+            || hgets( header, "EXP-TIME", sizeof( str), str)
+            || hgets( header, "EXPTIME", sizeof( str), str))
       printf( "   \"duration\": \"%.2f\",\n", atof( str));
    else
       fprintf( stderr, "No exposure duration found in '%s'\n", filename);
