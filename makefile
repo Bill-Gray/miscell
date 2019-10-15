@@ -187,3 +187,6 @@ z1$(EXE): z1.cpp
 
 geo_test$(EXE): geo_test.cpp geo_pot.cpp
 	$(CC) $(CFLAGS) -o geo_test$(EXE) geo_test.cpp geo_pot.cpp
+
+pointing : pointing.c
+	$(CC) $(CFLAGS) -I /usr/include/wcstools -o pointing $< -lwcstools
