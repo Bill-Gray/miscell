@@ -25,7 +25,8 @@ idea of one JSON file per image seems silly to me.
 
    (2) The 'surveyExpName' field contains the file name.  MPC is currently
 restrictive about what can be in that field.  I've e-mailed them to request
-greater flexibility.  No reply yet (I probably won't get one.)
+greater flexibility.  No reply yet (I probably won't get one.)  In the
+meantime,  the 'surveyExpName' omits the directory name.
 
    (3) The program can get the date/time of observation and the image
 orientation in the sky from the FITS header,  and usually can get the
@@ -54,6 +55,7 @@ static int output_pointing_data( const char *filename)
    int lhead, nbhead;
    char *header = fitsrhead( (char *)filename, &lhead, &nbhead);
    char str[80];
+   const char *exp_name = filename;
    struct WorldCoor *wcs;
    double ra, dec, width, height;
 
@@ -73,7 +75,10 @@ static int output_pointing_data( const char *filename)
 
    printf( "{\n");
    printf( "   \"action\": \"exposed\",\n");
-   printf( "   \"surveyExpName\": \"%s\",\n", filename);
+                  /* skip path data;  the exposure name can't contain '/' */
+   while( strchr( exp_name, '/'))
+      exp_name = strchr( exp_name, '/') + 1;
+   printf( "   \"surveyExpName\": \"%s\",\n", exp_name);
    printf( "   \"mode\": \"survey\",\n");
    printf( "   \"mpcCode\": \"%s\",\n", mpc_code);
    if( hgets( header, "DATE-OBS", sizeof( str), str))
