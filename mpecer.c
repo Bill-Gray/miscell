@@ -94,7 +94,7 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
    double semimajor_axis = 0.;
    double eccentricity = 0.;
    double perihelion_dist = 0.;
-   double earth_moid = 0.;
+   double earth_moid = -1.;
    char stns[100];
    int n_stns_found = 0;
    bool is_daily_orbit_update = false;
@@ -185,7 +185,7 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
                perihelion_dist = semimajor_axis * (1. - eccentricity);
                sprintf( tbuff + strlen( tbuff), " q=%.3f", perihelion_dist);
                }
-            if( n_written && earth_moid)
+            if( n_written && earth_moid >= 0.)
                sprintf( tbuff + strlen( tbuff), " MOID=%.4f", earth_moid);
             if( n_written)
                sprintf( tbuff + strlen( tbuff), ") %s", stns);
