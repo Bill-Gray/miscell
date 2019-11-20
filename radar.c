@@ -4,17 +4,18 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
+#include <assert.h>
 #include "mpc_func.h"
 
 /* Getting radar astrometry in a timely manner can be problematic.  It appears
 almost immediately at
 
-http://ssd.jpl.nasa.gov/?grp=ast&fmt=text&radar=
+http://ssd.jpl.nasa.gov/?grp=all&fmt=html&radar=
 
     but there is usually a significant delay before it shows up on AstDyS or
 NEODyS,  and it doesn't necessarily make it to MPC at all.  This code can read
 in the file at the above URL and spit the data back out in the MPC's 80-column
-punched-card format (two lines per observation).  Example input lines :
+punched-card format (two lines per observation).  Example output lines :
 
 
 101955 Bennu (1999 RQ36)          1999-09-21 09:00:00     135959.00   5.000 Hz COM  8560  -14  -14
@@ -38,24 +39,6 @@ observation but not the other.)
 
 
 int create_mpc_packed_desig( char *packed_desig, const char *obj_name);
-
-#ifdef OLD_TESTING_CODE
-int main( const int argc, const char **argv)
-{
-   if( argc >= 2)
-      {
-      char obuff[80];
-      const int rval = create_mpc_packed_desig( obuff, argv[1]);
-
-      obuff[12] = '\0';
-      printf( "'%s'\n", obuff);
-      if( rval)
-         printf( "Error code %d\n", rval);
-      }
-   return( 0);
-}
-
-#else
 
 static void put_mpc_code_from_dss( char *mpc_code, const int dss_desig)
 {
@@ -94,84 +77,270 @@ static void put_mpc_code_from_dss( char *mpc_code, const int dss_desig)
    memcpy( mpc_code, code, 3);
 }
 
-static int reformat_jpl_radar_data_to_mpc( char *line1, char *line2, const char *ibuff)
+static char *remove_html( char *buff)
 {
-   unsigned i;
-   const double hrs_per_day = 24.;
-   const double mins_per_day = hrs_per_day * 60.;
-   const double secs_per_day = mins_per_day * 60.;
-   const double fractional_day = (double)atoi( ibuff + 45) / hrs_per_day
-                                + (double)atoi( ibuff + 48) / mins_per_day
-                                + (double)atoi( ibuff + 51) / secs_per_day;
-   const double quantity = atof( ibuff + 53);
-   const double sigma = atof( ibuff + 67);
-   unsigned offset;
+   char *tptr;
 
-   if( ibuff[5] == ' ')       /* provisional desig */
+   while( (tptr = strchr( buff, '<')) != NULL)
       {
-      memcpy( line2, ibuff + 8, 10);
-      i = 0;
-      while( i < 10 && line2[i] != ')')
-         i++;
-      line2[i] = '\0';
+      char *endptr = strchr( tptr, '>');
+
+      assert( endptr);
+      memmove( tptr, endptr + 1, strlen( endptr));
       }
-   else                       /* numbered object */
+   tptr = buff + strlen( buff);
+   while( tptr > buff && tptr[-1] <= ' ')
+      tptr--;
+   *tptr = '\0';
+   tptr = buff;
+   while( *tptr == ' ')
+      tptr++;
+   memmove( buff, tptr, strlen( tptr) + 1);
+   return( buff);
+}
+
+typedef struct
+   {
+   char desig[20], time[20], time_modified[20];
+   char measurement[20], sigma[20];
+   int freq_mhz, receiver, xmitter;
+   bool is_range;
+   char bounce_point;      /* P = peak power, C = center of mass */
+   int reference;
+   char *observers, *notes;
+   } radar_obs_t;
+
+static int get_radar_obs( FILE *ifile, radar_obs_t *obs)
+{
+   char buff[300];
+   int rval = -1;
+
+   memset( obs, 0, sizeof( radar_obs_t));
+   while( rval && fgets( buff, sizeof( buff), ifile))
+      if( strstr( buff, "a href=\"sbdb.cgi?"))
+         {
+         char *tptr;
+
+         rval = 0;
+         remove_html( buff);
+         if( *buff == '(')    /* preliminary desig */
+            {
+            buff[strlen( buff) - 1] = '\0';     /* remove trailing right paren */
+            memmove( buff, buff + 1, strlen( buff));
+            }
+         else if( buff[1] == '/')      /* comet desig */
+            {
+            tptr = strchr( buff, '(');
+            assert( tptr);
+            tptr[-1] = '\0';
+            }
+         else if( (tptr = strstr( buff, "P/")) != NULL) /* numbered comet */
+            tptr[1] = '\0';
+         else                  /* numbered minor planet */
+            sprintf( buff, "%d", atoi( buff));
+         if( create_mpc_packed_desig( obs->desig, buff))
+            {
+            fprintf( stderr, "Couldn't pack '%s'\n", buff);
+            rval = -1;
+            }
+         if( !rval && fgets( buff, sizeof( buff), ifile))
+            strcpy( obs->time, remove_html( buff));
+         else
+            rval = -1;
+         if( !rval && fgets( buff, sizeof( buff), ifile))
+            strcpy( obs->measurement, remove_html( buff));
+         else
+            rval = -1;
+         if( !rval && fgets( buff, sizeof( buff), ifile))
+            strcpy( obs->sigma, remove_html( buff));
+         else
+            rval = -1;
+         if( !rval && fgets( buff, sizeof( buff), ifile))
+            {
+            remove_html( buff);
+            if( !strcmp( buff, "Hz"))
+               obs->is_range = false;
+            else if( !strcmp( buff, "us"))
+               obs->is_range = true;
+            else
+               fprintf( stderr, "Bad units '%s'\n", buff);
+            }
+         else
+            rval = -1;
+         if( !rval && fgets( buff, sizeof( buff), ifile))
+            obs->freq_mhz = atoi( remove_html( buff));
+         else
+            rval = -1;
+         if( !rval && fgets( buff, sizeof( buff), ifile))
+            obs->receiver = atoi( remove_html( buff));
+         else
+            rval = -1;
+         if( !rval && fgets( buff, sizeof( buff), ifile))
+            obs->xmitter  = atoi( remove_html( buff));
+         else
+            rval = -1;
+         if( !rval && fgets( buff, sizeof( buff), ifile))
+            obs->bounce_point = *(remove_html( buff));
+         else
+            rval = -1;
+         assert( *buff == 'C' || *buff == 'P');
+         if( !rval && fgets( buff, sizeof( buff), ifile))
+            obs->reference = atoi( remove_html( buff));
+         else
+            rval = -1;
+         if( !rval && fgets( buff, sizeof( buff), ifile))
+            {
+            remove_html( buff);
+            obs->observers = (char *)malloc( strlen( buff) + 1);
+            strcpy( obs->observers, buff);
+            }
+         else
+            rval = -1;
+         if( !rval && fgets( buff, sizeof( buff), ifile))
+            {
+            remove_html( buff);
+            obs->notes = (char *)malloc( strlen( buff) + 1);
+            strcpy( obs->notes, buff);
+            }
+         else
+            rval = -1;
+         if( !rval && fgets( buff, sizeof( buff), ifile))
+            strcpy( obs->time_modified, remove_html( buff));
+         else
+            rval = -1;
+         }
+   return( rval);
+}
+
+/* The round-trip travel time,  Doppler frequency,  and their
+uncertainties are all stored with implicit decimal points.
+See MPC's documentation of the radar astrometry format.  */
+
+static void put_with_implicit_decimal( char *line, const char *text)
+{
+   const char *decimal = strchr( text, '.');
+   size_t len;
+
+   if( decimal)
+      len = decimal - text;
+   else
+      len = strlen( text);
+   memcpy( line - len, text, len);
+   if( decimal)
+      memcpy( line, decimal + 1, strlen( decimal + 1));
+   line -= len;
+   while( *line == '0' && line[1] != ' ')
+      *line++ = ' ';       /* remove leading zeroes */
+}
+
+static void put_radar_comment( const radar_obs_t *obs)
+{
+   const char *notes = obs->notes;
+   char mpc_code[4];
+
+   put_mpc_code_from_dss( mpc_code, obs->receiver);
+   printf( "COD %.3s\n", mpc_code);
+   printf( "OBS %s\n", obs->observers);
+   printf( "COM Last modified %s\n", obs->time_modified);
+   while( *notes >= ' ')
       {
-      memcpy( line2, ibuff, 6);
-      line2[6] = '\0';
+      size_t len;
+      const size_t max_len = 70;
+
+      while( *notes == ' ')
+         notes++;
+      len = strlen( notes);
+      if( len <= max_len)           /* finish up line */
+         {
+         printf( "COM %s\n", notes);
+         return;
+         }
+      else
+         {
+         len = max_len;
+         while( notes[len] != ' ')
+            len--;
+         printf( "COM %.*s\n", (int)len, notes);
+         notes += len + 1;
+         }
       }
-   if( create_mpc_packed_desig( line1, line2))
-      return( -1);
-   memset( line1 + 12, ' ', 68);
+}
+
+static void put_radar_obs( char *line1, char *line2, const radar_obs_t *obs)
+{
+   const int seconds = atoi( obs->time + 17)
+                + atoi( obs->time + 14) * 60 + atoi( obs->time + 11) * 3600;
+   const int microdays = (seconds * 625 + 27) / 54;
+   int dest_column = (obs->is_range ? 43 : 58);
+   const char *measurement = obs->measurement;
+
+   memset( line1, ' ', 80);
    line1[80] = '\0';
+   memcpy( line1, obs->desig, 12);
    line1[14] = 'R';
-   memcpy( line1 + 15, ibuff + 34, 10);
+   memcpy( line1 + 15, obs->time, 10);
    line1[19] = line1[22] = ' ';
    line1[25] = '.';
-   sprintf( line1 + 26, "%06ld", (long)( fractional_day * 1e+6 + 0.5));
+   sprintf( line1 + 26, "%06d", microdays);
+   line1[32] = ' ';
+   put_mpc_code_from_dss( line1 + 68, obs->xmitter);
    memcpy( line1 + 72, "JPLRS", 5);
-   put_mpc_code_from_dss( line1 + 68, atoi( ibuff + 90));
-   put_mpc_code_from_dss( line1 + 77, atoi( ibuff + 94));
-   for( i = 0; i < 80; i++)
-      if( !line1[i])
-         line1[i] = ' ';
+   put_mpc_code_from_dss( line1 + 77, obs->receiver);
    strcpy( line2, line1);
-   memcpy( line1 + 63, ibuff + 84, 4);        /* frequency in MHz */
    line2[14] = 'r';
-   if( !memcmp( ibuff + 76, "Hz", 2))
+   sprintf( line1 + 62, "%5d", obs->freq_mhz);
+   line1[67] = ' ';
+   if( !obs->is_range)
       {
-      line1[47] = (quantity > 0. ? '+' : '-');
-      offset = 48;
+      line1[47] = (*measurement == '-' ? '-' : '+');
+      if( *measurement == '-')
+         measurement++;
       }
-   else if( !memcmp( ibuff + 76, "us", 2))
-      offset = 33;
-   else
-      return( -2);
-   sprintf( line1 + offset, "%12.0f", fabs( quantity) * 100.);
-   sprintf( line2 + offset, "%13.0f", sigma * 1000.);
-   line1[offset + 12] = line2[offset + 13] = ' ';
-   return( 0);
+   put_with_implicit_decimal( line1 + dest_column, measurement);
+   put_with_implicit_decimal( line2 + dest_column, obs->sigma);
+            /* I don't think it's technically necessary to zero-pad the
+               sigma.  But I've always _seen_ it zero-padded,  and there's
+               a chance someone reads it as a float and divides by 1000.
+               So best to make sure it's zero-padded.  */
+   dest_column += 2;
+   while( line2[dest_column] == ' ')
+      line2[dest_column--] = '0';
+            /* If the 'bounce point' is P = peak power,  I'm
+               setting this byte to 'S' for a surface return result.
+               I'm not convinced that this is correct.   */
+   line2[32] = (obs->bounce_point == 'C' ? 'C' : 'S');
 }
 
 int main( const int argc, const char **argv)
 {
-   if( argc >= 2)
-      {
-      FILE *ifile = fopen( argv[1], "rb");
+   const char *ifilename = "radar.html";
+   int i;
+   FILE *ifile;
+   bool show_comments = true;
 
-      if( ifile)
-         {
-         char ibuff[110], line1[100], line2[100];
-
-         while( fgets( ibuff, sizeof( ibuff), ifile))
-            if( !reformat_jpl_radar_data_to_mpc( line1, line2, ibuff))
-               printf( "%s\n%s\n", line1, line2);
-         fclose( ifile);
-         }
+   for( i = 1; i < argc; i++)
+      if( !strcmp( argv[i], "-c"))
+         show_comments = false;
       else
-         printf( "%s not opened\n", argv[1]);
+         ifilename = argv[i];
 
+   ifile = fopen( ifilename, "rb");
+   if( !ifile)
+      fprintf( stderr, "'%s' not opened", ifilename);
+   else
+      {
+      radar_obs_t obs;
+
+      while( !get_radar_obs( ifile, &obs))
+         {
+         char line1[90], line2[90];
+
+         if( show_comments)
+            put_radar_comment( &obs);
+         put_radar_obs( line1, line2, &obs);
+         printf( "%s\n%s\n", line1, line2);
+         }
+      fclose( ifile);
       }
    return( 0);
 }
-#endif
