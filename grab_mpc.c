@@ -1,11 +1,16 @@
+#ifdef _WIN32
+#include "windows.h"
+#else
 #define CURL_STATICLIB
-#include <stdio.h>
 #include <curl/curl.h>
 #include <curl/easy.h>
+#endif
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <assert.h>
 #include <time.h>
 
 /* Code to download astrometry for a given object from MPC.  Run as
@@ -16,6 +21,7 @@
 
 size_t total_written;
 
+#ifndef _WIN32
 static size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     size_t written;
 
@@ -23,6 +29,7 @@ static size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     total_written += written;
     return written;
 }
+#endif
 
 #define FETCH_FILESIZE_SHORT               -1
 #define FETCH_FOPEN_FAILED                 -2
@@ -73,6 +80,39 @@ static int check_for_existing( const char *url, const char *outfilename)
    return( rval);
 }
 
+#ifdef _WIN32
+static int grab_file( const char *url, const char *object_name,
+                  const char *outfilename, const bool append)
+{
+   const char *tname = "zzz1";
+   HRESULT rval = URLDownloadToFile( NULL, url, tname, 0, NULL);
+
+   printf( "Downloading '%s'\n", url);
+   printf( "Output '%s'\n", outfilename);
+   printf( "URLD %d\n", (int)rval);
+   sleep( 5);
+   if( rval == S_OK)
+      {
+      const char *tname = "zzz1";
+      FILE *ofile = fopen( outfilename, "wb");
+      FILE *ifile = fopen( tname, "rb");
+      char buff[200];
+      const time_t t0 = time( NULL);
+
+      assert( ifile);
+      if( !ofile)
+         return( FETCH_FOPEN_FAILED);
+      fprintf( ofile, "COM UNIX time %ld (%.24s) %s\n", (long)t0, ctime( &t0), url);
+      fprintf( ofile, "COM Obj %s\n", object_name);
+      while( fgets( buff, sizeof( buff), ifile))
+         fputs( buff, ofile);
+      fclose( ifile);
+      fclose( ofile);
+//    unlink( tname);
+      }
+   return( rval != S_OK);
+}
+#else
 static int grab_file( const char *url, const char *object_name,
                   const char *outfilename, const bool append)
 {
@@ -102,6 +142,7 @@ static int grab_file( const char *url, const char *object_name,
         return( FETCH_CURL_INIT_FAILED);
     return 0;
 }
+#endif
 
 #define BASE_MPC_URL "https://www.minorplanetcenter.net"
 
