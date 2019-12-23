@@ -62,9 +62,11 @@ int main( const int argc, const char **argv)
    double jd0 = 0., step_size = 0., jd, frac_jd0 = 0.;
    int int_jd0 = 0;
    bool state_vectors = false, is_equatorial = false;
-   bool is_ecliptical = false;
+   bool is_ecliptical = false, in_km_s = false;
    const char *header_fmt = "%13.5f %14.10f %4u";
    const char *object_name = "";
+   const double AU_IN_KM = 1.495978707e+8;
+   const double seconds_per_day = 24. * 60. * 60.;
 
    if( argc > 1 && !ifile)
       printf( "\nCouldn't open the Horizons file '%s'\n", argv[1]);
@@ -101,6 +103,7 @@ int main( const int argc, const char **argv)
                && !memcmp( buff + 50, " TDB", 4))
          {
          double coords[3];
+         int i;
 
          if( is_equatorial == is_ecliptical)       /* should be one or the other */
             {
@@ -127,6 +130,9 @@ int main( const int argc, const char **argv)
             return( -2);
             }
          get_coords_from_buff( coords, buff, is_ecliptical);
+         if( in_km_s)
+            for( i = 0; i < 3; i++)
+               coords[i] /= AU_IN_KM;
          fprintf( ofile, "%13.5f%16.10f%16.10f%16.10f", jd,
                   coords[0], coords[1], coords[2]);
          if( !state_vectors)
@@ -139,6 +145,9 @@ int main( const int argc, const char **argv)
                return( -2);
                }
             get_coords_from_buff( coords, buff, is_ecliptical);
+            if( in_km_s)
+               for( i = 0; i < 3; i++)
+                  coords[i] *= seconds_per_day / AU_IN_KM;
             fprintf( ofile, " %16.12f%16.12f%16.12f\n",
                   coords[0], coords[1], coords[2]);
             }
@@ -152,6 +161,8 @@ int main( const int argc, const char **argv)
          is_ecliptical = true;
       else if( !memcmp( buff, " Revised:", 9))
          object_name = look_up_name( atoi( buff + 72));
+      else if( !memcmp( buff,  "Output units    : KM-S", 22))
+         in_km_s = true;
 
    fprintf( ofile, "\n\nCreated from Horizons data by 'jpl2mpc', ver %s\n",
                                         __DATE__);
