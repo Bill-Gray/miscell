@@ -51,7 +51,10 @@ static double erfc( const double x)
    See:
 
    http://peircescriterion.blogspot.com/
-   Gould, B. A.,  AJ 4:81 (1855)
+   Gould, B. A.,  AJ 4:81 (1855)     1855AJ......4...81G
+
+   and further described in a 2011 paper :
+
    arXiv:1106.0564 [astro-ph]:  http://arxiv.org/abs/1106.0564
 
    To do this,  we need to find the positive zero-crossing (I'm
