@@ -44,7 +44,7 @@ int main( const int argc, const char **argv)
    assert( ofile);
    while( fgets( buff, sizeof( buff), ifile))
       if( !memcmp( buff, "ifdef", 5) || !memcmp( buff, "else", 4)
-                                     || !memcmp( buff, "endif", 5))
+                 || !memcmp( buff, "ifeq", 4) || !memcmp( buff, "endif", 5))
          fprintf( ofile, ".%s", buff);
       else if( !strcmp( buff, "CC=$(PREFIX)g++\n"))
          fprintf( ofile, "CC=$(PREFIX)cc\n");
