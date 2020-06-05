@@ -193,8 +193,13 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
                   n_written += sprintf( tbuff + strlen( tbuff), " %si=%.5s",
                               (n_written ? "" : "("), buff + 26);
                if( !memcmp( buff + 19, "H   ", 4))
-                  n_written += sprintf( tbuff + strlen( tbuff), " %sH=%.4s",
+                  {
+                  const char *format = (buff[27] == ' ' ?
+                                          " %sH=%.4s" : " %sH=%.5s");
+
+                  n_written += sprintf( tbuff + strlen( tbuff), format,
                               (n_written ? "" : "("), buff + 23);
+                  }
                memset( buff, 0, sizeof( buff));
                }
             if( semimajor_axis && eccentricity && !perihelion_dist)
