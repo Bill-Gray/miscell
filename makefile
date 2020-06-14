@@ -1,25 +1,44 @@
+# GNU Make file for miscellanous projects
+#
+# Usage: make [CLANG=Y] [W32=Y] [W64=Y] [tgt]
+#
+#	'W32'/'W64' = cross-compile for 32- or 64-bit Windows,  using MinGW-w64,
+#      on a Linux box
+#	'CLANG' = use clang instead of GCC;  Linux only
+# 'CC=g++-4.8' = use that version of g++;  helpful when testing older compilers
+# None of these: compile using g++ on Linux,  for Linux
+
 UNAME=$(shell qqame)
 
-ifdef MSWIN
+EXE=
+RM=rm -f
+PREFIX  =
+ADDED_EXES = grab_mpc neocp gmake2bsd
+CURL=-lcurl
+LUNAR_LIB = -L ~/lib -llunar
+
+ifdef W64
 	EXE=.exe
 	RM=del
 	PREFIX  = x86_64-w64-mingw32-g
 	ADDED_EXES =
 	CURL = -lurlmon
 	LUNAR_LIB = -L ~/win_lib -llunar
-else
-	EXE=
-	RM=rm -f
-	PREFIX  =
-	ADDED_EXES = grab_mpc neocp gmake2bsd
-	CURL=-lcurl
-	LUNAR_LIB = -L ~/lib -llunar
+endif
+
+ifdef W32
+	EXE=.exe
+	RM=del
+	PREFIX  = i686-w64-mingw32-g
+	ADDED_EXES =
+	CURL = -lurlmon
+	LUNAR_LIB = -L ~/win_lib32 -llunar
 endif
 
 ifdef CLANG
-CC=clang
+	CC=clang
 else
-CC=$(PREFIX)cc
+	CC=$(PREFIX)cc
 endif
 
 ADDED_MATH_LIB=-lm
@@ -56,6 +75,7 @@ clean:
 	$(RM) mpecer$(EXE)
 	$(RM) my_wget$(EXE)
 	$(RM) neocp$(EXE)
+	$(RM) neocp2$(EXE)
 	$(RM) nofs2mpc$(EXE)
 	$(RM) peirce$(EXE)
 	$(RM) plot_els$(EXE)
@@ -151,6 +171,9 @@ my_wget$(EXE): my_wget.c
 
 neocp$(EXE): neocp.c
 	$(CC) $(CFLAGS) -o neocp$(EXE) neocp.c $(CURL) $(CURLI)
+
+neocp2$(EXE): neocp2.c
+	$(CC) $(CFLAGS) -o neocp2$(EXE) neocp2.c $(CURL) $(CURLI)
 
 nofs2mpc$(EXE): nofs2mpc.cpp
 	$(CC) $(CFLAGS) -o nofs2mpc$(EXE) nofs2mpc.cpp $(ADDED_MATH_LIB)
