@@ -111,7 +111,7 @@ static int grab_file( const char *url, const char *object_name,
    if( rval == S_OK)
       {
       const char *tname = "zzz1";
-      FILE *ofile = fopen( outfilename, "wb");
+      FILE *ofile = fopen( outfilename, (append ? "ab" : "wb"));
       FILE *ifile = fopen( tname, "rb");
       char buff[200];
       const time_t t0 = time( NULL);
@@ -122,7 +122,10 @@ static int grab_file( const char *url, const char *object_name,
       fprintf( ofile, "COM UNIX time %ld (%.24s) %s\n", (long)t0, ctime( &t0), url);
       fprintf( ofile, "COM Obj %s\n", object_name);
       while( fgets( buff, sizeof( buff), ifile))
+         {
          fputs( buff, ofile);
+         total_written += strlen( buff);
+         }
       fclose( ifile);
       fclose( ofile);
 //    unlink( tname);
