@@ -104,10 +104,9 @@ static int grab_file( const char *url, const char *object_name,
    const char *tname = "zzz1";
    HRESULT rval = URLDownloadToFile( NULL, url, tname, 0, NULL);
 
-   printf( "Downloading '%s'\n", url);
-   printf( "Output '%s'\n", outfilename);
-   printf( "URLD %d\n", (int)rval);
-   sleep( 5);
+// printf( "Downloading '%s'\n", url);
+// printf( "Output '%s'\n", outfilename);
+// printf( "URLD %d\n", (int)rval);
    if( rval == S_OK)
       {
       const char *tname = "zzz1";
@@ -128,7 +127,7 @@ static int grab_file( const char *url, const char *object_name,
          }
       fclose( ifile);
       fclose( ofile);
-//    unlink( tname);
+      unlink( tname);
       }
    return( rval != S_OK);
 }
