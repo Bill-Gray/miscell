@@ -20,8 +20,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #ifdef _WIN32
 #include <windows.h>
 #else
-#include <time.h>
-#include <sys/time.h>
+// #include <time.h>
+// #include <sys/time.h>
+#include <sys/timex.h>
 #endif
 
 /* 'nanoseconds_since_1970( )' returns something close to the result of   */
@@ -102,6 +103,45 @@ int64_t nanoseconds_since_1970( void)
 }
 #endif    /* NOT_CURRENTLY_IN_USE */
 
+/* Getting time via ntp_gettime( ) appears to be straightforward.
+However,  the man pages appear to be in error on several counts.
+
+A distinction is made between ntp_gettime( ) and ntp_gettimex( ).
+The latter is supposed to set the TAI field.  At least on my
+Xubuntu 18.04 box,  the ntp_gettimex( ) function is unavailable,
+but the "old" ntp_gettime( ) function gives you TAI.
+
+Also,  the time is returned in the 'tv_sec' and 'tv_usec' members.
+The latter is supposed to be in microseconds.  It actually returns
+_nanoseconds_,  which is why it's not multiplied by a thousand
+in the following function.          */
+
+#ifndef _WIN32
+int64_t ntp_nanoseconds_since_1970( long *tai)
+{
+   struct ntptimeval ntv;
+
+   ntp_gettime( &ntv);
+// ntp_gettimex( &ntv);
+   if( tai)
+      *tai = ntv.tai;
+   return( ntv.time.tv_sec * (int64_t)1000000000 + ntv.time.tv_usec);
+}
+#endif
+
+/* In the following test code,  the time is found _twice_ in quick
+succession.  I was wondering just how fast these functions are.
+At least on my box,  it seems to take about two microseconds.  That's
+just slow enough that I wouldn't want to call ntp_nanoseconds_since_1970
+in a really short loop.
+
+   nanoseconds_since_1970( ),  on the same machine,  almost always
+returns the same time (rounded to a microsecond) for both calls,
+except maybe one time in five.  Which would suggest that it takes
+about 0.2 microseconds to run,  about ten times faster than the
+NTP function.  (But the latter gives nanosecond precision and
+TAI-UTC.  I don't know if that last bit is to be trusted,  though.) */
+
 int main( void)
 {
     int c;
@@ -111,13 +151,25 @@ int main( void)
             "times,  ^C to end program.\n");
     do
        {
+       long tai = 0;
        const uint64_t one_billion = (uint64_t)1000000000;
+#ifdef _WIN32
        const uint64_t t1 = nanoseconds_since_1970( );
+       const uint64_t t2 = nanoseconds_since_1970( );
+#else
+       const uint64_t t1 = ntp_nanoseconds_since_1970( &tai);
+       const uint64_t t2 = ntp_nanoseconds_since_1970( &tai);
+#endif
        const unsigned sec =     (unsigned)( t1 / one_billion);
        const unsigned nanosec = (unsigned)( t1 % one_billion);
+       const unsigned sec2 =     (unsigned)( t2 / one_billion);
+       const unsigned nanosec2 = (unsigned)( t2 % one_billion);
 
        printf(  " %02u:%02u:%02u.%09u\n", (sec / 3600) % 24,
                            (sec / 60) % 60, sec % 60, nanosec);
+       printf(  " %02u:%02u:%02u.%09u\n", (sec2 / 3600) % 24,
+                           (sec2 / 60) % 60, sec2 % 60, nanosec2);
+       printf(  "TAI offset %ld\n", tai);
        c = getchar( );
        }
        while( c != 1);
