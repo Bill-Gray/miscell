@@ -73,9 +73,10 @@ int main( const int argc, const char **argv)
       line_no++;
       }
    fclose( ifile);
-   if( !line_no)
+   if( idx == -1)
       {
       fprintf( stderr, "'%s' is not a valid object index\n", argv[1]);
+      fprintf( stderr, "(Valid asteroid numbers are listed in 'asteroid_indices.txt')\n");
       err_exit( );
       }
    epoch = atol( argv[2]) - START_JD;
