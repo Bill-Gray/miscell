@@ -112,7 +112,7 @@ static void fix_desig( const char *obs, const size_t n_lines,
                char *xdesigs)
 {
    size_t loc = 0, loc1, step;
-   int compare;
+   int compare, n_found = 0;
    const char *tptr;
 
 // printf( "Replacing %.7s with %.7s\n", old_desig, new_desig);
@@ -125,11 +125,16 @@ static void fix_desig( const char *obs, const size_t n_lines,
    while( loc < n_lines && (compare = memcmp( tptr, old_desig, 7)) <= 0)
       {
       if( !compare)
+         {
          memcpy( xdesigs, new_desig, 7);
+         n_found++;
+         }
       tptr += 81;
       xdesigs += 7;
       loc++;
       }
+   if( !n_found)
+      fprintf( stderr, "No fix for %.7s = %.7s\n", old_desig, new_desig);
 // printf( "Replaced %d,  starting at %ld\n", (int)( loc - loc1), (long)loc1);
 }
 
@@ -207,7 +212,7 @@ int main( const int argc, const char **argv)
    ifile = err_fopen( "dbl.txt", "rb");
    printf( "Adding xdesigs from dbl.txt\n");
    while( fgets( iline, sizeof( iline), ifile))
-      for( i = 7; iline[i] >= ' '; i += 9)
+      for( i = 7; i + 2 < strlen( iline) && iline[i + 2] >= ' '; i += 9)
          fix_desig( obs, n_lines, iline, iline + i + 2, xdesigs);
    fclose( ifile);
 
