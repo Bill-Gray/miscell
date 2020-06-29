@@ -15,6 +15,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 02110-1301, USA. */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
@@ -127,6 +128,158 @@ typedef struct
    char *observers, *notes;
    } radar_obs_t;
 
+static void substitute_name( char *oname, const char *iname)
+{
+   const char *subs[] = {
+            "LB", "L. Benner",
+            "Benner", "L. Benner",
+            "MB", "M. Brozovic",
+            "Brozovic", "M. Brozovic",
+            "MWB", "M. Busch",
+            "Busch", "M. Busch",
+            "Campbell", "D. B. Campbell",
+            "Chandler", "J. F. Chandler",
+            "LF", "L. Fernanda",
+            "Giorgini", "J. Giorgini",
+            "JDG", "J. Giorgini",
+            "Goldstein", "R. M. Goldstein",
+            "Greenberg", "A. H. Greenberg",
+            "Harmon", "J. K. Harmon",
+            "Harris", "A. W. Harris",
+            "Hine", "A. A. Hine",
+            "Howell", "E. Howell",
+            "EH", "E. Howell",
+            "Kamoun", "P. G. Kamoun",
+            "Lieske", "J. H. Lieske",
+            "SN", "S. P. Naidu",
+            "Naidu", "S. P. Naidu",
+            "Nolan", "M. C. Nolan",
+            "Magri", "C. Magri",
+            "Margot", "J. L. Margot",
+            "Marsden", "B. G. Marsden",
+            "MCN", "M. C. Nolan",
+            "MN", "M. C. Nolan",
+            "Ostro", "S. J. Ostro",
+            "Ostro.s", "S. J. Ostro",
+            "Pettengill", "G. H. Pettengill",
+            "PT", "P. Taylor",
+            "PAT", "P. Taylor",
+            "Rosema", "K. D. Rosema",
+            "Shapiro", "I. I. Shapiro",
+            "Shepard", "M. Shepard",
+            "Taylor", "P. Taylor",
+            "Werner", "C. L. Werner",
+            "Young", "J. W. Young",
+            NULL };
+   size_t i;
+
+   for( i = 0; subs[i]; i += 2)
+      if( !strcasecmp( iname, subs[i]))
+         {
+         strcpy( oname, subs[i + 1]);
+         return;
+         }
+   strcpy( oname, iname);
+   printf( "\n!?%s\n", iname);
+}
+
+static void fix_observers( char *buff)
+{
+   char obuff[300], *tptr, *start = buff;
+   bool done = false;
+   size_t i, j;
+   static const char *subs[] = {
+            "Benner,L.A.M.", "Benner",
+            "Benner, L.A.M.", "Benner",
+            "Benner,L. A. M.", "Benner",
+            "Benner, L. A. M.", "Benner",
+            "Benner, L.", "Benner",
+            "Benner,L.", "Benner",
+            "Campbell,D.B.", "Campbell",
+            "Campbell,D.B", "Campbell",
+            "Chandler,J.F", "Chandler",
+            "GOLDSTEIN,R.M", "Goldstein",
+            "Greenberg,A.H.", "Greenberg",
+            "Harris,A.W", "Harris",
+            "Harmon, J.K.", "Harmon",
+            "Harmon,J.K", "Harmon",
+            "Hine,A.A", "Hine",
+            "Kamoun,P.G.", "Kamoun",
+            "LIESKE,J.H", "Lieske",
+            "Margot, J. L.", "Margot",
+            "Margot,J.L.", "Margot",
+            "MAGRIHOWELL", "Magri,Howell",
+            "MAGRI,C.", "Magri",
+            "Marsden,B.G.", "Marsden",
+            "Nolan,M.C.", "Nolan",
+            "Nolan,M", "Nolan",
+            "Ostro,S.J.", "Ostro",
+            "Ostro,S.J", "Ostro",
+            "Ostro,S.", "Ostro",
+            "Ostro, S.", "Ostro",
+            "Ostro,S", "Ostro",
+            "PETTENGILL,G.H.", "Pettengill",
+            "PETTENGILL,G.H", "Pettengill",
+            "Rosema,K.D", "Rosema",
+            "SHAPIRO,I.I.", "Shapiro",
+            "SHAPIRO,I.I", "Shapiro",
+            "SHAPIRO,I", "Shapiro",
+            "Shepard, M.", "Shepard",
+            "TAYLOR,P.", "Taylor",
+            "Werner,C.L", "Werner",
+            "Young,J.W", "Young",
+            "ERV ", "ERV,",
+            "LFZM ", "LFZM,",
+            "PT ", "PT,",
+            NULL };
+
+   for( i = 0; subs[i]; i += 2)
+      if( (tptr = strcasestr( buff, subs[i])) != NULL)
+         {
+         strcpy( obuff, subs[i + 1]);
+         strcat( obuff, tptr + strlen( subs[i]));
+         strcpy( tptr, obuff);
+         }
+
+   if( isupper( buff[0]) && isupper( buff[1]) && buff[2])
+      {        /* cases such as 'AM DH .. ..' */
+      i = 2;
+      if( isupper( buff[i]))     /* maybe ERV,  etc. */
+         i++;
+      if( isupper( buff[i]))     /* Maybe LFZM, etc. */
+         i++;
+      while( buff[i] == ' ' && isupper( buff[i + 1]) && isupper( buff[i + 2]))
+         {
+         buff[i] = ',';
+         i += 3;
+         }
+      }
+
+   *obuff = '\0';
+   while( !done)
+      {
+      while( *buff == ' ')
+         buff++;
+      i = 0;
+      while( buff[i] && !strchr( ",;/&", buff[i]))
+         i++;
+      done = (buff[i] == '\0');
+      buff[i] = '\0';
+      j = i;
+      while( j && buff[j - 1] == ' ')
+         j--;
+      buff[j] = '\0';
+      substitute_name( obuff + strlen( obuff), buff);
+      buff += i;
+      if( !done)
+         {
+         strcat( obuff, ", ");
+         buff++;
+         }
+      }
+   strcpy( start, obuff);
+}
+
 static int get_radar_obs( FILE *ifile, radar_obs_t *obs)
 {
    char buff[300];
@@ -208,6 +361,7 @@ static int get_radar_obs( FILE *ifile, radar_obs_t *obs)
          if( !rval && fgets( buff, sizeof( buff), ifile))
             {
             remove_html( buff);
+            fix_observers( buff);
             obs->observers = (char *)malloc( strlen( buff) + 1);
             strcpy( obs->observers, buff);
             }
@@ -256,7 +410,7 @@ static void put_radar_comment( const radar_obs_t *obs)
    char mpc_code[4];
 
    put_mpc_code_from_dss( mpc_code, obs->receiver);
-   printf( "COD %.3s\n", mpc_code);
+   printf( "\nCOD %.3s\n", mpc_code);
    printf( "OBS %s\n", obs->observers);
    printf( "COM Last modified %s\n", obs->time_modified);
    while( *notes >= ' ')
