@@ -38,20 +38,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
 size_t total_written;
 
-#ifndef _WIN32
-static size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-    size_t written;
-
-    written = fwrite(ptr, size, nmemb, stream);
-    total_written += written;
-    return written;
-}
-#endif
 
 #define FETCH_FILESIZE_SHORT               -1
 #define FETCH_FOPEN_FAILED                 -2
 #define FETCH_CURL_PERFORM_FAILED          -3
-#define FETCH_FILESIZE_WRONG               -4
 #define FETCH_CURL_INIT_FAILED             -5
 
 /* In order to avoid hammering MPC's servers,  we do a bit of checking:
@@ -97,69 +87,97 @@ static int check_for_existing( const char *url, const char *outfilename)
    return( rval);
 }
 
+static FILE *init_output_file( const char *url, const char *object_name,
+                               const char *outfilename, const bool append)
+{
+   FILE *ofile = fopen( outfilename, (append ? "ab" : "wb"));
+
+   if( ofile)
+      {
+      const time_t t0 = time( NULL);
+
+      fprintf( ofile, "COM UNIX time %ld (%.24s) %s\n", (long)t0, ctime( &t0), url);
+      fprintf( ofile, "COM Obj %s\n", object_name);
+      }
+   return( ofile);
+}
+
 #ifdef _WIN32
 static int grab_file( const char *url, const char *object_name,
                   const char *outfilename, const bool append)
 {
    const char *tname = "zzz1";
-   HRESULT rval = URLDownloadToFile( NULL, url, tname, 0, NULL);
+   HRESULT rval;
+   FILE *ifile;
+   FILE *ofile = init_output_file( url, object_name, outfilename, append);
 
-// printf( "Downloading '%s'\n", url);
-// printf( "Output '%s'\n", outfilename);
-// printf( "URLD %d\n", (int)rval);
-   if( rval == S_OK)
+   if( !ofile)
+      return( FETCH_FOPEN_FAILED);
+   unlink( tname);
+   rval = URLDownloadToFile( NULL, url, tname, 0, NULL);
+   fprintf( ofile, "COM rval = %d\n", (int)rval);
+   ifile = fopen( tname, "rb");
+   if( ifile)
       {
-      const char *tname = "zzz1";
-      FILE *ofile = fopen( outfilename, (append ? "ab" : "wb"));
-      FILE *ifile = fopen( tname, "rb");
       char buff[200];
-      const time_t t0 = time( NULL);
 
-      assert( ifile);
-      if( !ofile)
-         return( FETCH_FOPEN_FAILED);
-      fprintf( ofile, "COM UNIX time %ld (%.24s) %s\n", (long)t0, ctime( &t0), url);
-      fprintf( ofile, "COM Obj %s\n", object_name);
       while( fgets( buff, sizeof( buff), ifile))
          {
          fputs( buff, ofile);
          total_written += strlen( buff);
          }
       fclose( ifile);
-      fclose( ofile);
-      unlink( tname);
       }
+   fclose( ofile);
    return( rval != S_OK);
 }
-#else
+#else             /* non-Win32 file grabbing */
+
+static size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+    size_t written;
+
+    written = fwrite(ptr, size, nmemb, stream);
+    total_written += written;
+    return written;
+}
+
 static int grab_file( const char *url, const char *object_name,
                   const char *outfilename, const bool append)
 {
-    CURL *curl = curl_easy_init();
+    CURL *curl;
+    int rval = 0;
+    FILE *fp = init_output_file( url, object_name, outfilename, append);
 
-    if (curl) {
-        FILE *fp = fopen( outfilename, (append ? "ab" : "wb"));
-        const time_t t0 = time( NULL);
+    if( !fp)
+        return( FETCH_FOPEN_FAILED);
+    curl = curl_easy_init();
+    if (curl)
+        {
         CURLcode res;
+        char err_buff[CURL_ERROR_SIZE];
 
-        if( !fp)
-            return( FETCH_FOPEN_FAILED);
-        fprintf( fp, "COM UNIX time %ld (%.24s) %s\n", (long)t0, ctime( &t0), url);
-        fprintf( fp, "COM Obj %s\n", object_name);
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, err_buff);
         curl_easy_setopt(curl, CURLOPT_USERAGENT,
             "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0");
         res = curl_easy_perform(curl);
         curl_easy_cleanup(curl);
-        fclose(fp);
         if( res)
-           return( FETCH_CURL_PERFORM_FAILED);
-    } else
-        return( FETCH_CURL_INIT_FAILED);
-    return 0;
+           {
+           fprintf( fp, "Error '%s'\n", err_buff);
+           rval = FETCH_CURL_PERFORM_FAILED;
+           }
+        }
+    else
+        {
+        fprintf( fp, "Error: couldn't initialize curl\n");
+        rval = FETCH_CURL_INIT_FAILED;
+        }
+    fclose(fp);
+    return rval;
 }
 #endif
 
@@ -224,11 +242,14 @@ static int fetch_astrometry_from_mpc( const char *output_filename,
    strcat( url, "&btnG=MPC+Database+Search");
    if( verbose)
       printf( "Grabbing '%s''\n", url);
-   rval = grab_file( url, object_name, "zzzz", 0);
-   look_for_link_to_astrometry( "zzzz", url2);
+   unlink( output_filename);
+   rval = grab_file( url, object_name, output_filename, 0);
+   if( !rval && !look_for_link_to_astrometry( output_filename, url2))
+      rval = -314159;
+   if( rval)
+      return( rval);
    if( verbose)
       printf( "Revised URL: '%s'\n", url2);
-   unlink( "zzzz");
    if( rval)
       return( rval);
    if( total_written < 200)
@@ -241,11 +262,7 @@ static int fetch_astrometry_from_mpc( const char *output_filename,
    total_written = 0;
    rval = grab_file( url2, object_name, output_filename, append);
    if( rval)
-      return( rval - 1000);
-   if( total_written % 81)
-      rval = FETCH_FILESIZE_WRONG;
-   else
-      rval = (int)total_written / 81;
+      rval -= 1000;
    return( rval);
 }
 
@@ -295,20 +312,17 @@ int main( const int argc, char **argv)
          }
 
    rval = fetch_astrometry_from_mpc( output_filename, obj_name, append);
-   if( rval < 0)
-      fprintf( stderr, "Failed: rval %d\n", rval);
-   else if( verbose)
+   if( !rval && verbose)
       {
       FILE *ifile = fopen( output_filename, "rb");
-      char buff[100];
+      char buff[200];
 
+      assert( ifile);
       printf( "%d lines read\n", rval);
       if( ifile)
          {
-         if( fgets( buff, sizeof( buff), ifile))
-            printf( "%s", buff);    /* show header line */
-         if( fgets( buff, sizeof( buff), ifile))
-            printf( "%s", buff);    /* show first observation */
+         for( i = 0; i < 4 && fgets( buff, sizeof( buff), ifile); i++)
+            printf( "%s", buff);    /* show header lines and a couple of obs */
          fseek( ifile, -81L, SEEK_END);
          if( fgets( buff, sizeof( buff), ifile))
             printf( "%s", buff);    /* show last observation */
@@ -320,3 +334,4 @@ int main( const int argc, char **argv)
    return( rval < 0 ? rval : 0);
 }
 #endif
+
