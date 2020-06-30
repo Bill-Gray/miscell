@@ -20,8 +20,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #ifdef _WIN32
 #include <windows.h>
 #else
-// #include <time.h>
-// #include <sys/time.h>
+#include <time.h>
+#include <sys/time.h>
+#endif
+
+/* The NTP code should,  in theory,  work on other POSIX systems.
+But I've had a report of failure on MacOS and haven't tested it on
+BSD yet.  So we'll only exercise this on Linux for the nonce. */
+
+#ifdef _linux
+   #define USE_NTP 1
+#endif
+
+#ifdef USE_NTP
 #include <sys/timex.h>
 #endif
 
@@ -87,22 +98,6 @@ int64_t nanoseconds_since_1970( void)
 #endif
 #endif
 
-/* At one time,  I was using the following in Linux.  It gives a
-"real" precision of nanoseconds,  instead of getting microseconds
-and multiplying by 1000 (or decimicroseconds and multiplying by 100).
-However,  it does require the realtime library to be linked in...
-I leave it here in case we someday need nanosecond precision.  */
-
-#ifdef NOT_CURRENTLY_IN_USE
-int64_t nanoseconds_since_1970( void)
-{
-   struct timespec t;
-
-   clock_gettime( CLOCK_REALTIME, &t);
-   return( t.tv_sec * (int64_t)1000000000 + t.tv_nsec);
-}
-#endif    /* NOT_CURRENTLY_IN_USE */
-
 /* Getting time via ntp_gettime( ) appears to be straightforward.
 However,  the man pages appear to be in error on several counts.
 
@@ -116,7 +111,7 @@ The latter is supposed to be in microseconds.  It actually returns
 _nanoseconds_,  which is why it's not multiplied by a thousand
 in the following function.          */
 
-#ifndef _WIN32
+#ifdef USE_NTP
 int64_t ntp_nanoseconds_since_1970( long *tai)
 {
    struct ntptimeval ntv;
@@ -126,6 +121,32 @@ int64_t ntp_nanoseconds_since_1970( long *tai)
    if( tai)
       *tai = ntv.tai;
    return( ntv.time.tv_sec * (int64_t)1000000000 + ntv.time.tv_usec);
+}
+#endif
+
+/* clock_gettime( ) appears to be the way to go.  It has nanosecond
+resolution and responds in about a microsecond.    */
+
+#ifndef _WIN32
+
+#define N_CLOCKS 4
+
+static void try_clock_gettime( void)
+{
+   struct timespec t[4];
+   size_t i;
+   const int flags[N_CLOCKS] = { CLOCK_MONOTONIC, CLOCK_REALTIME, CLOCK_TAI, CLOCK_BOOTTIME };
+   const char *hdr[N_CLOCKS] = { "Monotonic", "Realtime", "TAI", "Boot-time" };
+
+   for( i = 0; i < N_CLOCKS; i++)
+      clock_gettime( flags[i], &t[i]);
+
+   for( i = 0; i < N_CLOCKS; i++)
+      printf( "%02d:%02d:%02d.%09ld %s\n",
+               (int)( t[i].tv_sec / 3600) % 24,
+               (int)( t[i].tv_sec / 60) % 60,
+               (int)( t[i].tv_sec % 60), t[i].tv_nsec, hdr[i]);
+   printf( "%ld clocks/s\n", (long)CLOCKS_PER_SEC);
 }
 #endif
 
@@ -153,12 +174,12 @@ int main( void)
        {
        long tai = 0;
        const uint64_t one_billion = (uint64_t)1000000000;
-#ifdef _WIN32
-       const uint64_t t1 = nanoseconds_since_1970( );
-       const uint64_t t2 = nanoseconds_since_1970( );
-#else
+#ifdef USE_NTP
        const uint64_t t1 = ntp_nanoseconds_since_1970( &tai);
        const uint64_t t2 = ntp_nanoseconds_since_1970( &tai);
+#else
+       const uint64_t t1 = nanoseconds_since_1970( );
+       const uint64_t t2 = nanoseconds_since_1970( );
 #endif
        const unsigned sec =     (unsigned)( t1 / one_billion);
        const unsigned nanosec = (unsigned)( t1 % one_billion);
@@ -170,6 +191,9 @@ int main( void)
        printf(  " %02u:%02u:%02u.%09u\n", (sec2 / 3600) % 24,
                            (sec2 / 60) % 60, sec2 % 60, nanosec2);
        printf(  "TAI offset %ld\n", tai);
+#ifndef _WIN32
+       try_clock_gettime( );
+#endif
        c = getchar( );
        }
        while( c != 1);
