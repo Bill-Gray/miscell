@@ -220,6 +220,12 @@ static int fetch_astrometry_from_mpc( const char *output_filename,
    char url[300], url2[300];
    int i, rval;
 
+   if( !strcmp( object_name, "n"))
+      {
+      strcpy( url, BASE_MPC_URL "//cgi-bin/bulk_neocp.cgi?what=obs");
+      return( grab_file( url, "NEOCP", output_filename, 0));
+      }
+
    snprintf( url2, sizeof( url2), BASE_MPC_URL "/tmp/%s.txt", object_name);
    for( i = 38; url2[i]; i++)
       if( url2[i] == ' ' || url2[i] == '/')
