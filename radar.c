@@ -133,6 +133,7 @@ static void substitute_name( char *oname, const char *iname)
    const char *subs[] = {
             "LB", "L. Benner",
             "Benner", "L. Benner",
+            "BennerA.M", "L. Benner",
             "MB", "M. Brozovic",
             "Brozovic", "M. Brozovic",
             "MWB", "M. Busch",
@@ -140,36 +141,52 @@ static void substitute_name( char *oname, const char *iname)
             "Campbell", "D. B. Campbell",
             "Chandler", "J. F. Chandler",
             "LF", "L. Fernanda",
+            "LFZ", "L. Fernanda",
+            "LFZM", "L. Fernanda",
+            "Zambrano", "L. Fernanda",
             "Giorgini", "J. Giorgini",
+            "GIORGI", "J. Giorgini",
             "JDG", "J. Giorgini",
             "Goldstein", "R. M. Goldstein",
             "Greenberg", "A. H. Greenberg",
             "Harmon", "J. K. Harmon",
             "Harris", "A. W. Harris",
+            "DH", "D. Hickson",
             "Hine", "A. A. Hine",
             "Howell", "E. Howell",
+            "HOWEL", "E. Howell",
+            "HOWELLNOLANSPRINGM", "E. Howell, M. C. Nolan, ?. Springmann",
             "EH", "E. Howell",
             "Kamoun", "P. G. Kamoun",
             "Lieske", "J. H. Lieske",
+            "SM", "S. Marshall",
             "SN", "S. P. Naidu",
             "Naidu", "S. P. Naidu",
             "Nolan", "M. C. Nolan",
             "Magri", "C. Magri",
             "Margot", "J. L. Margot",
             "Marsden", "B. G. Marsden",
+            "Marshall", "S. Marshall",
+            "SM", "S. Marshall",
+            "SPN", "S. P. Naidu",
             "MCN", "M. C. Nolan",
             "MN", "M. C. Nolan",
+            "M.N.", "M. C. Nolan",
             "Ostro", "S. J. Ostro",
             "Ostro.s", "S. J. Ostro",
             "Pettengill", "G. H. Pettengill",
             "PT", "P. Taylor",
+            "P.T.", "P. Taylor",
             "PAT", "P. Taylor",
             "Rosema", "K. D. Rosema",
             "Shapiro", "I. I. Shapiro",
             "Shepard", "M. Shepard",
             "Taylor", "P. Taylor",
+            "AV", "A. Virkki",
+            "FV", "F. Venditti",
             "Werner", "C. L. Werner",
             "Young", "J. W. Young",
+            "Zaitsev", "A. Zaitsev",
             NULL };
    size_t i;
 
@@ -180,7 +197,7 @@ static void substitute_name( char *oname, const char *iname)
          return;
          }
    strcpy( oname, iname);
-   printf( "\n!?%s\n", iname);
+   fprintf( stderr, "!?%s\n", iname);
 }
 
 static void fix_observers( char *buff)
@@ -211,8 +228,11 @@ static void fix_observers( char *buff)
             "MAGRIHOWELL", "Magri,Howell",
             "MAGRI,C.", "Magri",
             "Marsden,B.G.", "Marsden",
+            "Marshall, S.", "Marshall",
             "Nolan,M.C.", "Nolan",
             "Nolan,M", "Nolan",
+            "Nolan.", "Nolan",
+            "NolanHowell", "Nolan, Howell",
             "Ostro,S.J.", "Ostro",
             "Ostro,S.J", "Ostro",
             "Ostro,S.", "Ostro",
@@ -231,6 +251,7 @@ static void fix_observers( char *buff)
             "ERV ", "ERV,",
             "LFZM ", "LFZM,",
             "PT ", "PT,",
+            "Zaitsev,A.", "Zaitsev",
             NULL };
 
    for( i = 0; subs[i]; i += 2)
