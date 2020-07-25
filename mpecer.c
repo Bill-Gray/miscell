@@ -94,6 +94,46 @@ static int grab_file( const char *url, const char *outfilename,
     return 0;
 }
 
+/* In some cases,  such as MPECs 2019-055, 2020-O10,  etc.,  the title isn't
+given on the first line with an <h2> tag.  It'll instead look like,  e.g.,
+
+<h2>MPEC 2020-O10 : </h2>
+
+    In such cases,  you have to search a bit further down in the MPEC
+to find it,  then rewind back to where you were.  Return value is -1 if
+we couldn't find the ISSN text that ought to be present;  -2 if we found
+that text,  but no </b> tag in the following five lines;  -3 if we found
+that </b> tag,  but no <b> tag before it;  and 0 if we actually found
+the title we were looking for.  */
+
+static int look_for_mpec_title( FILE *ifile, char *title)
+{
+   const long curr_loc = ftell( ifile);
+   char buff[200], *tptr;
+   int i, rval = -1;
+
+   while( rval == -1 && fgets( buff, sizeof( buff), ifile))
+      if( strstr( buff, "ISSN 1523-6714"))
+         rval = -2;
+   for( i = 5; rval == -2 && fgets( buff, sizeof( buff), ifile); i++)
+      if( (tptr = strstr( buff, "</b>")) != NULL)
+         {
+         *tptr = '\0';
+         tptr = strstr( buff, "<b>");
+         if( tptr)
+            {
+            strcpy( title, tptr + 3);
+            rval = 0;
+            }
+         else
+            rval = -3;
+         }
+   fseek( ifile, curr_loc, SEEK_SET);
+   if( rval)
+      fprintf( stderr, "Couldn't find MPEC title : %d\n", rval);
+   return( rval);
+}
+
 static bool is_observation_line( const char *buff)
 {
    const bool rval = ( strlen( buff) == 81
@@ -135,6 +175,8 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
          if( mpec_no == 1)
             fprintf( ofile, "<br>\n<a name=\"%c\"> </a>\n", half_month);
          *tptr = '\0';
+         if( !strcmp( tptr - 3, " : "))
+            look_for_mpec_title( ifile, tptr);
          fprintf( ofile, "<a href=\"%s\"> %s </a>", url, buff + 4);
          printf( "%s ", buff + 4);
          if( strstr( buff + 4, "DAILY ORBIT"))
