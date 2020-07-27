@@ -60,6 +60,7 @@ clean:
 	$(RM) ellip_pt$(EXE)
 	$(RM) eop_proc$(EXE)
 	$(RM) fix_obs$(EXE)
+	$(RM) getpoint$(EXE)
 	$(RM) gfc_xvt$(EXE)
 	$(RM) gmake2bsd$(EXE)
 	$(RM) gpl$(EXE)
@@ -126,6 +127,9 @@ eop_proc$(EXE): eop_proc.c
 
 fix_obs$(EXE): fix_obs.cpp
 	$(CC) $(CFLAGS) -o fix_obs$(EXE) fix_obs.cpp
+
+getpoint$(EXE): getpoint.c
+	$(CC) $(CFLAGS) -o getpoint$(EXE) getpoint.c
 
 gfc_xvt$(EXE): gfc_xvt.c
 	$(CC) $(CFLAGS) -o gfc_xvt$(EXE) gfc_xvt.c
