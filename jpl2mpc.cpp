@@ -49,6 +49,8 @@ static const char *look_up_name( const int idx)
       return( "Chandra = 1999-040B = NORAD 25867");
    if( idx == -139479)
       return( "Gaia = 2013-074A = NORAD 39479");
+   if( idx == -9901491)
+      return( "Tianwen-1 = 2020-049A = NORAD 45935");
    return( "");
 }
 
@@ -176,10 +178,14 @@ int main( const int argc, const char **argv)
          state_vectors = true;
       else if( strstr( buff, "Earth Mean Equator and Equinox"))
          is_equatorial = true;
+      else if( strstr( buff, "Reference frame : ICRF"))
+         is_equatorial = true;
       else if( strstr( buff, "Ecliptic and Mean Equinox of Reference Epoch"))
          is_ecliptical = true;
+      else if( strstr( buff, "Reference frame : Ecliptic of J2000"))
+         is_ecliptical = true;
       else if( !memcmp( buff, " Revised:", 9))
-         object_name = look_up_name( atoi( buff + 72));
+         object_name = look_up_name( atoi( buff + 71));
       else if( !memcmp( buff,  "Output units    : KM-S", 22))
          in_km_s = true;
 
