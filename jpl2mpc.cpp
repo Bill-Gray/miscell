@@ -43,10 +43,30 @@ and Gaia are recognized,  but others can obviously be added.   */
 
 static const char *look_up_name( const int idx)
 {
+   if( idx == -21)
+      return( "SOHO");
+   if( idx == -48)
+      return( "Hubble Space Telescope");
+   if( idx == -82)
+      return( "Cassini");
+   if( idx == -234)
+      return( "STEREO-A");
+   if( idx == -235)
+      return( "STEREO-B");
+   if( idx == -144)
+      return( "Solar Orbiter");
    if( idx == -95)
       return( "TESS = 2018-038A = NORAD 43435");
+   if( idx == -79)
+      return( "Spitzer Space Telescope");
+   if( idx == -96)
+      return( "Parker Space Probe");
+   if( idx == -98)
+      return( "New Horizons");
    if( idx == -151)
       return( "Chandra = 1999-040B = NORAD 25867");
+   if( idx == -163)
+      return( "WISE");
    if( idx == -139479)
       return( "Gaia = 2013-074A = NORAD 39479");
    if( idx == -9901491)
