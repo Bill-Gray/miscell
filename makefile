@@ -43,16 +43,20 @@ endif
 
 ADDED_MATH_LIB=-lm
 
-all:   blunder$(EXE) clock1$(EXE) css_art$(EXE) \
-	csv2txt$(EXE) ellip_pt$(EXE) fix_obs$(EXE) \
-	eop_proc$(EXE) gfc_xvt$(EXE) gpl$(EXE) i2mpc$(EXE) jpl2mpc$(EXE) \
-	ktest$(EXE) mpcorbx$(EXE) mpecer$(EXE) mpc_extr$(EXE) mpc_sort$(EXE) \
-	mpc_stat$(EXE) my_wget$(EXE) nofs2mpc$(EXE) peirce$(EXE) sr_plot$(EXE) \
-	plot_orb$(EXE) radar$(EXE) reverser$(EXE) \
+all:  bc430$(EXE) blunder$(EXE) clock1$(EXE) css_art$(EXE) \
+	csv2txt$(EXE) ellip_pt$(EXE) eop_proc$(EXE) fix_obs$(EXE) \
+	gfc_xvt$(EXE) gpl$(EXE) gmake2bsd$(EXE) i2mpc$(EXE) inverf$(EXE) jpl2mpc$(EXE) \
+	ktest$(EXE) mpcorbx$(EXE) mpc_extr$(EXE) mpc_sort$(EXE) \
+	mpc_stat$(EXE) nofs2mpc$(EXE) peirce$(EXE) sr_plot$(EXE) \
+	plot_orb$(EXE) reverser$(EXE) \
 	si_print$(EXE) splottes$(EXE) vid_dump$(EXE) \
-	xfer2$(EXE) xfer3$(EXE) $(ADDED_EXES)
+	xfer2$(EXE) xfer3$(EXE)
+
+extras: $(ADDED_EXES) mpecer$(EXE) my_wget$(EXE) radar$(EXE)
 
 clean:
+	$(RM) archive$(EXE)
+	$(RM) bc430$(EXE)
 	$(RM) blunder$(EXE)
 	$(RM) clock1$(EXE)
 	$(RM) css_art$(EXE)
@@ -66,6 +70,7 @@ clean:
 	$(RM) gpl$(EXE)
 	$(RM) grab_mpc$(EXE)
 	$(RM) i2mpc$(EXE)
+	$(RM) inverf$(EXE)
 	$(RM) jpl2mpc$(EXE)
 	$(RM) ktest$(EXE)
 	$(RM) mpc_stat$(EXE)
@@ -145,6 +150,9 @@ grab_mpc$(EXE): grab_mpc.c
 
 i2mpc$(EXE): i2mpc.cpp
 	$(CC) $(CFLAGS) -o i2mpc$(EXE) i2mpc.cpp
+
+inverf$(EXE): inverf.c
+	$(CC) $(CFLAGS) -o inverf$(EXE) inverf.c -lm
 
 ktest$(EXE): ktest.c
 	$(CC) $(CFLAGS) -o ktest$(EXE) ktest.c $(ADDED_MATH_LIB)
