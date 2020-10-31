@@ -1,0 +1,21 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  buildUbuntu:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+    - name: make
+      run: make
+
+  buildOSX:
+    runs-on: macOS-latest
+
+    steps:
+    - uses: actions/checkout@master
+    - name: make
+      run: make CLANG=Y
+
