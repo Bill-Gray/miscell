@@ -71,6 +71,8 @@ static const char *look_up_name( const int idx)
       return( "Gaia = 2013-074A = NORAD 39479");
    if( idx == -9901491)
       return( "Tianwen-1 = 2020-049A = NORAD 45935");
+   if( idx == -37)
+      return( "Hayabusa 2 = 2014-076A = NORAD 40319");
    return( "");
 }
 
