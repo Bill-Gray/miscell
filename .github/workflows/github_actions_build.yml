@@ -17,5 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - name: make
-      run: make CLANG=Y
+      run: |
+        echo > clock1
+        make CLANG=Y
 
