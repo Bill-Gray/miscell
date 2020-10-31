@@ -98,21 +98,28 @@ int main( const int argc, const char **argv)
       err_exit( );
       }
    while( idx--)
-      fgets( buff, sizeof( buff), ifile);
-   fgets( buff, sizeof( buff), ifile);
+      if( !fgets( buff, sizeof( buff), ifile))
+         return( -1);
+   if( !fgets( buff, sizeof( buff), ifile))
+      return( -1);
    a = atof( buff);
    printf( "Semimajor axis (AU) %s", buff);
-   fgets( buff, sizeof( buff), ifile);
+   if( !fgets( buff, sizeof( buff), ifile))
+      return( -1);
    ecc = atof( buff);
    printf( "Eccentricity %s", buff);
    printf( "Perihelion dist (AU) %.8f\n", a * (1. - ecc));
-   fgets( buff, sizeof( buff), ifile);
+   if( !fgets( buff, sizeof( buff), ifile))
+      return( -1);
    printf( "Incl (deg)      %12.8f\n", atof( buff) * 180. / PI);
-   fgets( buff, sizeof( buff), ifile);
+   if( !fgets( buff, sizeof( buff), ifile))
+      return( -1);
    printf( "Arg per (deg)   %12.8f\n", atof( buff) * 180. / PI);
-   fgets( buff, sizeof( buff), ifile);
+   if( !fgets( buff, sizeof( buff), ifile))
+      return( -1);
    printf( "Asc node (deg)  %12.8f\n", atof( buff) * 180. / PI);
-   fgets( buff, sizeof( buff), ifile);
+   if( !fgets( buff, sizeof( buff), ifile))
+      return( -1);
    printf( "Mean anom (deg) %12.8f\n", atof( buff) * 180. / PI);
    fclose( ifile);
    return( 0);
