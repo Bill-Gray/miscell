@@ -129,14 +129,23 @@ resolution and responds in about a microsecond.    */
 
 #ifndef _WIN32
 
-#define N_CLOCKS 4
+#ifdef CLOCK_TAI
+   #define N_CLOCKS 4
+#else
+   #define N_CLOCKS 3
+#endif
 
 static void try_clock_gettime( void)
 {
    struct timespec t[4];
    size_t i;
+#ifdef CLOCK_TAI
    const int flags[N_CLOCKS] = { CLOCK_MONOTONIC, CLOCK_REALTIME, CLOCK_TAI, CLOCK_BOOTTIME };
    const char *hdr[N_CLOCKS] = { "Monotonic", "Realtime", "TAI", "Boot-time" };
+#else
+   const int flags[N_CLOCKS] = { CLOCK_MONOTONIC, CLOCK_REALTIME, CLOCK_BOOTTIME };
+   const char *hdr[N_CLOCKS] = { "Monotonic", "Realtime", "Boot-time" };
+#endif
 
    for( i = 0; i < N_CLOCKS; i++)
       clock_gettime( flags[i], &t[i]);
