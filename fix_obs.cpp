@@ -133,7 +133,7 @@ static void fix_desig( const char *obs, const size_t n_lines,
       xdesigs += 7;
       loc++;
       }
-   if( !n_found)
+   if( !n_found && new_desig[6] != ' ')
       fprintf( stderr, "No fix for %.7s = %.7s\n", old_desig, new_desig);
 // printf( "Replaced %d,  starting at %ld\n", (int)( loc - loc1), (long)loc1);
 }
@@ -215,6 +215,23 @@ int main( const int argc, const char **argv)
       for( i = 7; i + 2 < strlen( iline) && iline[i + 2] >= ' '; i += 9)
          fix_desig( obs, n_lines, iline, iline + i + 2, xdesigs);
    fclose( ifile);
+
+   ifile = err_fopen( "numids.txt", "rb");
+   if( ifile)
+      {
+      printf( "Adding xdesigs from numids.txt\n");
+      while( fgets( iline, sizeof( iline), ifile))
+         {
+         char numbered_desig[8];
+
+         memcpy( numbered_desig, iline, 6);
+         numbered_desig[6] = ' ';
+         numbered_desig[7] = '\0';
+         for( i = 6; i < strlen( iline) && iline[i] >= ' '; i += 7)
+            fix_desig( obs, n_lines, numbered_desig, iline + i, xdesigs);
+         }
+      fclose( ifile);
+      }
 
    for( i = 0; i < n_lines; i++)
       if( xdesigs[i * 7])
