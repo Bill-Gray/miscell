@@ -53,11 +53,15 @@ int main( const int argc, const char **argv)
 {
    const char *inbox_filename =
             "/home/phred/.thunderbird/ye4urkt7.default/ImapMail/shared5.mainehost-1.net/INBOX";
+   const char *inbox2_filename =
+            "/home/olga/.thunderbird/3oz6ykst.default/ImapMail/shared5.mainehost.net/INBOX";
    FILE *ifile = fopen( inbox_filename, "rb");
    char buff[200];
    const char *search_obj = (argc > 1 ? argv[1] : "");
    int state = NO_OUTPUT;
 
+   if( !ifile)
+      ifile = fopen( inbox2_filename, "rb");
    assert( ifile);
    while( fgets( buff, sizeof( buff), ifile))
       {
