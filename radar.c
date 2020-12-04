@@ -374,6 +374,8 @@ static int get_radar_obs( FILE *ifile, radar_obs_t *obs)
             obs->bounce_point = *(remove_html( buff));
          else
             rval = -1;
+         if( *buff != 'C' && *buff != 'P')
+            printf( "? Error : %d, '%s'\n", rval, buff);
          assert( *buff == 'C' || *buff == 'P');
          if( !rval && fgets( buff, sizeof( buff), ifile))
             obs->reference = atoi( remove_html( buff));
