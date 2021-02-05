@@ -44,7 +44,7 @@ endif
 ADDED_MATH_LIB=-lm
 
 all:  bc430$(EXE) blunder$(EXE) clock1$(EXE) css_art$(EXE) \
-	csv2txt$(EXE) ellip_pt$(EXE) eop_proc$(EXE) fix_obs$(EXE) \
+	csv2txt$(EXE) details$(EXE) ellip_pt$(EXE) eop_proc$(EXE) fix_obs$(EXE) \
 	gfc_xvt$(EXE) gpl$(EXE) gmake2bsd$(EXE) i2mpc$(EXE) inverf$(EXE) jpl2mpc$(EXE) \
 	ktest$(EXE) mpcorbx$(EXE) mpc_extr$(EXE) mpc_sort$(EXE) \
 	mpc_stat$(EXE) nofs2mpc$(EXE) peirce$(EXE) sr_plot$(EXE) \
@@ -61,6 +61,7 @@ clean:
 	$(RM) clock1$(EXE)
 	$(RM) css_art$(EXE)
 	$(RM) csv2txt$(EXE)
+	$(RM) details$(EXE)
 	$(RM) ellip_pt$(EXE)
 	$(RM) eop_proc$(EXE)
 	$(RM) fix_obs$(EXE)
@@ -107,7 +108,7 @@ else
 	cp grab_mpc $(HOME)/bin
 endif
 
-CFLAGS=-Wextra -Wall -O3 -pedantic
+CFLAGS=-Wextra -Werror -Wall -O3 -pedantic
 
 .cpp.o:
 	$(CC) $(CFLAGS) -c $<
@@ -123,6 +124,9 @@ css_art$(EXE): css_art.c
 
 csv2txt$(EXE): csv2txt.c
 	$(CC) $(CFLAGS) -o csv2txt$(EXE) csv2txt.c
+
+details$(EXE): details.c
+	$(CC) $(CFLAGS) -o details$(EXE) details.c
 
 ellip_pt$(EXE): ellip_pt.c
 	$(CC) $(CFLAGS) -o ellip_pt$(EXE) ellip_pt.c $(ADDED_MATH_LIB)
