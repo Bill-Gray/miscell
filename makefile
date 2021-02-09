@@ -110,32 +110,14 @@ endif
 
 CFLAGS=-Wextra -Werror -Wall -O3 -pedantic
 
-.cpp.o:
+.c.o:
 	$(CC) $(CFLAGS) -c $<
 
 blunder$(EXE): blunder.cpp
 	$(CC) $(CFLAGS) -o blunder$(EXE) blunder.cpp $(ADDED_MATH_LIB)
 
-clock1$(EXE): clock1.cpp
-	$(CC) $(CFLAGS) -o clock1$(EXE) clock1.cpp
-
-css_art$(EXE): css_art.c
-	$(CC) $(CFLAGS) -o css_art$(EXE) css_art.c
-
-csv2txt$(EXE): csv2txt.c
-	$(CC) $(CFLAGS) -o csv2txt$(EXE) csv2txt.c
-
-details$(EXE): details.c
-	$(CC) $(CFLAGS) -o details$(EXE) details.c
-
 ellip_pt$(EXE): ellip_pt.c
 	$(CC) $(CFLAGS) -o ellip_pt$(EXE) ellip_pt.c $(ADDED_MATH_LIB)
-
-eop_proc$(EXE): eop_proc.c
-	$(CC) $(CFLAGS) -o eop_proc$(EXE) eop_proc.c
-
-fix_obs$(EXE): fix_obs.cpp
-	$(CC) $(CFLAGS) -o fix_obs$(EXE) fix_obs.cpp
 
 getpoint$(EXE): getpoint.c
 	$(CC) $(CFLAGS) -o getpoint$(EXE) getpoint.c
