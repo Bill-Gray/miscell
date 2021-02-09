@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <ctype.h>
 
 /* MPECs give observatory information (names of observers/measurers
 and telescope specifications) in a non-machine friendly form,
@@ -88,7 +89,7 @@ static void error_exit( const char *error_message)
 int main( const int argc, const char **argv)
 {
    FILE *ifile = fopen( argv[1], "rb");
-   char buff[1000];
+   char buff[1000], *tptr, mpec_name[15];
 
    if( argc < 2)
       error_exit( "No input file specified");
@@ -116,7 +117,6 @@ int main( const int argc, const char **argv)
             if( scope)
                {
                int pass;
-               char *tptr;
 
                printf( "\nCOD %.3s\n", buff);
                scope[-1] = '\0';
@@ -145,9 +145,12 @@ int main( const int argc, const char **argv)
                         while( *tptr == ' ')
                            tptr++;
                         }
-                     printf( format, tptr);
+                     if( *tptr)
+                        printf( format, tptr);
                      }
                   }
+               if( *mpec_name)
+                  printf( "COM Default details extracted from %s\n", mpec_name);
                while( (tptr = strchr( scope, ',')) != NULL)
                   {
                   *tptr = '\0';
@@ -161,6 +164,18 @@ int main( const int argc, const char **argv)
             fseek( ifile, -(long)strlen( tbuff), SEEK_CUR);
             }
          return( 0);
+         }
+      else if( (tptr = strstr( buff, "MPEC ")) != NULL
+                     && atoi( tptr + 5) > 1992 && atoi( tptr + 5) < 2090
+                     && tptr[9] == '-')
+         {
+         size_t len = 11;
+
+         while( isdigit( tptr[len]))
+            len++;
+         assert( len < sizeof( mpec_name));
+         memcpy( mpec_name, tptr, len);
+         mpec_name[len] = '\0';
          }
    return( -1);
 }
