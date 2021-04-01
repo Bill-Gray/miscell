@@ -65,8 +65,8 @@ int main( const int argc, const char **argv)
          "8049 ScT",    /* Roberts Creek 1 (Scott Tilley) */
          "8335 Tu2",    /* Tulsa-2 (Oklahoma) +35.8311  -96.1411 1083ft, 330m */
          "8336 Tu1",    /* Tulsa-1 (Oklahoma) +36.139208,-95.983429 660ft, 201m */
+         "9903 Ch5",    /* station reporting Chang'e 5 obs, 2020 Nov 24 */
          NULL };
-
 
    if( !ifile)
       {
