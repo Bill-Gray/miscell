@@ -108,9 +108,12 @@ int main( const int argc, const char **argv)
             assert( buff[3] == ' ');
             while( fgets( tbuff, sizeof( tbuff), ifile) && tbuff[0] == ' ')
                {
-               assert( !memcmp( tbuff, "    ", 4));
-               assert( tbuff[4] > ' ');
-               strcpy( buff + strlen( buff) - 1, tbuff + 3);
+               size_t i = 1;
+
+               while( tbuff[i] == ' ')
+                  i++;
+               assert( i > 2 && i < 5);
+               strcpy( buff + strlen( buff) - 1, tbuff + i - 1);
                }
             strip_trailing_period_and_whitespace( buff);
             scope = find_telescope( buff);
