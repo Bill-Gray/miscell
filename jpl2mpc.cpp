@@ -208,6 +208,13 @@ int main( const int argc, const char **argv)
          is_ecliptical = true;
       else if( !memcmp( buff, " Revised:", 9))
          object_name = look_up_name( atoi( buff + 71));
+      else if( !memcmp( buff, "Target body name:", 17))
+         {
+         const char *tptr = strstr( buff, "(-");
+
+         if( tptr)
+            object_name = look_up_name( atoi( tptr + 1));
+         }
       else if( !memcmp( buff,  "Output units    : KM-S", 22))
          in_km_s = true;
 
@@ -307,5 +314,9 @@ horizons@ssd.jpl.nasa.gov, subject line JOB.
 !$$EOF++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 https://ssd.jpl.nasa.gov/horizons_batch.cgi?batch=1&COMMAND='-139479'&OBJ_DATA='NO'&TABLE_TYPE='V'&START_TIME='2020-01-01'&STOP_TIME='2021-01-01'&STEP_SIZE='3660'&VEC_TABLE='2'&VEC_LABELS='N'
+
+For TESS,  2021 :
+
+https://ssd.jpl.nasa.gov/horizons_batch.cgi?batch=1&COMMAND='-95'&OBJ_DATA='NO'&TABLE_TYPE='V'&START_TIME='2021-01-01'&STOP_TIME='2022-01-01'&STEP_SIZE='3650'&VEC_TABLE='2'&VEC_LABELS='N'
 
 */
