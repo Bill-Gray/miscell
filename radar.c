@@ -328,7 +328,7 @@ static int get_radar_obs( FILE *ifile, radar_obs_t *obs)
          else if( (tptr = strstr( buff, "P/")) != NULL) /* numbered comet */
             tptr[1] = '\0';
          else                  /* numbered minor planet */
-            sprintf( buff, "%d", atoi( buff));
+            sprintf( buff, "(%d)", atoi( buff));
          if( create_mpc_packed_desig( obs->desig, buff))
             {
             fprintf( stderr, "Couldn't pack '%s'\n", buff);
