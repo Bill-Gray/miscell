@@ -126,7 +126,10 @@ static void fix_desig( const char *obs, const size_t n_lines,
       {
       if( !compare)
          {
-         memcpy( xdesigs, new_desig, 7);
+         if( new_desig[5] == ' ')         /* numbered */
+            memcpy( xdesigs - 5, new_desig, 5);
+         else
+            memcpy( xdesigs, new_desig, 7);
          n_found++;
          }
       tptr += 81;
