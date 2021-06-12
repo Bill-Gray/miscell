@@ -73,6 +73,7 @@ clean:
 	$(RM) i2mpc$(EXE)
 	$(RM) inverf$(EXE)
 	$(RM) jpl2mpc$(EXE)
+	$(RM) jpl2sof$(EXE)
 	$(RM) ktest$(EXE)
 	$(RM) mpc_stat$(EXE)
 	$(RM) mpc_extr$(EXE)
@@ -145,6 +146,9 @@ ktest$(EXE): ktest.c
 
 jpl2mpc$(EXE): jpl2mpc.cpp
 	$(CC) $(CFLAGS) -o jpl2mpc$(EXE) jpl2mpc.cpp
+
+jpl2sof$(EXE): jpl2sof.c
+	$(CC) $(CFLAGS) -o jpl2sof$(EXE) -I ~/include jpl2sof.c $(LUNAR_LIB) $(ADDED_MATH_LIB)
 
 mpc_stat$(EXE): mpc_stat.cpp
 	$(CC) $(CFLAGS) -o mpc_stat$(EXE) mpc_stat.cpp $(ADDED_MATH_LIB)
