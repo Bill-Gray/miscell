@@ -73,14 +73,16 @@ static int check_for_existing( const char *url, const char *outfilename)
          while( i && (buff[i - 1] == 10 || buff[i - 1] == 13))
             i--;
          buff[i] = '\0';
+         if( !strcmp( buff + 52, url) &&
+                  t0 < atoi( buff + 14) + DELAY_BETWEEN_RELOADS)
+            rval = 1;   /* yup,  just reuse the existing file */
          if( verbose)
             {
             printf( "Old file read\n%s\n", buff);
             printf( "Delay is %d seconds\n", (int)( t0 - atoi( buff + 14)));
+            if( rval)
+               printf( "Recyclable\n");
             }
-         if( !strcmp( buff + 52, url) &&
-                  t0 < atoi( buff + 14) + DELAY_BETWEEN_RELOADS)
-            rval = 1;   /* yup,  just reuse the existing file */
          }
       fclose( fp);
       }
@@ -103,32 +105,11 @@ static FILE *init_output_file( const char *url, const char *object_name,
 }
 
 #ifdef _WIN32
-static int grab_file( const char *url, const char *object_name,
-                  const char *outfilename, const bool append)
+static int grab_file( const char *url, const char *outfilename)
 {
-   const char *tname = "zzz1";
    HRESULT rval;
-   FILE *ifile;
-   FILE *ofile = init_output_file( url, object_name, outfilename, append);
 
-   if( !ofile)
-      return( FETCH_FOPEN_FAILED);
-   unlink( tname);
-   rval = URLDownloadToFile( NULL, url, tname, 0, NULL);
-   fprintf( ofile, "COM rval = %d\n", (int)rval);
-   ifile = fopen( tname, "rb");
-   if( ifile)
-      {
-      char buff[200];
-
-      while( fgets( buff, sizeof( buff), ifile))
-         {
-         fputs( buff, ofile);
-         total_written += strlen( buff);
-         }
-      fclose( ifile);
-      }
-   fclose( ofile);
+   rval = URLDownloadToFile( NULL, url, outfilename, 0, NULL);
    return( rval != S_OK);
 }
 #else             /* non-Win32 file grabbing */
@@ -141,12 +122,11 @@ static size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     return written;
 }
 
-static int grab_file( const char *url, const char *object_name,
-                  const char *outfilename, const bool append)
+static int grab_file( const char *url, const char *outfilename)
 {
     CURL *curl;
     int rval = 0;
-    FILE *fp = init_output_file( url, object_name, outfilename, append);
+    FILE *fp = fopen( outfilename, "wb");
 
     if( !fp)
         return( FETCH_FOPEN_FAILED);
@@ -180,6 +160,35 @@ static int grab_file( const char *url, const char *object_name,
     return rval;
 }
 #endif
+
+static int grab_file_with_time_info( const char *url, const char *object_name,
+                  const char *outfilename, const bool append)
+{
+   FILE *ofile, *ifile;
+   const char *tname = "zzz1";
+
+   unlink( tname);
+   if( grab_file( url, tname))
+       return( -1);
+   ofile = init_output_file( url, object_name, outfilename, append);
+   if( !ofile)
+      return( FETCH_FOPEN_FAILED);
+   ifile = fopen( tname, "rb");
+   if( ifile)
+      {
+      char buff[200];
+
+      while( fgets( buff, sizeof( buff), ifile))
+         {
+         fputs( buff, ofile);
+         total_written += strlen( buff);
+         }
+      fclose( ifile);
+      }
+   unlink( tname);
+   fclose( ofile);
+   return( 0);
+}
 
 #define BASE_MPC_URL "https://www.minorplanetcenter.net"
 
@@ -223,7 +232,7 @@ static int fetch_astrometry_from_mpc( const char *output_filename,
    if( !strcmp( object_name, "n"))
       {
       strcpy( url, BASE_MPC_URL "//cgi-bin/bulk_neocp.cgi?what=obs");
-      return( grab_file( url, "NEOCP", output_filename, 0));
+      return( grab_file_with_time_info( url, "NEOCP", output_filename, 0));
       }
 
    snprintf( url2, sizeof( url2), BASE_MPC_URL "/tmp/%s.txt", object_name);
@@ -249,7 +258,7 @@ static int fetch_astrometry_from_mpc( const char *output_filename,
    if( verbose)
       printf( "Grabbing '%s''\n", url);
    unlink( output_filename);
-   rval = grab_file( url, object_name, output_filename, 0);
+   rval = grab_file_with_time_info( url, object_name, output_filename, 0);
    if( !rval && !look_for_link_to_astrometry( output_filename, url2))
       rval = -314159;
    if( rval)
@@ -266,7 +275,7 @@ static int fetch_astrometry_from_mpc( const char *output_filename,
       printf( "Grabbing '%s'\n", url2);
 #endif
    total_written = 0;
-   rval = grab_file( url2, object_name, output_filename, append);
+   rval = grab_file_with_time_info( url2, object_name, output_filename, append);
    if( rval)
       rval -= 1000;
    return( rval);
@@ -317,6 +326,9 @@ int main( const int argc, char **argv)
             break;
          }
 
+            /* Run as 'grab_mpc filename url' as a simple file downloader */
+   if( !memcmp( argv[2], "http", 4) || !memcmp( argv[2], "ftp", 3))
+      return( grab_file( argv[2], output_filename));
    rval = fetch_astrometry_from_mpc( output_filename, obj_name, append);
    if( !rval && verbose)
       {
