@@ -95,6 +95,23 @@ static void put_mpc_code_from_dss( char *mpc_code, const int dss_desig)
    memcpy( mpc_code, code, 3);
 }
 
+static bool havent_seen_this_name( const char *iname)
+{
+   static char **names = NULL;
+   int i;
+   const int max_names = 10000;
+
+   if( !names)
+      names = (char **)calloc( max_names, sizeof( char *));
+   for( i = 0; names[i]; i++)
+      if( !strcmp( names[i], iname))
+         return( false);
+   names[i] = (char *)malloc( strlen( iname) + 1);
+   strcpy( names[i], iname);
+   return( true);
+}
+
+
 static char *remove_html( char *buff)
 {
    char *tptr;
@@ -197,7 +214,8 @@ static void substitute_name( char *oname, const char *iname)
          return;
          }
    strcpy( oname, iname);
-   fprintf( stderr, "!?%s\n", iname);
+   if( havent_seen_this_name( iname))
+      fprintf( stderr, "!?%s\n", iname);
 }
 
 static void fix_observers( char *buff)
@@ -440,13 +458,16 @@ static void put_radar_comment( const radar_obs_t *obs)
       {
       size_t len;
       const size_t max_len = 70;
+      const char *insert = "";
 
       while( *notes == ' ')
          notes++;
       len = strlen( notes);
+      if( notes[0] == '=' && notes[1] == ' ')
+         insert = " ";
       if( len <= max_len)           /* finish up line */
          {
-         printf( "COM %s\n", notes);
+         printf( "COM %s%s\n", insert, notes);
          return;
          }
       else
@@ -454,7 +475,7 @@ static void put_radar_comment( const radar_obs_t *obs)
          len = max_len;
          while( notes[len] != ' ')
             len--;
-         printf( "COM %.*s\n", (int)len, notes);
+         printf( "COM %s%.*s\n", insert, (int)len, notes);
          notes += len + 1;
          }
       }
