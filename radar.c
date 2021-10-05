@@ -29,12 +29,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 almost immediately at
 
 http://ssd.jpl.nasa.gov/?grp=all&fmt=html&radar=
+https://ssd-api.jpl.nasa.gov/sb_radar.api?modified=y&notes=y&observer=y
 
     but there is usually a significant delay before it shows up on AstDyS or
 NEODyS,  and it doesn't necessarily make it to MPC at all.  This code can read
 in the file at the above URL and spit the data back out in the MPC's 80-column
 punched-card format (two lines per observation).  Example output lines :
-
 
 101955 Bennu (1999 RQ36)          1999-09-21 09:00:00     135959.00   5.000 Hz COM  8560  -14  -14
 101955 Bennu (1999 RQ36)          1999-09-21 10:20:00   15418454.00  10.000 us COM  8560  -14  -14
@@ -109,29 +109,6 @@ static bool havent_seen_this_name( const char *iname)
    names[i] = (char *)malloc( strlen( iname) + 1);
    strcpy( names[i], iname);
    return( true);
-}
-
-
-static char *remove_html( char *buff)
-{
-   char *tptr;
-
-   while( (tptr = strchr( buff, '<')) != NULL)
-      {
-      char *endptr = strchr( tptr, '>');
-
-      assert( endptr);
-      memmove( tptr, endptr + 1, strlen( endptr));
-      }
-   tptr = buff + strlen( buff);
-   while( tptr > buff && tptr[-1] <= ' ')
-      tptr--;
-   *tptr = '\0';
-   tptr = buff;
-   while( *tptr == ' ')
-      tptr++;
-   memmove( buff, tptr, strlen( tptr) + 1);
-   return( buff);
 }
 
 typedef struct
@@ -319,108 +296,122 @@ static void fix_observers( char *buff)
    strcpy( start, obuff);
 }
 
-static int get_radar_obs( FILE *ifile, radar_obs_t *obs)
+static int get_radar_obs( char *buff, radar_obs_t *obs)
 {
-   char buff[300];
-   int rval = -1;
+   int field, rval = -1;
 
    memset( obs, 0, sizeof( radar_obs_t));
-   while( rval && fgets( buff, sizeof( buff), ifile))
-      if( strstr( buff, "a href=\"sbdb.cgi?"))
-         {
-         char *tptr;
+   for( field = 0; field < 12; field++)
+      {
+      int field_len;
+      char *tptr;
+      bool is_null = false;
 
-         rval = 0;
-         remove_html( buff);
-         if( *buff == '(')    /* preliminary desig */
-            {
-            buff[strlen( buff) - 1] = '\0';     /* remove trailing right paren */
-            memmove( buff, buff + 1, strlen( buff));
-            }
-         else if( buff[1] == '/')      /* comet desig */
-            {
-            tptr = strchr( buff, '(');
-            assert( tptr);
-            tptr[-1] = '\0';
-            }
-         else if( (tptr = strstr( buff, "P/")) != NULL) /* numbered comet */
-            tptr[1] = '\0';
-         else                  /* numbered minor planet */
-            sprintf( buff, "(%d)", atoi( buff));
-         if( create_mpc_packed_desig( obs->desig, buff))
-            {
-            fprintf( stderr, "Couldn't pack '%s'\n", buff);
-            rval = -1;
-            }
-         if( !rval && fgets( buff, sizeof( buff), ifile))
-            strcpy( obs->time, remove_html( buff));
-         else
-            rval = -1;
-         if( !rval && fgets( buff, sizeof( buff), ifile))
-            strcpy( obs->measurement, remove_html( buff));
-         else
-            rval = -1;
-         if( !rval && fgets( buff, sizeof( buff), ifile))
-            strcpy( obs->sigma, remove_html( buff));
-         else
-            rval = -1;
-         if( !rval && fgets( buff, sizeof( buff), ifile))
-            {
-            remove_html( buff);
-            if( !strcmp( buff, "Hz"))
-               obs->is_range = false;
-            else if( !strcmp( buff, "us"))
-               obs->is_range = true;
-            else
-               fprintf( stderr, "Bad units '%s'\n", buff);
-            }
-         else
-            rval = -1;
-         if( !rval && fgets( buff, sizeof( buff), ifile))
-            obs->freq_mhz = atoi( remove_html( buff));
-         else
-            rval = -1;
-         if( !rval && fgets( buff, sizeof( buff), ifile))
-            obs->receiver = atoi( remove_html( buff));
-         else
-            rval = -1;
-         if( !rval && fgets( buff, sizeof( buff), ifile))
-            obs->xmitter  = atoi( remove_html( buff));
-         else
-            rval = -1;
-         if( !rval && fgets( buff, sizeof( buff), ifile))
-            obs->bounce_point = *(remove_html( buff));
-         else
-            rval = -1;
-         if( *buff != 'C' && *buff != 'P')
-            printf( "? Error : %d, '%s'\n", rval, buff);
-         assert( *buff == 'C' || *buff == 'P');
-         if( !rval && fgets( buff, sizeof( buff), ifile))
-            obs->reference = atoi( remove_html( buff));
-         else
-            rval = -1;
-         if( !rval && fgets( buff, sizeof( buff), ifile))
-            {
-            remove_html( buff);
-            fix_observers( buff);
-            obs->observers = (char *)malloc( strlen( buff) + 1);
-            strcpy( obs->observers, buff);
-            }
-         else
-            rval = -1;
-         if( !rval && fgets( buff, sizeof( buff), ifile))
-            {
-            remove_html( buff);
-            obs->notes = (char *)malloc( strlen( buff) + 1);
-            strcpy( obs->notes, buff);
-            }
-         else
-            rval = -1;
-         if( !rval && fgets( buff, sizeof( buff), ifile))
-            strcpy( obs->time_modified, remove_html( buff));
-         else
-            rval = -1;
+      if( *buff == '"')
+         {
+         size_t i = 1;
+
+         while( buff[i] && (buff[i] != '"' || buff[i - 1] == '\\'))
+            i++;
+         tptr = buff + 1;
+         field_len = (int)i - 1;
+         buff += i + 2;
          }
+      else if( !memcmp( buff, "null", 4))
+         {
+         tptr = buff;
+         field_len = 4;
+         buff += 5;
+         is_null = true;
+         }
+      else
+         {
+         fprintf( stderr, "Error at '%.40s'\n", buff);
+         exit( -1);
+         }
+      tptr[field_len] = '\0';
+      if( !is_null)
+         switch( field)
+            {
+            case 0:
+               {
+               char tbuff[18];
+               int i;
+
+               assert( field_len < 15);
+               i = 0;
+               while( isdigit( tptr[i]))
+                  i++;
+               if( !tptr[i])
+                  sprintf( tbuff, "(%s)", tptr);
+               else
+                  strcpy( tbuff, tptr);
+               if( create_mpc_packed_desig( obs->desig, tbuff))
+                  {
+                  fprintf( stderr, "Couldn't pack '%s'\n", tbuff);
+                  rval = -1;
+                  }
+               }
+               break;
+            case 1:
+               strcpy( obs->time, tptr);
+               break;
+            case 2:
+               strcpy( obs->measurement, tptr);
+               break;
+            case 3:
+               strcpy( obs->sigma, tptr);
+               break;
+            case 4:
+               if( !strcmp( tptr, "Hz"))
+                  obs->is_range = false;
+               else if( !strcmp( tptr, "us"))
+                  obs->is_range = true;
+               else
+                  fprintf( stderr, "Bad units '%s'\n", tptr);
+               break;
+            case 5:
+               obs->freq_mhz = atoi( tptr);
+               break;
+            case 6:
+               obs->receiver = atoi( tptr);
+               break;
+            case 7:
+               obs->xmitter  = atoi( tptr);
+               break;
+#ifdef NO_REFERENCES_YET
+            case 7:
+               obs->reference = atoi( tptr);
+               break;
+#endif
+            case 8:
+               obs->bounce_point = *tptr;
+               if( *tptr != 'C' && *tptr != 'P')
+                  printf( "? Error : %d, '%s'\n", rval, tptr);
+               assert( *tptr == 'C' || *tptr == 'P');
+               break;
+            case 9:
+               {
+               char tbuff[200];
+
+               assert( field_len < (int)sizeof( tbuff) - 1);
+               strcpy( tbuff, tptr);
+               fix_observers( tbuff);
+               obs->observers = (char *)malloc( strlen( tbuff) + 1);
+               strcpy( obs->observers, tbuff);
+               }
+               break;
+            case 10:
+               obs->notes = (char *)malloc( strlen( tptr) + 1);
+               strcpy( obs->notes, tptr);
+               break;
+            case 11:
+               strcpy( obs->time_modified, tptr);
+               break;
+            default:
+               fprintf( stderr, "? field %d\n", field);
+            }
+      }
    return( rval);
 }
 
@@ -528,7 +519,7 @@ static void put_radar_obs( char *line1, char *line2, const radar_obs_t *obs)
 
 int main( const int argc, const char **argv)
 {
-   const char *ifilename = "radar.html";
+   const char *ifilename = "radar.json";
    int i;
    FILE *ifile;
    bool show_comments = true;
@@ -544,18 +535,32 @@ int main( const int argc, const char **argv)
       fprintf( stderr, "'%s' not opened", ifilename);
    else
       {
-      radar_obs_t obs;
+      int len;
+      char *buff;
 
-      while( !get_radar_obs( ifile, &obs))
-         {
-         char line1[90], line2[90];
-
-         if( show_comments)
-            put_radar_comment( &obs);
-         put_radar_obs( line1, line2, &obs);
-         printf( "%s\n%s\n", line1, line2);
-         }
+      fseek( ifile, 0L, SEEK_END);
+      len = (int)ftell( ifile);
+      fseek( ifile, 0L, SEEK_SET);
+      buff = (char *)malloc( len + 1);
+      buff[len] = '\0';
+      i = fread( buff, 1, len, ifile);
+      assert( i == len);
       fclose( ifile);
+      i = 0;
+      while( buff[i] && memcmp( buff + i, "\"data\":", 7))
+         i++;
+      for( ; i < len; i++)
+         if( buff[i - 1] == '[' && buff[i] == '"')
+            {
+            radar_obs_t obs;
+            char line1[90], line2[90];
+
+            get_radar_obs( buff + i, &obs);
+            if( show_comments)
+               put_radar_comment( &obs);
+            put_radar_obs( line1, line2, &obs);
+            printf( "%s\n%s\n", line1, line2);
+            }
       }
    return( 0);
 }
