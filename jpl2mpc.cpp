@@ -45,6 +45,8 @@ static const char *look_up_name( const int idx)
 {
    if( idx == -21)
       return( "SOHO");
+   if( idx == -49)
+      return( "Lucy");
    if( idx == -48)
       return( "Hubble Space Telescope");
    if( idx == -82)
@@ -108,9 +110,10 @@ int main( const int argc, const char **argv)
    char buff[200];
    unsigned n_written = 0;
    double jd0 = 0., step_size = 0., jd, frac_jd0 = 0.;
-   int int_jd0 = 0;
+   int int_jd0 = 0, i;
    bool state_vectors = false, is_equatorial = false;
    bool is_ecliptical = false, in_km_s = false;
+   bool output_in_au_days = true;
    const char *header_fmt = "%13.5f %14.10f %4u";
    const char *object_name = "";
    const double AU_IN_KM = 1.495978707e+8;
@@ -135,10 +138,21 @@ int main( const int argc, const char **argv)
       printf( "format,  or how to get such ephemerides using a URL.\n");
       exit( -1);
       }
+   for( i = 2; i < argc; i++)
+      if( argv[i][0] == '-')
+         switch( argv[i][1])
+            {
+            case 'k':
+               output_in_au_days = false;
+               break;
+            }
 
    fseek( ifile, 0L, SEEK_SET);
    fprintf( ofile, header_fmt, 0., 0., 0);
-   fprintf( ofile, " 0,1,1");  /* i.e.,  ecliptic J2000 in AU and days */
+   if( output_in_au_days)
+      fprintf( ofile, " 0,1,1");  /* i.e.,  ecliptic J2000 in AU and days */
+   else
+      fprintf( ofile, " 0,149597870.7,86400");     /* km and km/s */
    while( fgets( buff, sizeof( buff), ifile))
       if( (jd = atof( buff)) > 2000000. && jd < 3000000. &&
                strlen( buff) > 54 && !memcmp( buff + 17, " = A.D.", 7)
@@ -176,12 +190,22 @@ int main( const int argc, const char **argv)
          if( in_km_s)
             for( i = 0; i < 3; i++)
                coords[i] /= AU_IN_KM;
-         fprintf( ofile, "%13.5f%16.10f%16.10f%16.10f", jd,
+         if( output_in_au_days)
+            fprintf( ofile, "%13.5f%21.16f%21.16f%21.16f", jd,
                   coords[0], coords[1], coords[2]);
+         else
+            fprintf( ofile, "%13.5f%21.7f%21.7f%21.7f", jd,
+                       coords[0] * AU_IN_KM,
+                       coords[1] * AU_IN_KM,
+                       coords[2] * AU_IN_KM);
          if( !state_vectors)
             fprintf( ofile, "\n");
          else
             {
+            const char *vel_format = (output_in_au_days ?
+                         " %21.17f%21.17f%21.17f\n" :
+                         " %21.13f%21.13f%21.13f\n");
+
             if( !fgets( buff, sizeof( buff), ifile))
                {
                printf( "Failed to get data from input file\n");
@@ -191,7 +215,10 @@ int main( const int argc, const char **argv)
             if( in_km_s)
                for( i = 0; i < 3; i++)
                   coords[i] *= seconds_per_day / AU_IN_KM;
-            fprintf( ofile, " %16.12f%16.12f%16.12f\n",
+            if( !output_in_au_days)
+               for( i = 0; i < 3; i++)
+                  coords[i] *= AU_IN_KM / seconds_per_day;
+            fprintf( ofile, vel_format,
                   coords[0], coords[1], coords[2]);
             }
          n_written++;
