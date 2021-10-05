@@ -159,10 +159,13 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
 
    sprintf( url, "https://www.minorplanetcenter.net/mpec/%s/%s%cx%d.html",
                         year, year, half_month, mpec_no % 10);
+   assert( mpec_no > 0 && mpec_no < 620);
    if( mpec_no < 100)
       url[47] = '0' + mpec_no / 10;
-   else
+   else if( mpec_no < 360)
       url[47] = 'A' + mpec_no / 10 - 10;
+   else
+      url[47] = 'a' + mpec_no / 10 - 36;
    grab_file( url, "zz", 0);
    ifile = fopen( "zz", "rb");
    assert( ifile);
