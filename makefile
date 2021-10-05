@@ -111,6 +111,10 @@ endif
 
 CFLAGS=-Wextra -Werror -Wall -O3 -pedantic
 
+ifdef DEBUG
+	CFLAGS += -g
+endif
+
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
