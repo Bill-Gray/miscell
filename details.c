@@ -104,6 +104,8 @@ int main( const int argc, const char **argv)
             char tbuff[90], *scope;
 
             remove_html_tags( buff);
+            if( buff[0] == ' ' || buff[1] == ' ' || buff[2] == ' ')
+               fprintf( stderr, "Problem:\n%s\n", buff);
             assert( buff[0] != ' ' && buff[1] != ' ' && buff[2] != ' ');
             assert( buff[3] == ' ');
             while( fgets( tbuff, sizeof( tbuff), ifile) && tbuff[0] == ' ')
