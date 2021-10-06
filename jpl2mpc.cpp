@@ -257,11 +257,13 @@ int main( const int argc, const char **argv)
    fprintf( ofile, header_fmt, jd0, step_size, n_written);
 
    fclose( ifile);
-// fprintf( ofile, "Ephemeris from JPL Horizons output\n");
-// fprintf( ofile, "Created using 'jpl2mpc', version %s\n", __DATE__);
-// fprintf( ofile, "Ephemeris converted %s", ctime( &t0));
-// printf( "JD0: %f   Step size: %f   %ld steps\n",
-//                             jd0,  step_size, (long)n_written);
+#ifdef REMOVED
+   fprintf( ofile, "Ephemeris from JPL Horizons output\n");
+   fprintf( ofile, "Created using 'jpl2mpc', version %s\n", __DATE__);
+   fprintf( ofile, "Ephemeris converted %s", ctime( &t0));
+   printf( "JD0: %f   Step size: %f   %ld steps\n",
+                               jd0,  step_size, (long)n_written);
+#endif
    return( 0);
 }
 
