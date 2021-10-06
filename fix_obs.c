@@ -115,7 +115,7 @@ static void fix_desig( const char *obs, const size_t n_lines,
    int compare, n_found = 0;
    const char *tptr;
 
-// printf( "Replacing %.7s with %.7s\n", old_desig, new_desig);
+/* printf( "Replacing %.7s with %.7s\n", old_desig, new_desig);   */
    for( step = (size_t)0x80000000; step; step >>= 1)
       if( (loc1 = loc + step) < n_lines)
          if( memcmp( obs + loc1 * 81 + 5, old_desig, 7) < 0)
@@ -138,7 +138,7 @@ static void fix_desig( const char *obs, const size_t n_lines,
       }
    if( !n_found && new_desig[6] != ' ')
       fprintf( stderr, "No fix for %.7s = %.7s\n", old_desig, new_desig);
-// printf( "Replaced %d,  starting at %ld\n", (int)( loc - loc1), (long)loc1);
+/* printf( "Replaced %d,  starting at %ld\n", (int)( loc - loc1), (long)loc1); */
 }
 
 #ifdef __GNUC__

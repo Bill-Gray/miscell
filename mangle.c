@@ -114,7 +114,7 @@ static void output_mangled_text( const char *text)
 
       if( idx < 0 || idx > 25)
          printf( "%c&#x3%02x;", text[i], rand( ) % 33);
-//       printf( "%c", text[i]);
+/*       printf( "%c", text[i]); */
       else
          {
          if( remaps[idx])

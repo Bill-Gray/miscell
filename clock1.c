@@ -117,7 +117,7 @@ int64_t ntp_nanoseconds_since_1970( long *tai)
    struct ntptimeval ntv;
 
    ntp_gettime( &ntv);
-// ntp_gettimex( &ntv);
+/* ntp_gettimex( &ntv);    */
    if( tai)
       *tai = ntv.tai;
    return( ntv.time.tv_sec * (int64_t)1000000000 + ntv.time.tv_usec);
