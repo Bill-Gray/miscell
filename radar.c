@@ -445,7 +445,7 @@ static void put_radar_comment( const radar_obs_t *obs)
    printf( "\nCOD %.3s\n", mpc_code);
    printf( "OBS %s\n", obs->observers);
    printf( "COM Last modified %s\n", obs->time_modified);
-   while( *notes >= ' ')
+   while( notes && *notes >= ' ')
       {
       size_t len;
       const size_t max_len = 70;
