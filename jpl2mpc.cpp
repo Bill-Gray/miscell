@@ -38,8 +38,9 @@ equatorial AU/day data.)
    The following looks up a couple of JPL identifiers to get human-readable
 names.  If a name is set properly,  it can be used automatically when
 'eph2tle' tries to fit Two-Line Elements,  and that program will spot the
-international and NORAD designations.  At present,  only TESS,  Chandra,
-and Gaia are recognized,  but others can obviously be added.   */
+international and NORAD designations.  Some are here basically for reference
+purposes only;  I don't expect,  for example,  to ever produce TLEs of
+any kind for Cassini or New Horizons.   */
 
 static const char *look_up_name( const int idx)
 {
@@ -56,7 +57,7 @@ static const char *look_up_name( const int idx)
    if( idx == -235)
       return( "STEREO-B");
    if( idx == -144)
-      return( "Solar Orbiter");
+      return( "Solar Orbiter = 2020-010A = NORAD 45167");
    if( idx == -95)
       return( "TESS = 2018-038A = NORAD 43435");
    if( idx == -79)
@@ -69,6 +70,8 @@ static const char *look_up_name( const int idx)
       return( "Chandra = 1999-040B = NORAD 25867");
    if( idx == -163)
       return( "WISE");
+   if( idx == -170)
+      return( "James Webb Space Telescope = 2021-130A = NORAD 50463");
    if( idx == -139479)
       return( "Gaia = 2013-074A = NORAD 39479");
    if( idx == -9901491)
