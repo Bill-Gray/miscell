@@ -3,6 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include "watdefs.h"
+#include "lunar.h"
 #include "date.h"
 
 /* Code to read in ephemerides of JPL orbital elements and output them
@@ -21,13 +22,13 @@ several steps needed,  and you have to get them all right or your ephems
 will be bogus (and this code isn't great at error checking at present) :
 
    -- Go to the Horizons page (https://ssd.jpl.nasa.gov/horizons.cgi).
-   -- Select 'Ephemeris Type' ELEMENTS.
+   -- Select 'Ephemeris Type' Osculating Orbital Elements.
    -- Select the 'target body' to be your desired object.
    -- Select the 'center' to be either the sun (@10) or earth (@399).  I
       do plan to add some other possible orbital element centers.
-   -- Select 'Display/Output' to be plain text.
    -- Select a 'time span' to cover the desired time span.
-   -- Click 'Generate Ephemeris',  and save the output to a text file.
+   -- Click 'Generate Ephemeris',  then 'Download Results' to save the
+      output to a text file.
 */
 
 int main( const int argc, const char **argv)
@@ -50,6 +51,10 @@ int main( const int argc, const char **argv)
                         | FULL_CTIME_NO_SPACES | FULL_CTIME_MONTHS_AS_DIGITS | FULL_CTIME_LEADING_ZEROES);
          if( fgets( buff, sizeof( buff), ifile) && fgets( buff2, sizeof( buff2), ifile))
             {
+            double q = atof( buff + 31);
+
+            if( q > 200.)        /* cvt km to AU */
+                q /= AU_IN_KM;
             full_ctime( obuff + 21, atof( buff2 + 57), FULL_CTIME_YMD | FULL_CTIME_LEADING_ZEROES
                         | FULL_CTIME_FORMAT_DAY | FULL_CTIME_7_PLACES
                         | FULL_CTIME_NO_SPACES | FULL_CTIME_MONTHS_AS_DIGITS);
@@ -57,7 +62,7 @@ int main( const int argc, const char **argv)
             if( center)
                obuff[7] = '0' + center;
             sprintf( obuff + 37, " %17.14f %10.6f %10.6f %10.6f %10.8f",
-                              atof( buff + 31),                /* q */
+                              q,
                               atof( buff + 57),                /* incl */
                               atof( buff2 + 5),                /* Omega */
                               atof( buff2 + 31),                /* omega */
