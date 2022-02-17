@@ -64,31 +64,32 @@ static void put_mpc_code_from_dss( char *mpc_code, const int dss_desig)
 
    switch( dss_desig)
       {
-      case -73:
-         code = "273";
-         break;            /* used only for 367943 Duende (2012 DA14) */
-      case -25:
-         code = "257";     /* Goldstone, DSS 25 */
-         break;            /* used only as receiver for 2006 RH120 */
-      case -14:
-         code = "253";     /* Goldstone, DSS 14 */
-         break;
       case -1:
          code = "251";     /* Arecibo */
-         break;
-      case -13:            /* Goldstone,  DSS 13 */
-         code = "252";
-         break;
-      case -38:
-         code = "255";     /* used only as receiver for 6489 Golevka (1991 JX) */
-         break;
-      case -9:
-         code = "256";     /* used for a few 2007 TU24 and one 2001 EC16 obs */
          break;
       case -2:
          code = "254";
          break;            /* used only for two 1566 Icarus (1949 MA) obs */
+      case -9:
+         code = "256";     /* used for a few 2007 TU24 and one 2001 EC16 obs */
+         break;
+      case -13:            /* Goldstone,  DSS 13 */
+         code = "252";
+         break;
+      case -14:
+         code = "253";     /* Goldstone, DSS 14 */
+         break;
+      case -25:
+         code = "257";     /* Goldstone, DSS 25 */
+         break;            /* used only as receiver for 2006 RH120 */
+      case -38:
+         code = "255";     /* used only as receiver for 6489 Golevka (1991 JX) */
+         break;
+      case -73:
+         code = "273";
+         break;            /* used only for 367943 Duende (2012 DA14) */
       default:
+         fprintf( stderr, "DSS designation %d unrecognized", dss_desig);
          code = "?!!";
          break;
       }
