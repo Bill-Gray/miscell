@@ -24,7 +24,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 described at
 
 http://www.satobs.org/position/IODformat.html
-               K130213:032353605     (CYYMMDD HH:MM:SS.sss)
 
    The '-f' flag causes the date/time to be output in MPC 'standard'
 format,  to a precision of 0.000001 day = 86.4 milliseconds.  By
@@ -66,6 +65,8 @@ int main( const int argc, const char **argv)
          "8335 Tu2",    /* Tulsa-2 (Oklahoma) +35.8311  -96.1411 1083ft, 330m */
          "8336 Tu1",    /* Tulsa-1 (Oklahoma) +36.139208,-95.983429 660ft, 201m */
          "9903 Ch5",    /* station reporting Chang'e 5 obs, 2020 Nov 24 */
+         "9999 Mc1",    /* first Rob McNaught meteor station */
+         "9998 Mc2",    /* second Rob McNaught meteor station */
          NULL };
 
    if( !ifile)
@@ -93,7 +94,7 @@ int main( const int argc, const char **argv)
 
          for( i = 23; buff[i] >= '0' && buff[i] <= '9'; i++)
             ;
-         if( i == 40)
+         if( i >= 37 && i <= 40)  /* seconds, 0.1s, 0.01s,  or millisecs */
             {
             char obuff[90];
             double day;
