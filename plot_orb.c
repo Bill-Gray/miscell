@@ -109,15 +109,23 @@ int main( const int argc, const char **argv)
 /*       fprintf( ofile, "moveto\n");           */
          fprintf( ofile, "%.1f %.1f rmoveto\n", dy, -dx);
          }
-      if( strlen( buff) > 111)
+      if( strlen( buff) > 141)
          {
-         int j = 111;
+         int j = 141, loc = 141;
 
          while( buff[j] >= ' ')
             j++;
          buff[j] = '\0';
          fprintf( ofile, "currentpoint\n");
-         fprintf( ofile, "(%s) show\nmoveto\n", buff + 111);
+         if( buff[141] == '!')      /* hacked-in text offsets */
+            {
+            int x, y, n;
+
+            sscanf( buff + 142, "%d,%d %n", &x, &y, &n);
+            loc += n + 1;
+            fprintf( ofile, "%d %d rmoveto", x, y);
+            }
+         fprintf( ofile, "(%s) show\nmoveto\n", buff + loc);
          }
       line++;
       prev_x = x;
