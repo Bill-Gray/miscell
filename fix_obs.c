@@ -25,7 +25,7 @@ and the list of identifications and list of double designations,  available at
 http://www.minorplanetcenter.net/iau/ECS/MPCAT-OBS/MPCAT-OBS.html
 http://www.minorplanetcenter.net/iau/ECS/MPCAT/MPCAT.html
 
-   the input files being named 'UnnObs.txt',  'ids.txt',  and 'dbl.txt'.
+   the input files being named 'UnnObs.txt',  'ids.txt',  and 'numids.txt'.
 
    It outputs 'UnnObs2.txt',  in which the ID files are used to "correct"
 UnnObs.txt.  For example,  the line in ids.txt reading
@@ -210,13 +210,6 @@ int main( const int argc, const char **argv)
    while( fgets( iline, sizeof( iline), ifile))
       for( i = 7; iline[i] >= ' '; i += 7)
          fix_desig( obs, n_lines, iline, iline + i, xdesigs);
-   fclose( ifile);
-
-   ifile = err_fopen( "dbl.txt", "rb");
-   printf( "Adding xdesigs from dbl.txt\n");
-   while( fgets( iline, sizeof( iline), ifile))
-      for( i = 7; i + 2 < strlen( iline) && iline[i + 2] >= ' '; i += 9)
-         fix_desig( obs, n_lines, iline, iline + i + 2, xdesigs);
    fclose( ifile);
 
    ifile = err_fopen( "numids.txt", "rb");
