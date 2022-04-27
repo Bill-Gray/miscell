@@ -38,11 +38,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
 size_t total_written;
 
-
 #define FETCH_FILESIZE_SHORT               -1
 #define FETCH_FOPEN_FAILED                 -2
 #define FETCH_CURL_PERFORM_FAILED          -3
 #define FETCH_CURL_INIT_FAILED             -5
+#define FETCH_OBJECT_NOT_FOUND            -47
 
 /* In order to avoid hammering MPC's servers,  we do a bit of checking:
 if the file exists,  and has data for the object we're looking for (based
@@ -260,7 +260,7 @@ static int fetch_astrometry_from_mpc( const char *output_filename,
    unlink( output_filename);
    rval = grab_file_with_time_info( url, object_name, output_filename, 0);
    if( !rval && !look_for_link_to_astrometry( output_filename, url2))
-      rval = -314159;
+      rval = FETCH_OBJECT_NOT_FOUND;
    if( rval)
       return( rval);
    if( verbose)
