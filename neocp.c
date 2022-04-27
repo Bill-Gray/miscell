@@ -33,7 +33,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #endif
 
 /* Code to "scrape" astrometry from NEOCP,  in as efficient and
-error-proof a manner as reasonably possible.
+error-proof a manner as reasonably possible.  Note that 'neocp2.c' does
+basically the same thing,  but in a manner that may be preferable (fewer
+accesses to the MPC site and less likely to encounter troubles,  but at
+the cost of transferring more bytes;  read on for details.)  The choice
+could be argued,  but I'm currently using 'neocp2.c' exclusively.  With
+that warning,  here's how 'neocp.c' works :
 
    We begin by downloading the list of objects currently on NEOCP,
 
@@ -64,8 +69,21 @@ to 'neocp.old'.
 updated list of NEOCP astrometry in 'neocp.tmp' and an updated
 object list in 'neocplst.tmp'.  Only then can we safely remove
 the old files 'neocp.txt' and 'neocplst.txt',  and rename the
-.tmp files to replace them.   */
+.tmp files to replace them.
 
+   Note that 'neocp2.c' (q.v.) simply downloads a file from MPC
+containing all NEOCP astrometry.  That's basically our new 'neocp.txt';
+comparison with the previous one allows that code to generate 'neocp.new'
+and add removed objects to 'neocp.old'.
+
+   As a result,  only one file is downloaded from NEOCP,  even if
+multiple objects have changed.  (With this code,  we'll always grab
+the list of objects,  and then make a separate request for data for
+each object that has been updated.)  'neocp.c' will be faster and
+grab less data if few objects have changed;  'neocp2.c' may be faster
+if many objects have changed.  'neocp2.c' will also work even if the
+list file is corrupted or out of date,  both of which have happened on
+admittedly rare occasions.     */
 
    /* Limit the program to a certain amount of CPU time.  In this
       case,  if it's taking more than 200 seconds,  something
@@ -228,7 +246,7 @@ static unsigned fetch_a_file( const char *url, char *obuff,
 static bool is_valid_neocplst_line( const char *buff)
 {
    const size_t len = strlen( buff);
-   const bool is_valid = ((len == NEOCPLST_LINE_LEN || len == NEOCPLST_LINE_LEN + 1)
+   const bool is_valid = (len >= NEOCPLST_LINE_LEN && len <= NEOCPLST_LINE_LEN + 3
             && (!memcmp( buff + 48, "Updated ", 8) || !memcmp( buff + 48, "Added ", 6))
             && !memcmp( buff + 11, " 20", 3) && buff[37] == '.');
 
