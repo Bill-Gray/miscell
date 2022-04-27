@@ -48,6 +48,7 @@ int main( const int argc, const char **argv)
    FILE *ifile = fopen( argv[1], "rb"), *ofile = NULL;
    const char *code_xlate[] = {
          "0433 GRR",    /* Greg Roberts */
+         "0794 EVi",    /* Eelke Visser */
          "1086 AOO",    /* Odessa Astronomical Observatory, Kryzhanovka */
          "1244 AMa",    /* Andriy Makeyev */
          "1753 VMe",    /* Vitaly Mechinsky  */
