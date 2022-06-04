@@ -60,7 +60,7 @@ int main( const int argc, const char **argv)
    int pass, i, j, lines_to_skip = 0;
    char *buff;
 
-   if( argc < 1)
+   if( argc < 2)
       {
       printf( "Specify the input file name as a command-line argument\n");
       return( -1);
