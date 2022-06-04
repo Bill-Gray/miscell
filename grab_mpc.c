@@ -165,7 +165,11 @@ static int grab_file_with_time_info( const char *url, const char *object_name,
                   const char *outfilename, const bool append)
 {
    FILE *ofile, *ifile;
+#if defined( _WIN32) || defined( __WATCOMC__)
    const char *tname = "zzz1";
+#else
+   const char *tname = "/tmp/zzz1";
+#endif
 
    unlink( tname);
    if( grab_file( url, tname))
