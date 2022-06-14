@@ -88,7 +88,7 @@ static void error_exit( const char *error_message)
 
 int main( const int argc, const char **argv)
 {
-   FILE *ifile = fopen( argv[1], "rb");
+   FILE *ifile;
    char buff[1000], *tptr, mpec_name[15];
 
    if( argc < 2)
