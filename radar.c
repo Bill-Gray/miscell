@@ -317,9 +317,24 @@ static void fix_observers( char *buff)
    strcpy( start, obuff);
 }
 
-static int get_radar_obs( char *buff, radar_obs_t *obs)
+static void get_packed_desig( char *packed, const char *idesig)
 {
-   int field, rval = -1;
+   char tbuff[18];
+   int i = 0;
+
+   while( isdigit( idesig[i]))
+      i++;
+   if( !idesig[i])
+      sprintf( tbuff, "(%s)", idesig);
+   else
+      strcpy( tbuff, idesig);
+   if( create_mpc_packed_desig( packed, tbuff))
+      fprintf( stderr, "Couldn't pack '%s'\n", tbuff);
+}
+
+static void get_radar_obs( char *buff, radar_obs_t *obs)
+{
+   int field;
 
    memset( obs, 0, sizeof( radar_obs_t));
    for( field = 0; field < 12; field++)
@@ -355,24 +370,8 @@ static int get_radar_obs( char *buff, radar_obs_t *obs)
          switch( field)
             {
             case 0:
-               {
-               char tbuff[18];
-               int i;
-
                assert( field_len < 15);
-               i = 0;
-               while( isdigit( tptr[i]))
-                  i++;
-               if( !tptr[i])
-                  sprintf( tbuff, "(%s)", tptr);
-               else
-                  strcpy( tbuff, tptr);
-               if( create_mpc_packed_desig( obs->desig, tbuff))
-                  {
-                  fprintf( stderr, "Couldn't pack '%s'\n", tbuff);
-                  rval = -1;
-                  }
-               }
+               get_packed_desig( obs->desig, tptr);
                break;
             case 1:
                strcpy( obs->time, tptr);
@@ -408,7 +407,7 @@ static int get_radar_obs( char *buff, radar_obs_t *obs)
             case 8:
                obs->bounce_point = *tptr;
                if( *tptr != 'C' && *tptr != 'P')
-                  printf( "? Error : %d, '%s'\n", rval, tptr);
+                  printf( "? Error : '%s'\n", tptr);
                assert( *tptr == 'C' || *tptr == 'P');
                break;
             case 9:
@@ -434,7 +433,6 @@ static int get_radar_obs( char *buff, radar_obs_t *obs)
                fprintf( stderr, "? field %d\n", field);
             }
       }
-   return( rval);
 }
 
 /* The round-trip travel time,  Doppler frequency,  and their
