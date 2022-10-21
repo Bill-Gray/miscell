@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
+#include <time.h>
 #include <assert.h>
 #include "mpc_func.h"
 
@@ -426,6 +427,7 @@ static int get_radar_obs( char *buff, radar_obs_t *obs)
                strcpy( obs->notes, tptr);
                break;
             case 11:
+               assert( strlen( tptr) == 19);
                strcpy( obs->time_modified, tptr);
                break;
             default:
@@ -456,6 +458,9 @@ static void put_with_implicit_decimal( char *line, const char *text)
       *line++ = ' ';       /* remove leading zeroes */
 }
 
+static char last_modified[20];
+static char last_observed[20];
+
 static void put_radar_comment( const radar_obs_t *obs)
 {
    const char *notes = obs->notes;
@@ -465,6 +470,10 @@ static void put_radar_comment( const radar_obs_t *obs)
    printf( "\nCOD %.3s\n", mpc_code);
    printf( "OBS %s\n", obs->observers);
    printf( "COM Last modified %s\n", obs->time_modified);
+   if( strcmp( last_modified, obs->time_modified) < 0)
+      strcpy( last_modified, obs->time_modified);
+   if( strcmp( last_observed, obs->time) < 0)
+      strcpy( last_observed, obs->time);
    while( notes && *notes >= ' ')
       {
       size_t len;
@@ -557,6 +566,7 @@ int main( const int argc, const char **argv)
       {
       int len;
       char *buff;
+      time_t t0 = time( NULL);
 
       fseek( ifile, 0L, SEEK_END);
       len = (int)ftell( ifile);
@@ -581,6 +591,12 @@ int main( const int argc, const char **argv)
             put_radar_obs( line1, line2, &obs);
             printf( "%s\n%s\n", line1, line2);
             }
+      printf( "COM Final modification %s\n", last_modified);
+      printf( "COM Final observation %s\n", last_observed);
+      printf( "COM 'radar' converter run at %s", ctime( &t0));
+      printf( "COM 'radar' version 2022 Oct 21;  see\n"
+              "COM https://github.com/Bill-Gray/miscell/blob/master/radar.c\n"
+              "COM for relevant code\n");
       }
    return( 0);
 }
