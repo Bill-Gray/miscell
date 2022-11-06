@@ -435,6 +435,56 @@ static void get_radar_obs( char *buff, radar_obs_t *obs)
       }
 }
 
+static void output_index( const char *buff)
+{
+   char **found = (char **)calloc( 10000, sizeof( char *));
+   size_t n_found = 0, i;
+
+   while( *buff)
+      {
+      buff++;
+      if( buff[0] == '[' && buff[1] == '"')
+         {
+         char tbuff[20], packed[20];
+
+         buff += 2;
+         i = 0;
+         while( buff[i] && buff[i] != '"')
+            i++;
+         assert( i < sizeof( tbuff));
+         memcpy( tbuff, buff, i);
+         buff += i;
+         tbuff[i] = '\0';
+         get_packed_desig( packed, tbuff);
+         i = 0;
+         while( i < n_found && strcmp( found[i], packed))
+            i++;
+         if( i == n_found)
+            {
+            found[n_found] = (char *)malloc( strlen( packed) + 1);
+            strcpy( found[n_found++], packed);
+            }
+         }
+      }
+   for( i = 1; i < n_found; i++)
+      if( strcmp( found[i], found[i - 1]) < 0)
+         {
+         char *tptr = found[i];
+
+         found[i] = found[i - 1];
+         found[i - 1] = tptr;
+         if( i > 1)
+            i -= 2;
+         }
+   for( i = 0; i < n_found; i++)
+      {
+      if( !(i % 5))
+         printf( "\nCOM desigs :");
+      printf( " %s", found[i]);
+      }
+   printf( "\n");
+}
+
 /* The round-trip travel time,  Doppler frequency,  and their
 uncertainties are all stored with implicit decimal points.
 See MPC's documentation of the radar astrometry format.  */
@@ -577,6 +627,11 @@ int main( const int argc, const char **argv)
       i = 0;
       while( buff[i] && memcmp( buff + i, "\"data\":", 7))
          i++;
+      printf( "COM 'radar' converter run at %s", ctime( &t0));
+      printf( "COM 'radar' version 2022 Oct 21;  see\n"
+              "COM https://github.com/Bill-Gray/miscell/blob/master/radar.c\n"
+              "COM for relevant code\n");
+      output_index( buff + i);
       for( ; i < len; i++)
          if( buff[i - 1] == '[' && buff[i] == '"')
             {
@@ -591,10 +646,6 @@ int main( const int argc, const char **argv)
             }
       printf( "COM Final modification %s\n", last_modified);
       printf( "COM Final observation %s\n", last_observed);
-      printf( "COM 'radar' converter run at %s", ctime( &t0));
-      printf( "COM 'radar' version 2022 Oct 21;  see\n"
-              "COM https://github.com/Bill-Gray/miscell/blob/master/radar.c\n"
-              "COM for relevant code\n");
       }
    return( 0);
 }
