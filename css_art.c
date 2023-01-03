@@ -36,6 +36,7 @@ If we then see any of
 COD G96
 COD I52
 COD V06
+COD V00
 COD 703
 
    the state becomes OUTPUT_TEXT.  When we see a line starting
@@ -68,6 +69,7 @@ int main( const int argc, const char **argv)
       if( !memcmp( buff, "Subject: 703 ARTSAT ", 20)
                || !memcmp( buff, "Subject: G96 ARTSAT ", 20)
                || !memcmp( buff, "Subject: I52 ARTSAT ", 20)
+               || !memcmp( buff, "Subject: V00 ARTSAT ", 20)
                || !memcmp( buff, "Subject: V06 ARTSAT ", 20))
          if( !memcmp( buff + 20, search_obj, strlen( search_obj)))
             {
@@ -77,6 +79,7 @@ int main( const int argc, const char **argv)
       if( state == GOT_OBJECT)
          if( !memcmp( buff, "COD G96", 7) || !memcmp( buff, "COD 703", 7)
                                           || !memcmp( buff, "COD I52", 7)
+                                          || !memcmp( buff, "COD V00", 7)
                                           || !memcmp( buff, "COD V06", 7))
             state = OUTPUT_TEXT;
       if( state == OUTPUT_TEXT && !memcmp( buff, "From", 4))
