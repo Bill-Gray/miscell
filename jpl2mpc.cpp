@@ -78,6 +78,8 @@ static const char *look_up_name( const int idx)
       return( "Tianwen-1 = 2020-049A = NORAD 45935");
    if( idx == -37)
       return( "Hayabusa 2 = 2014-076A = NORAD 40319");
+   if( idx == -164)
+      return( "Lunar Flashlight = 2022-168B = NORAD 54697");
    return( "");
 }
 
