@@ -13,13 +13,12 @@ UNAME=$(shell qqame)
 EXE=
 RM=rm -f
 PREFIX  =
-ADDED_EXES = grab_mpc neocp gmake2bsd
+ADDED_EXES = grab_mpc neocp gmake2bsd jpl2ast jpl2sof
 CURL=-lcurl
 LUNAR_LIB = -L ~/lib -llunar
 
 ifdef W64
 	EXE=.exe
-	RM=del
 	PREFIX  = x86_64-w64-mingw32-g
 	ADDED_EXES =
 	CURL = -lurlmon
@@ -28,7 +27,6 @@ endif
 
 ifdef W32
 	EXE=.exe
-	RM=del
 	PREFIX  = i686-w64-mingw32-g
 	ADDED_EXES =
 	CURL = -lurlmon
@@ -45,7 +43,7 @@ ADDED_MATH_LIB=-lm
 
 all:  bc430$(EXE) blunder$(EXE) clock1$(EXE) css_art$(EXE) \
 	csv2txt$(EXE) details$(EXE) ellip_pt$(EXE) eop_proc$(EXE) fix_obs$(EXE) \
-	gfc_xvt$(EXE) gpl$(EXE) gmake2bsd$(EXE) i2mpc$(EXE) inverf$(EXE) jpl2ast$(EXE) \
+	gfc_xvt$(EXE) gpl$(EXE) gmake2bsd$(EXE) i2mpc$(EXE) inverf$(EXE) \
 	jpl2mpc$(EXE) ktest$(EXE) mpcorbx$(EXE) mpc_extr$(EXE) mpc_sort$(EXE) \
 	mpc_stat$(EXE) nofs2mpc$(EXE) peirce$(EXE) sr_plot$(EXE) \
 	plot_orb$(EXE) reverser$(EXE) \
@@ -119,11 +117,32 @@ endif
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
+bc430$(EXE): bc430.c
+	$(CC) $(CFLAGS) -o bc430$(EXE) bc430.c
+
 blunder$(EXE): blunder.cpp
 	$(CC) $(CFLAGS) -o blunder$(EXE) blunder.cpp $(ADDED_MATH_LIB)
 
+clock1$(EXE): clock1.c
+	$(CC) $(CFLAGS) -o clock1$(EXE) clock1.c
+
+css_art$(EXE): css_art.c
+	$(CC) $(CFLAGS) -o css_art$(EXE) css_art.c
+
+csv2txt$(EXE): csv2txt.c
+	$(CC) $(CFLAGS) -o csv2txt$(EXE) csv2txt.c
+
+details$(EXE): details.c
+	$(CC) $(CFLAGS) -o details$(EXE) details.c
+
 ellip_pt$(EXE): ellip_pt.c
 	$(CC) $(CFLAGS) -o ellip_pt$(EXE) ellip_pt.c $(ADDED_MATH_LIB)
+
+eop_proc$(EXE): eop_proc.c
+	$(CC) $(CFLAGS) -o eop_proc$(EXE) eop_proc.c
+
+fix_obs$(EXE): fix_obs.c
+	$(CC) $(CFLAGS) -o fix_obs$(EXE) fix_obs.c
 
 getpoint$(EXE): getpoint.c
 	$(CC) $(CFLAGS) -o getpoint$(EXE) getpoint.c
@@ -199,6 +218,9 @@ plot_orb$(EXE): plot_orb.c
 
 radar$(EXE): radar.c
 	$(CC) $(CFLAGS) -o radar$(EXE) -I ~/include radar.c $(LUNAR_LIB) $(ADDED_MATH_LIB)
+
+reverser$(EXE): reverser.c
+	$(CC) $(CFLAGS) -o reverser$(EXE) reverser.c
 
 si_print$(EXE): si_print.c
 	$(CC) $(CFLAGS) -o si_print$(EXE) si_print.c -DTEST_CODE $(ADDED_MATH_LIB)
