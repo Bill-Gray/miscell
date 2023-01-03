@@ -45,8 +45,8 @@ ADDED_MATH_LIB=-lm
 
 all:  bc430$(EXE) blunder$(EXE) clock1$(EXE) css_art$(EXE) \
 	csv2txt$(EXE) details$(EXE) ellip_pt$(EXE) eop_proc$(EXE) fix_obs$(EXE) \
-	gfc_xvt$(EXE) gpl$(EXE) gmake2bsd$(EXE) i2mpc$(EXE) inverf$(EXE) jpl2mpc$(EXE) \
-	ktest$(EXE) mpcorbx$(EXE) mpc_extr$(EXE) mpc_sort$(EXE) \
+	gfc_xvt$(EXE) gpl$(EXE) gmake2bsd$(EXE) i2mpc$(EXE) inverf$(EXE) jpl2ast$(EXE) \
+	jpl2mpc$(EXE) ktest$(EXE) mpcorbx$(EXE) mpc_extr$(EXE) mpc_sort$(EXE) \
 	mpc_stat$(EXE) nofs2mpc$(EXE) peirce$(EXE) sr_plot$(EXE) \
 	plot_orb$(EXE) reverser$(EXE) \
 	si_print$(EXE) splottes$(EXE) vid_dump$(EXE) \
@@ -72,6 +72,7 @@ clean:
 	$(RM) grab_mpc$(EXE)
 	$(RM) i2mpc$(EXE)
 	$(RM) inverf$(EXE)
+	$(RM) jpl2ast$(EXE)
 	$(RM) jpl2mpc$(EXE)
 	$(RM) jpl2sof$(EXE)
 	$(RM) ktest$(EXE)
@@ -147,6 +148,9 @@ inverf$(EXE): inverf.c
 
 ktest$(EXE): ktest.c
 	$(CC) $(CFLAGS) -o ktest$(EXE) ktest.c $(ADDED_MATH_LIB)
+
+jpl2ast$(EXE): jpl2ast.c
+	$(CC) $(CFLAGS) -o jpl2ast$(EXE) -I ~/include jpl2ast.c $(LUNAR_LIB)
 
 jpl2mpc$(EXE): jpl2mpc.cpp
 	$(CC) $(CFLAGS) -o jpl2mpc$(EXE) jpl2mpc.cpp
