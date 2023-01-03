@@ -128,8 +128,8 @@ static bool havent_seen_this_name( const char *iname)
 typedef struct
    {
    char desig[20], time[20], time_modified[20];
-   char measurement[20], sigma[20];
-   int freq_mhz, receiver, xmitter;
+   char measurement[20], sigma[20], freq_mhz[20];
+   int receiver, xmitter;
    bool is_range;
    char bounce_point;      /* P = peak power, C = center of mass */
    int reference;
@@ -391,7 +391,7 @@ static void get_radar_obs( char *buff, radar_obs_t *obs)
                   fprintf( stderr, "Bad units '%s'\n", tptr);
                break;
             case 5:
-               obs->freq_mhz = atoi( tptr);
+               strcpy( obs->freq_mhz, tptr);
                break;
             case 6:
                obs->receiver = atoi( tptr);
@@ -556,6 +556,7 @@ static void put_radar_obs( char *line1, char *line2, const radar_obs_t *obs)
    const int microdays = (seconds * 625 + 27) / 54;
    int dest_column = (obs->is_range ? 43 : 58);
    const char *measurement = obs->measurement;
+   char *tptr;
 
    memset( line1, ' ', 80);
    line1[80] = '\0';
@@ -571,8 +572,20 @@ static void put_radar_obs( char *line1, char *line2, const radar_obs_t *obs)
    put_mpc_code_from_dss( line1 + 77, obs->receiver);
    strcpy( line2, line1);
    line2[14] = 'r';
-   sprintf( line1 + 62, "%5d", obs->freq_mhz);
+   sprintf( line1 + 62, "%5d", atoi( obs->freq_mhz));
    line1[67] = ' ';
+   tptr = strchr( obs->freq_mhz, '.');
+   if( tptr)      /* store a fractional part of freq in mhz */
+      {
+      int loc2 = 62;
+
+      tptr++;
+      if( *tptr)
+         line1[67] = *tptr++;
+      assert( strlen( tptr) < 6);
+      while( *tptr)
+         line2[loc2++] = *tptr++;
+      }
    if( !obs->is_range)
       {
       line1[47] = (*measurement == '-' ? '-' : '+');
@@ -628,7 +641,7 @@ int main( const int argc, const char **argv)
       while( buff[i] && memcmp( buff + i, "\"data\":", 7))
          i++;
       printf( "COM 'radar' converter run at %s", ctime( &t0));
-      printf( "COM 'radar' version 2022 Oct 21;  see\n"
+      printf( "COM 'radar' version 2023 Jan 03;  see\n"
               "COM https://github.com/Bill-Gray/miscell/blob/master/radar.c\n"
               "COM for relevant code\n");
       output_index( buff + i);
