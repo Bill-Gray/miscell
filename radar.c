@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #include <time.h>
 #include <assert.h>
 #include "mpc_func.h"
+#include "stringex.h"
 
 /* Getting radar astrometry in a timely manner can be problematic.  It appears
 almost immediately at
@@ -273,8 +274,8 @@ static void fix_observers( char *buff)
    for( i = 0; subs[i]; i += 2)
       if( (tptr = strcasestr( buff, subs[i])) != NULL)
          {
-         strcpy( obuff, subs[i + 1]);
-         strcat( obuff, tptr + strlen( subs[i]));
+         strlcpy_error( obuff, subs[i + 1]);
+         strlcat_error( obuff, tptr + strlen( subs[i]));
          strcpy( tptr, obuff);
          }
 
@@ -310,7 +311,7 @@ static void fix_observers( char *buff)
       buff += i;
       if( !done)
          {
-         strcat( obuff, ", ");
+         strlcat_error( obuff, ", ");
          buff++;
          }
       }
@@ -319,15 +320,15 @@ static void fix_observers( char *buff)
 
 static void get_packed_desig( char *packed, const char *idesig)
 {
-   char tbuff[18];
+   char tbuff[22];
    int i = 0;
 
    while( isdigit( idesig[i]))
       i++;
    if( !idesig[i])
-      sprintf( tbuff, "(%s)", idesig);
+      snprintf_err( tbuff, sizeof( tbuff), "(%s)", idesig);
    else
-      strcpy( tbuff, idesig);
+      strlcpy_error( tbuff, idesig);
    if( create_mpc_packed_desig( packed, tbuff))
       fprintf( stderr, "Couldn't pack '%s'\n", tbuff);
 }
@@ -374,13 +375,13 @@ static void get_radar_obs( char *buff, radar_obs_t *obs)
                get_packed_desig( obs->desig, tptr);
                break;
             case 1:
-               strcpy( obs->time, tptr);
+               strlcpy_error( obs->time, tptr);
                break;
             case 2:
-               strcpy( obs->measurement, tptr);
+               strlcpy_error( obs->measurement, tptr);
                break;
             case 3:
-               strcpy( obs->sigma, tptr);
+               strlcpy_error( obs->sigma, tptr);
                break;
             case 4:
                if( !strcmp( tptr, "Hz"))
@@ -391,7 +392,7 @@ static void get_radar_obs( char *buff, radar_obs_t *obs)
                   fprintf( stderr, "Bad units '%s'\n", tptr);
                break;
             case 5:
-               strcpy( obs->freq_mhz, tptr);
+               strlcpy_error( obs->freq_mhz, tptr);
                break;
             case 6:
                obs->receiver = atoi( tptr);
@@ -415,7 +416,7 @@ static void get_radar_obs( char *buff, radar_obs_t *obs)
                char tbuff[200];
 
                assert( field_len < (int)sizeof( tbuff) - 1);
-               strcpy( tbuff, tptr);
+               strlcpy_error( tbuff, tptr);
                fix_observers( tbuff);
                obs->observers = (char *)malloc( strlen( tbuff) + 1);
                strcpy( obs->observers, tbuff);
@@ -427,7 +428,7 @@ static void get_radar_obs( char *buff, radar_obs_t *obs)
                break;
             case 11:
                assert( strlen( tptr) == 19);
-               strcpy( obs->time_modified, tptr);
+               strlcpy_error( obs->time_modified, tptr);
                break;
             default:
                fprintf( stderr, "? field %d\n", field);
@@ -519,9 +520,9 @@ static void put_radar_comment( const radar_obs_t *obs)
    printf( "OBS %s\n", obs->observers);
    printf( "COM Last modified %s\n", obs->time_modified);
    if( strcmp( last_modified, obs->time_modified) < 0)
-      strcpy( last_modified, obs->time_modified);
+      strlcpy_error( last_modified, obs->time_modified);
    if( strcmp( last_observed, obs->time) < 0)
-      strcpy( last_observed, obs->time);
+      strlcpy_error( last_observed, obs->time);
    while( notes && *notes >= ' ')
       {
       size_t len;
@@ -565,14 +566,14 @@ static void put_radar_obs( char *line1, char *line2, const radar_obs_t *obs)
    memcpy( line1 + 15, obs->time, 10);
    line1[19] = line1[22] = ' ';
    line1[25] = '.';
-   sprintf( line1 + 26, "%06d", microdays);
+   snprintf_err( line1 + 26, 8, "%06d", microdays);
    line1[32] = ' ';
    put_mpc_code_from_dss( line1 + 68, obs->xmitter);
    memcpy( line1 + 72, "JPLRS", 5);
    put_mpc_code_from_dss( line1 + 77, obs->receiver);
    strcpy( line2, line1);
    line2[14] = 'r';
-   sprintf( line1 + 62, "%5d", atoi( obs->freq_mhz));
+   snprintf_err( line1 + 62, 7, "%5d", atoi( obs->freq_mhz));
    line1[67] = ' ';
    tptr = strchr( obs->freq_mhz, '.');
    if( tptr)      /* store a fractional part of freq in mhz */
