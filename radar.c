@@ -501,7 +501,13 @@ static void put_with_implicit_decimal( char *line, const char *text)
       len = strlen( text);
    memcpy( line - len, text, len);
    if( decimal)
-      memcpy( line, decimal + 1, strlen( decimal + 1));
+      {
+      size_t n_places = strlen( decimal + 1);
+
+      if( n_places > 4)
+         n_places = 4;
+      memcpy( line, decimal + 1, n_places);
+      }
    line -= len;
    while( *line == '0' && line[1] != ' ')
       *line++ = ' ';       /* remove leading zeroes */
