@@ -98,7 +98,7 @@ int main( const int argc, const char **argv)
                   memcpy( obuff + 15, buff + 6, 4);       /* year */
                   obuff[20] = (char)( '0' + month / 10);
                   obuff[21] = (char)( '0' + month % 10);
-                  sprintf( obuff + 24, "%.6f",
+                  snprintf( obuff + 24, sizeof( obuff) - 24, "%.6f",
                            atof( buff + 19) / 24. + atof( buff + 22) / 1440.
                          + atof( buff + 25) / 86400.);
                   obuff[23] = buff[15];   /* day (10s) */

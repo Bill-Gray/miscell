@@ -225,7 +225,7 @@ int main( const int argc, const char **argv)
             parallax_to_lat_alt( x, y, &lat, &ht_in_meters);
             if( buff[21] != ' ' && buff[32] != ' ')
                {        /* make sure there's precision for altitude */
-               sprintf( alt_buff, "%5.0f", ht_in_meters);
+               snprintf( alt_buff, sizeof( alt_buff), "%5.0f", ht_in_meters);
                }
             else        /* put blanks in for altitude */
                strcpy( alt_buff, "     ");
@@ -235,7 +235,7 @@ int main( const int argc, const char **argv)
                if( rects[i].lon1 < lon && rects[i].lon2 > lon)
                   if( rects[i].lat1 < lat && rects[i].lat2 > lat)
                      rect_no = i;
-            sprintf( buff + 34, "  %+09.5f  %s ", lat, alt_buff);
+            snprintf( buff + 34, sizeof( buff) - 34, "  %+09.5f  %s ", lat, alt_buff);
             if( rect_no >= 0)
                memcpy( buff + 53, rects[rect_no].name, 15);
             else

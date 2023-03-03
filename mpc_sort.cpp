@@ -72,7 +72,7 @@ static FILE *err_fopen( const char *filename, const char *permits)
       {
       char buff[90];
 
-      sprintf( buff, "Couldn't open '%s'\n", filename);
+      snprintf( buff, sizeof( buff), "Couldn't open '%s'\n", filename);
       err_exit( buff, -1);
       }
    return( rval);

@@ -125,7 +125,7 @@ int main( const int argc, const char **argv)
                      + (double)((int)buff[33] * 10 + buff[34]) / 1440.
                      + (double)((int)buff[35] * 10 + buff[36]) / 86400.
                      + (double)((int)buff[37] * 10 + buff[38]) / 8640000.;
-               sprintf( obuff + 23, "%09.6f", day);
+               snprintf( obuff + 23, sizeof( obuff) - 23, "%09.6f", day);
                }
                      /* buff[44] contains an angle format code,  allowing */
                      /* angles to be in minutes or seconds or degrees...  */
