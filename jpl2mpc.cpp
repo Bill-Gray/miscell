@@ -86,16 +86,20 @@ static int look_up_name( char *obuff, const size_t buffsize, const int idx)
 {
    size_t i;
 
-   *obuff = '\0';
    for( i = 0; i < sizeof( jpl_xrefs) / sizeof( jpl_xrefs[0]); i++)
       if( idx == jpl_xrefs[i].jpl_desig)
+         {
          snprintf( obuff, (int)buffsize, "%s = %s = NORAD %d",
                   jpl_xrefs[i].name, jpl_xrefs[i].intl_desig,
                   jpl_xrefs[i].norad_number);
-   if( !*obuff)
-      fprintf( stderr, "Couldn't find %d\n", idx);
-   assert( *obuff);
-   return( *obuff != '\0');
+         return( i);
+         }
+   fprintf( stderr, "Couldn't find JPL ID %d\n"
+             "This object's JPL object number isn't in the list built into\n"
+             "this program.  It either isn't an artsat,  or just isn't in the\n"
+             "list.  That may just mean the list needs updating;  please contact\n"
+             "the author of this program if you think that's happening here.\n", idx);
+   exit( -1);
 }
 
 static int get_coords_from_buff( double *coords, const char *buff, const bool is_ecliptical)
@@ -290,7 +294,7 @@ int main( const int argc, const char **argv)
          }
 
    t0 = time( NULL);
-   fprintf( ofile, "\n\nCreated from Horizons data by 'jpl2mpc', ver %s, at %s UTC\n",
+   fprintf( ofile, "\n\nCreated from Horizons data by 'jpl2mpc', ver %s, at %.24s UTC\n",
                                         __DATE__, asctime( gmtime( &t0)));
                      /* Seek back to start of input file & write header data: */
    fseek( ifile, 0L, SEEK_SET);
