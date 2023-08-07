@@ -47,7 +47,10 @@ double inverf( const double y)
 {
    double x, diff;
    const double erf_limit = .915;
+   const double t = sqrt( -2. * log( (1. - y) / 2.));
+   const double guess = -0.70711*((2.30753+t*0.27061)/(1.+t*(0.99229+t*0.04481)) - t);
 
+   printf( "NR guess %.8f\n", guess);
    if( y < -erf_limit)
       return( -inverf( -y));
    else if( y > erf_limit)
