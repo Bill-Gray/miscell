@@ -31,7 +31,9 @@ TEL 0.43-m f/6.8 reflector + CCD
    This is the form described at
 https://www.minorplanetcenter.net/iau/info/ObsDetails.html
 
-   Takes the name of an MPEC as a command-line argument.   */
+   Takes the name of an MPEC as a command-line argument.  If an MPC
+code is given as an additional command-line argument,  then only
+that code is shown. */
 
 /* Anything in the input between angle brackets is assumed to be an HTML
 tag,  and irrelevant/unwanted.   Strip 'em all out : */
@@ -104,7 +106,7 @@ int main( const int argc, const char **argv)
             char tbuff[90], *scope;
 
             remove_html_tags( buff);
-            if( buff[0] == ' ' || buff[1] == ' ' || buff[2] == ' ')
+            if( buff[0] == ' ' || buff[1] == ' ' || buff[2] == ' ' || buff[3] != ' ')
                fprintf( stderr, "Problem:\n%s\n", buff);
             assert( buff[0] != ' ' && buff[1] != ' ' && buff[2] != ' ');
             assert( buff[3] == ' ');
@@ -119,7 +121,7 @@ int main( const int argc, const char **argv)
                }
             strip_trailing_period_and_whitespace( buff);
             scope = find_telescope( buff);
-            if( scope)
+            if( scope && (argc == 2 || !memcmp( argv[2], buff, 3)))
                {
                int pass;
 
