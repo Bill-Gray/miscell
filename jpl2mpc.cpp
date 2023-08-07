@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #include <math.h>
 #include <time.h>
 #include <stdint.h>
+#include <assert.h>
 
 /* Code to convert an ephemeris gathered from JPL's _Horizons_ system into
 the format used by MPC's DASO service,  or for generating TLEs with
@@ -38,49 +39,63 @@ equatorial AU/day data.)
    The following looks up a couple of JPL identifiers to get human-readable
 names.  If a name is set properly,  it can be used automatically when
 'eph2tle' tries to fit Two-Line Elements,  and that program will spot the
-international and NORAD designations.  Some are here basically for reference
-purposes only;  I don't expect,  for example,  to ever produce TLEs of
-any kind for Cassini or New Horizons.   */
+international and NORAD designations.  The table is also used in add_off.c
+in the 'lunar repository;  if objects are added to one,  they should be
+added to the other.  The re-use is why the table includes objects such
+as Cassini and New Horizons,  for which TLEs will never be computed. */
 
-static const char *look_up_name( const int idx)
+typedef struct
 {
-   if( idx == -21)
-      return( "SOHO");
-   if( idx == -49)
-      return( "Lucy");
-   if( idx == -48)
-      return( "Hubble Space Telescope");
-   if( idx == -82)
-      return( "Cassini");
-   if( idx == -234)
-      return( "STEREO-A");
-   if( idx == -235)
-      return( "STEREO-B");
-   if( idx == -144)
-      return( "Solar Orbiter = 2020-010A = NORAD 45167");
-   if( idx == -95)
-      return( "TESS = 2018-038A = NORAD 43435");
-   if( idx == -79)
-      return( "Spitzer Space Telescope");
-   if( idx == -96)
-      return( "Parker Space Probe");
-   if( idx == -98)
-      return( "New Horizons");
-   if( idx == -151)
-      return( "Chandra = 1999-040B = NORAD 25867");
-   if( idx == -163)
-      return( "WISE");
-   if( idx == -170)
-      return( "James Webb Space Telescope = 2021-130A = NORAD 50463");
-   if( idx == -139479)
-      return( "Gaia = 2013-074A = NORAD 39479");
-   if( idx == -9901491)
-      return( "Tianwen-1 = 2020-049A = NORAD 45935");
-   if( idx == -37)
-      return( "Hayabusa 2 = 2014-076A = NORAD 40319");
-   if( idx == -164)
-      return( "Lunar Flashlight = 2022-168B = NORAD 54697");
-   return( "");
+   const char mpc_code[4];
+   int jpl_desig, norad_number;
+   const char *intl_desig, *name;
+} jpl_xref_t;
+
+/* MPC code    JPL#   NORAD#  Intl desig    Common name */
+static const jpl_xref_t jpl_xrefs[] = {
+   { "249",      -21, 23726, "1995-065A",   "SOHO" },
+   { "Jui",      -28, 56176, "2023-053A",   "JUICE" },
+   { "Ha2",      -37, 40319, "2014-076A",   "Hayabusa 2" },
+   { "250",      -48, 20580, "1990-037B",   "Hubble Space Telescope" },
+   { "Luc",      -49, 49328, "2021-093A",   "Lucy" },
+   { "Cas",      -82, 25008, "1997-061A",   "Cassini" },
+   { "245",      -79, 27871, "2003-038A",   "Spitzer Space Telescope" },
+   { "C57",      -95, 43435, "2018-038A",   "TESS" },
+   { "PSP",      -96, 43592, "2018-065A",   "Parker Solar Probe" },
+   { "C54",      -98, 28928, "2006-001A",   "New Horizons" },
+   { "Equ",     -101, 79970, "2022-156ZZZ", "EQUULEUS" },
+   { "SoO",     -144, 45167, "2020-010A",   "Solar Orbiter" },
+   { "Cha",     -151, 25867, "1999-040B",   "Chandra X-ray Observatory" },
+   { "Cdr",     -158, 57320, "2023-098A",   "Chandrayaan-3" },
+   { "C51",     -163, 36119, "2009-071A",   "WISE" },
+   { "LFL",     -164, 54697, "2022-168B",   "Lunar Flashlight" },
+   { "274",     -170, 50463, "2021-130A",   "James Webb Space Telescope" },
+   { "C55",     -227, 34380, "2009-011A",   "Kepler" },
+   { "C49",     -234, 29510, "2006-047A",   "STEREO-A" },
+   { "C50",     -235, 29511, "2006-047B",   "STEREO-B" },
+   { "Euc",     -680, 57217, "2023-092A",   "Euclid" },
+   { "C52",  -128485, 28485, "2004-047A",   "Swift" },
+   { "C53",  -139089, 39089, "2013-009D",   "NEOSSat" },
+   { "258",  -139479, 39479, "2013-074A",   "Gaia" },
+   { "C56",  -141043, 41043, "2015-070A",   "LISA Pathfinder" },
+   { "C59",  -148840, 48841, "2021-050B",   "Yangwang 1" },
+   { "Tia", -9901491, 45935, "2020-049A",   "Tianwen-1" } };
+/* MPC code    JPL#   NORAD#  Intl desig    Common name */
+
+static int look_up_name( char *obuff, const size_t buffsize, const int idx)
+{
+   size_t i;
+
+   *obuff = '\0';
+   for( i = 0; i < sizeof( jpl_xrefs) / sizeof( jpl_xrefs[0]); i++)
+      if( idx == jpl_xrefs[i].jpl_desig)
+         snprintf( obuff, (int)buffsize, "%s = %s = NORAD %d",
+                  jpl_xrefs[i].name, jpl_xrefs[i].intl_desig,
+                  jpl_xrefs[i].norad_number);
+   if( !*obuff)
+      fprintf( stderr, "Couldn't find %d\n", idx);
+   assert( *obuff);
+   return( *obuff != '\0');
 }
 
 static int get_coords_from_buff( double *coords, const char *buff, const bool is_ecliptical)
@@ -108,6 +123,19 @@ static int get_coords_from_buff( double *coords, const char *buff, const bool is
    return( 0);
 }
 
+static double ephemeris_line_jd( const char *buff)
+{
+   const double rval = atof( buff);
+
+   if( rval > 2000000. && rval < 3000000. &&
+               strlen( buff) > 54 && !memcmp( buff + 17, " = A.D.", 7)
+               && buff[42] == ':' && buff[45] == '.'
+               && !memcmp( buff + 50, " TDB", 4))
+      return( rval);
+   else                          /* not an ephemeris line */
+      return( 0.);
+}
+
 int main( const int argc, const char **argv)
 {
    FILE *ifile = (argc > 1 ? fopen( argv[1], "rb") : NULL);
@@ -120,7 +148,7 @@ int main( const int argc, const char **argv)
    bool is_ecliptical = false, in_km_s = false;
    bool output_in_au_days = true;
    const char *header_fmt = "%13.5f %14.10f %4u";
-   const char *object_name = "";
+   char object_name[90];
    const double AU_IN_KM = 1.495978707e+8;
    const double seconds_per_day = 24. * 60. * 60.;
 
@@ -152,40 +180,72 @@ int main( const int argc, const char **argv)
                break;
             }
 
-   fseek( ifile, 0L, SEEK_SET);
-   fprintf( ofile, header_fmt, 0., 0., 0);
-   if( output_in_au_days)
-      fprintf( ofile, " 0,1,1");  /* i.e.,  ecliptic J2000 in AU and days */
-   else
-      fprintf( ofile, " 0,149597870.7,86400");     /* km and km/s */
    while( fgets( buff, sizeof( buff), ifile))
-      if( (jd = atof( buff)) > 2000000. && jd < 3000000. &&
-               strlen( buff) > 54 && !memcmp( buff + 17, " = A.D.", 7)
-               && buff[42] == ':' && buff[45] == '.'
-               && !memcmp( buff + 50, " TDB", 4))
+      {
+      if( (jd = ephemeris_line_jd( buff)) > 0.)
          {
-         double coords[3];
-         int i;
-
-         if( is_equatorial == is_ecliptical)       /* should be one or the other */
-            {
-            printf( "Input coordinates must be in the Earth mean equator and equinox\n");
-            printf( "or in J2000 ecliptic coordinates\n");
-            return( -1);
-            }
          if( !n_written)
             {
             jd0 = jd;
             int_jd0 = atoi( buff);
             frac_jd0 = atof( buff + 7);
-            if( *object_name)
-               fprintf( ofile, " (500) Geocentric: %s\n", object_name);
-            else
-               fprintf( ofile, "\n");
             }
          else if( n_written == 1)
             step_size = (atof( buff + 7) - frac_jd0)
                                   + (double)( atoi( buff) - int_jd0);
+         n_written++;
+         }
+      else if( !memcmp( buff, "   VX    VY    VZ", 17))
+         state_vectors = true;
+      else if( strstr( buff, "Earth Mean Equator and Equinox"))
+         is_equatorial = true;
+      else if( strstr( buff, "Reference frame : ICRF"))
+         is_equatorial = true;
+      else if( strstr( buff, "Ecliptic and Mean Equinox of Reference Epoch"))
+         is_ecliptical = true;
+      else if( strstr( buff, "Reference frame : Ecliptic of J2000"))
+         is_ecliptical = true;
+      else if( !memcmp( buff, " Revised:", 9))
+         {
+         char *id = strchr( buff + 70, '-');
+
+         assert( id);
+         look_up_name( object_name, sizeof( object_name), atoi( id));
+         }
+      else if( !memcmp( buff, "Target body name:", 17))
+         {
+         const char *tptr = strstr( buff, "(-");
+
+         if( tptr)
+            look_up_name( object_name, sizeof( object_name), atoi( tptr + 1));
+         }
+      else if( !memcmp( buff,  "Output units    : KM-S", 22))
+         in_km_s = true;
+      }
+   if( is_equatorial == is_ecliptical)       /* should be one or the other */
+      {
+      fprintf( stderr, "Input coordinates must be in the Earth mean equator\n"
+                       "and equinox,  or in J2000 ecliptic coordinates.\n");
+      return( -1);
+      }
+   fprintf( ofile, header_fmt, jd0, step_size, n_written);
+   if( output_in_au_days)
+      fprintf( ofile, " 0,1,1");  /* i.e.,  ecliptic J2000 in AU and days */
+   else
+      fprintf( ofile, " 0,149597870.7,86400");     /* km and km/s */
+   if( *object_name)
+      fprintf( ofile, " (500) Geocentric: %s\n", object_name);
+   else
+      fprintf( ofile, "\n");
+                  /* Now go back to start of input and read through, */
+                  /* looking for actual ephemeris data to output : */
+   fseek( ifile, 0L, SEEK_SET);
+   while( fgets( buff, sizeof( buff), ifile))
+      if( (jd = ephemeris_line_jd( buff)) > 0.)
+         {
+         double coords[3];
+         int i;
+
          if( !fgets( buff, sizeof( buff), ifile))
             {
             printf( "Failed to get data from input file\n");
@@ -226,29 +286,7 @@ int main( const int argc, const char **argv)
             fprintf( ofile, vel_format,
                   coords[0], coords[1], coords[2]);
             }
-         n_written++;
          }
-      else if( !memcmp( buff, "   VX    VY    VZ", 17))
-         state_vectors = true;
-      else if( strstr( buff, "Earth Mean Equator and Equinox"))
-         is_equatorial = true;
-      else if( strstr( buff, "Reference frame : ICRF"))
-         is_equatorial = true;
-      else if( strstr( buff, "Ecliptic and Mean Equinox of Reference Epoch"))
-         is_ecliptical = true;
-      else if( strstr( buff, "Reference frame : Ecliptic of J2000"))
-         is_ecliptical = true;
-      else if( !memcmp( buff, " Revised:", 9))
-         object_name = look_up_name( atoi( buff + 71));
-      else if( !memcmp( buff, "Target body name:", 17))
-         {
-         const char *tptr = strstr( buff, "(-");
-
-         if( tptr)
-            object_name = look_up_name( atoi( tptr + 1));
-         }
-      else if( !memcmp( buff,  "Output units    : KM-S", 22))
-         in_km_s = true;
 
    fprintf( ofile, "\n\nCreated from Horizons data by 'jpl2mpc', ver %s\n",
                                         __DATE__);
@@ -256,10 +294,6 @@ int main( const int argc, const char **argv)
    fseek( ifile, 0L, SEEK_SET);
    while( fgets( buff, sizeof( buff), ifile) && memcmp( buff, "$$SOE", 5))
       fprintf( ofile, "%s", buff);
-
-                     /* Seek back to start of file & write corrected hdr: */
-   fseek( ofile, 0L, SEEK_SET);
-   fprintf( ofile, header_fmt, jd0, step_size, n_written);
 
    fclose( ifile);
 #ifdef REMOVED
