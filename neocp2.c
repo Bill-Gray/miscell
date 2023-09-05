@@ -88,7 +88,7 @@ static FILE *err_fopen( const char *filename, const char *permits)
 
 /* Like MPC,  we make use of 'mutant hex' (base 62).  */
 
-static char mutant_hex( const int ival)
+static char int_to_mutant_hex_char( const int ival)
 {
    const char *buff =
         "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -111,12 +111,16 @@ static void time_tag( char *tag)
    const time_t t0 = time( NULL);
    struct tm tm;
 
+#ifdef _WIN32
+   memcpy( &tm, gmtime( &t0), sizeof( tm));
+#else
    gmtime_r( &t0, &tm);
+#endif
    tag[0] = '~';
-   tag[1] = mutant_hex( tm.tm_mon + 1);
-   tag[2] = mutant_hex( tm.tm_mday);
-   tag[3] = mutant_hex( tm.tm_hour);
-   tag[4] = mutant_hex( tm.tm_min);
+   tag[1] = int_to_mutant_hex_char( tm.tm_mon + 1);
+   tag[2] = int_to_mutant_hex_char( tm.tm_mday);
+   tag[3] = int_to_mutant_hex_char( tm.tm_hour);
+   tag[4] = int_to_mutant_hex_char( tm.tm_min);
 }
 
 typedef struct
