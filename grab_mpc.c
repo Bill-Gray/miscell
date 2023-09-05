@@ -44,10 +44,20 @@ size_t total_written;
 #define FETCH_CURL_INIT_FAILED             -5
 #define FETCH_OBJECT_NOT_FOUND            -47
 
+static const char *find_filename( const char *url)
+{
+   size_t i = strlen( url);
+
+   while( i && url[i - 1] != '/' && url[i - 1] != ' ')
+      i--;
+   return( url + i);
+}
+
 /* In order to avoid hammering MPC's servers,  we do a bit of checking:
-if the file exists,  and has data for the object we're looking for (based
-on the URLs matching),  _and_ no more than DELAY_BETWEEN_RELOADS seconds
-have elapsed,  then we can recycle the existing file.
+if the file exists,  and has data for the object we're looking for
+(based on the file names in the URLs matching),  _and_ no more than
+DELAY_BETWEEN_RELOADS seconds have elapsed,  then we can recycle the
+existing file.
 
    At least for the nonce,  let's say we don't ask for astrometry any more
 often than once every three hours.  */
@@ -73,7 +83,7 @@ static int check_for_existing( const char *url, const char *outfilename)
          while( i && (buff[i - 1] == 10 || buff[i - 1] == 13))
             i--;
          buff[i] = '\0';
-         if( !strcmp( buff + 52, url) &&
+         if( !strcmp( find_filename( buff), find_filename( url)) &&
                   t0 < atoi( buff + 14) + DELAY_BETWEEN_RELOADS)
             rval = 1;   /* yup,  just reuse the existing file */
          if( verbose)
@@ -212,7 +222,7 @@ static bool look_for_link_to_astrometry( const char *filename, char *url)
    if( ifile)
       {
       while( !got_it &&  fgets( buff, sizeof( buff), ifile))
-         if( (tptr = strstr( buff, "../tmp/")) != NULL)
+         if( (tptr = strstr( buff, "../tmp")) != NULL)
             {
             tptr += 2;
             strcpy( url, BASE_MPC_URL);
@@ -239,8 +249,8 @@ static int fetch_astrometry_from_mpc( const char *output_filename,
       return( grab_file_with_time_info( url, "NEOCP", output_filename, 0));
       }
 
-   snprintf( url2, sizeof( url2), BASE_MPC_URL "/tmp/%s.txt", object_name);
-   for( i = 38; url2[i]; i++)
+   snprintf( url2, sizeof( url2), "%s.txt", object_name);
+   for( i = 0; url2[i]; i++)
       if( url2[i] == ' ' || url2[i] == '/')
          url2[i] = '_';
    if( verbose)
@@ -265,8 +275,6 @@ static int fetch_astrometry_from_mpc( const char *output_filename,
    rval = grab_file_with_time_info( url, object_name, output_filename, 0);
    if( !rval && !look_for_link_to_astrometry( output_filename, url2))
       rval = FETCH_OBJECT_NOT_FOUND;
-   if( rval)
-      return( rval);
    if( verbose)
       printf( "Revised URL: '%s'\n", url2);
    if( rval)
