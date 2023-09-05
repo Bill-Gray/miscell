@@ -17,7 +17,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
 #include <math.h>
 
-#define SQRT_PI 1.7724538509055160272981674833411451827975494561223871282138077898529113
 
 /* In computing the inverse of the error function,  it helps that the
 derivative of erf( ) is easily computed.  Easy derivatives mean easy
@@ -43,6 +42,25 @@ most,  three iterations are required,  near y = +/- erf_limit.   */
 #include <stdio.h>
 #endif
 
+#define SQRT_PI 1.7724538509055160272981674833411451827975494561223871282138077898529113
+
+#ifdef DEBUGGING
+static double maclaurin_approximation_of_inverse_erf( const double x)
+{
+   const double PI =
+       3.1415926535897932384626433832795028841971693993751058209749445923;
+   const double x2 = x * x;
+   const double t1 = SQRT_PI / 2.;
+   const double t3 = SQRT_PI * PI / 24.;
+   const double t5 = SQRT_PI * PI * PI * (7. / 480.) / 2.;
+   const double t7 = SQRT_PI * PI * PI * PI * (127. / 40320.) / 2.;
+   const double t9 = SQRT_PI * PI * PI * PI * PI * (4369. / 5806080.) / 2.;
+   const double t11 = SQRT_PI * PI * PI * PI * PI * PI * (34807. / 182476800) / 2.;
+
+   return( x * (t1 + x2 * (t3 + x2 * (t5 + x2 * (t7 + x2 * (t9 + x2 * t11))))));
+}
+#endif
+
 double inverf( const double y)
 {
    double x, diff;
@@ -52,6 +70,7 @@ double inverf( const double y)
    const double guess = -0.70711*((2.30753+t*0.27061)/(1.+t*(0.99229+t*0.04481)) - t);
 
    printf( "NR guess %.8f\n", guess);
+   printf( "Maclaurin approx %.8f\n", maclaurin_approximation_of_inverse_erf( y));
 #endif
    if( y < -erf_limit)
       return( -inverf( -y));
