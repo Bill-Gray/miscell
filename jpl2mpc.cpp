@@ -127,12 +127,27 @@ static int get_coords_from_buff( double *coords, const char *buff, const bool is
    return( 0);
 }
 
+static char *fgets_trimmed( char *buff, const size_t buffsize, FILE *ifile)
+{
+   char *rval = fgets( buff, (int)buffsize, ifile);
+
+   if( rval)
+      {
+      size_t i = strlen( buff);
+
+      while( i && buff[i - 1] <= ' ')
+         i--;
+      rval[i] = '\0';
+      }
+   return( rval);
+}
+
 static double ephemeris_line_jd( const char *buff)
 {
    const double rval = atof( buff);
 
    if( rval > 2000000. && rval < 3000000. &&
-               strlen( buff) > 54 && !memcmp( buff + 17, " = A.D.", 7)
+               strlen( buff) == 54 && !memcmp( buff + 17, " = A.D.", 7)
                && buff[42] == ':' && buff[45] == '.'
                && !memcmp( buff + 50, " TDB", 4))
       return( rval);
@@ -185,7 +200,7 @@ int main( const int argc, const char **argv)
                break;
             }
 
-   while( fgets( buff, sizeof( buff), ifile))
+   while( fgets_trimmed( buff, sizeof( buff), ifile))
       {
       if( (jd = ephemeris_line_jd( buff)) > 0.)
          {
@@ -245,13 +260,13 @@ int main( const int argc, const char **argv)
                   /* Now go back to start of input and read through, */
                   /* looking for actual ephemeris data to output : */
    fseek( ifile, 0L, SEEK_SET);
-   while( fgets( buff, sizeof( buff), ifile))
+   while( fgets_trimmed( buff, sizeof( buff), ifile))
       if( (jd = ephemeris_line_jd( buff)) > 0.)
          {
          double coords[3];
          int i;
 
-         if( !fgets( buff, sizeof( buff), ifile))
+         if( !fgets_trimmed( buff, sizeof( buff), ifile))
             {
             fprintf( stderr, "Failed to get data from input file\n");
             return( -2);
@@ -276,7 +291,7 @@ int main( const int argc, const char **argv)
                          " %21.17f%21.17f%21.17f\n" :
                          " %21.13f%21.13f%21.13f\n");
 
-            if( !fgets( buff, sizeof( buff), ifile))
+            if( !fgets_trimmed( buff, sizeof( buff), ifile))
                {
                fprintf( stderr, "Failed to get data from input file\n");
                return( -2);
@@ -298,8 +313,8 @@ int main( const int argc, const char **argv)
                                         __DATE__, asctime( gmtime( &t0)));
                      /* Seek back to start of input file & write header data: */
    fseek( ifile, 0L, SEEK_SET);
-   while( fgets( buff, sizeof( buff), ifile) && memcmp( buff, "$$SOE", 5))
-      fprintf( ofile, "%s", buff);
+   while( fgets_trimmed( buff, sizeof( buff), ifile) && memcmp( buff, "$$SOE", 5))
+      fprintf( ofile, "%s\n", buff);
 
    fclose( ifile);
    return( 0);
