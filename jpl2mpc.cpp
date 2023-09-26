@@ -39,10 +39,11 @@ equatorial AU/day data.)
    The following looks up a couple of JPL identifiers to get human-readable
 names.  If a name is set properly,  it can be used automatically when
 'eph2tle' tries to fit Two-Line Elements,  and that program will spot the
-international and NORAD designations.  The table is also used in add_off.c
-in the 'lunar repository;  if objects are added to one,  they should be
-added to the other.  The re-use is why the table includes objects such
-as Cassini and New Horizons,  for which TLEs will never be computed. */
+international and NORAD designations.  The table is also used in jpl2sof.c
+in this repository and in add_off.c in the 'lunar repository;  if objects
+are added to one,  they should be added to the others.  The re-use is why
+the table includes objects such as Cassini and New Horizons,  for which
+TLEs will never be computed. */
 
 typedef struct
 {
@@ -58,6 +59,7 @@ static const jpl_xref_t jpl_xrefs[] = {
    { "Ha2",      -37, 40319, "2014-076A",   "Hayabusa 2" },
    { "250",      -48, 20580, "1990-037B",   "Hubble Space Telescope" },
    { "Luc",      -49, 49328, "2021-093A",   "Lucy" },
+   { "OsR",      -64, 41757, "2016-055A",   "OSIRIS-REx" },
    { "Cas",      -82, 25008, "1997-061A",   "Cassini" },
    { "245",      -79, 27871, "2003-038A",   "Spitzer Space Telescope" },
    { "C57",      -95, 43435, "2018-038A",   "TESS" },
@@ -73,6 +75,7 @@ static const jpl_xref_t jpl_xrefs[] = {
    { "C55",     -227, 34380, "2009-011A",   "Kepler" },
    { "C49",     -234, 29510, "2006-047A",   "STEREO-A" },
    { "C50",     -235, 29511, "2006-047B",   "STEREO-B" },
+   { "Sli",     -240, 57801, "2023-137B",   "SLIM" },
    { "Euc",     -680, 57217, "2023-092A",   "Euclid" },
    { "C52",  -128485, 28485, "2004-047A",   "Swift" },
    { "C53",  -139089, 39089, "2013-009D",   "NEOSSat" },
