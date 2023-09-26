@@ -105,7 +105,7 @@ install:
 ifdef GLOBAL
 	cp grab_mpc /usr/local/bin
 else
-	cp grab_mpc $(HOME)/bin
+	cp grab_mpc ~/bin
 endif
 
 CFLAGS=-Wextra -Werror -Wall -O3 -pedantic
