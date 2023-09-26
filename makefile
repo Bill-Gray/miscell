@@ -45,7 +45,7 @@ all:  bc430$(EXE) blunder$(EXE) clock1$(EXE) css_art$(EXE) \
 	csv2txt$(EXE) details$(EXE) ellip_pt$(EXE) eop_proc$(EXE) fix_obs$(EXE) \
 	gfc_xvt$(EXE) gpl$(EXE) gmake2bsd$(EXE) i2mpc$(EXE) inverf$(EXE) \
 	jpl2mpc$(EXE) ktest$(EXE) mpcorbx$(EXE) mpc_extr$(EXE) mpc_sort$(EXE) \
-	mpc_stat$(EXE) nofs2mpc$(EXE) peirce$(EXE) sr_plot$(EXE) \
+ nofs2mpc$(EXE) peirce$(EXE) sr_plot$(EXE) \
 	plot_orb$(EXE) reverser$(EXE) \
 	si_print$(EXE) splottes$(EXE) vid_dump$(EXE) \
 	xfer2$(EXE) xfer3$(EXE)
@@ -74,7 +74,6 @@ clean:
 	$(RM) jpl2mpc$(EXE)
 	$(RM) jpl2sof$(EXE)
 	$(RM) ktest$(EXE)
-	$(RM) mpc_stat$(EXE)
 	$(RM) mpc_extr$(EXE)
 	$(RM) mpc_sort$(EXE)
 	$(RM) mpc_up$(EXE)
@@ -176,9 +175,6 @@ jpl2mpc$(EXE): jpl2mpc.cpp
 
 jpl2sof$(EXE): jpl2sof.c
 	$(CC) $(CFLAGS) -o jpl2sof$(EXE) -I ~/include jpl2sof.c $(LUNAR_LIB) $(ADDED_MATH_LIB)
-
-mpc_stat$(EXE): mpc_stat.cpp
-	$(CC) $(CFLAGS) -o mpc_stat$(EXE) mpc_stat.cpp $(ADDED_MATH_LIB)
 
 mpc_extr$(EXE): mpc_extr.cpp
 	$(CC) $(CFLAGS) -o mpc_extr$(EXE) mpc_extr.cpp
