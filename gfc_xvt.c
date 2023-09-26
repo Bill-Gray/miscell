@@ -78,7 +78,7 @@ int main( const int argc, const char **argv)
       if( !memcmp( buff, "gfc ", 4) && atoi( buff + 3) <= max_l)
          {
          int l, m, n_scanned;
-         char c_term[40], s_term[40];
+         char c_term[41], s_term[41];
          char *tptr;
 
          n_scanned = sscanf( buff + 4, "%d %d %40s %40s", &l, &m, c_term, s_term);
