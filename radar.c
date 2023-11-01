@@ -31,18 +31,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 almost immediately at
 
 http://ssd.jpl.nasa.gov/?grp=all&fmt=html&radar=
-https://ssd-api.jpl.nasa.gov/sb_radar.api?modified=y&notes=y&observer=y
 
     but there is usually a significant delay before it shows up on AstDyS or
-NEODyS,  and it doesn't necessarily make it to MPC at all.  This code can read
-in the file at the above URL and spit the data back out in the MPC's 80-column
-punched-card format (two lines per observation).  Example output lines :
+NEODyS,  and it doesn't necessarily make it to MPC at all.  You can get all
+the radar data in JSON form from JPL's API using the following URL :
 
-101955 Bennu (1999 RQ36)          1999-09-21 09:00:00     135959.00   5.000 Hz COM  8560  -14  -14
-101955 Bennu (1999 RQ36)          1999-09-21 10:20:00   15418454.00  10.000 us COM  8560  -14  -14
-101955 Bennu (1999 RQ36)          1999-09-23 09:30:00   14820631.00   5.000 us COM  8560  -14  -14
+https://ssd-api.jpl.nasa.gov/sb_radar.api?modified=y&notes=y&observer=y
 
-   And example output lines :
+   Save the result as 'radar.json' and run this program.  It will convert the
+data to the MPC's 80-column punched-card format (two lines per observation).
+Example output lines :
 
 A1955         R1999 09 21.375000               +    13595900   8560 253 JPLRS253
 A1955         r1999 09 21.375000C                        5000       253 JPLRS253
@@ -54,11 +52,7 @@ A1955         r1999 09 23.395833C         5000                      253 JPLRS253
    Note that I didn't try to combine simultaneous Doppler and range observations
 into a single MPC observation.  The MPC format lets you do that,  but it's not
 a requirement (and keeping them separate does make it easier to exclude one
-observation but not the other.)
-*/
-
-
-int create_mpc_packed_desig( char *packed_desig, const char *obj_name);
+observation but not the other.)            */
 
 static void put_mpc_code_from_dss( char *mpc_code, const int dss_desig)
 {
@@ -144,7 +138,9 @@ static void substitute_name( char *oname, const char *iname)
             "Benner", "L. Benner",
             "BennerA.M", "L. Benner",
             "Benner AND NOLAN", "L. Benner, M. Nolan",
+            "Benner L. A. M.", "L. Benner",
             "MB", "M. Brozovic",
+            "M.B.", "M. Brozovic",
             "Brozovic", "M. Brozovic",
             "MWB", "M. Busch",
             "Busch", "M. Busch",
@@ -164,10 +160,11 @@ static void substitute_name( char *oname, const char *iname)
             "Harris", "A. W. Harris",
             "DH", "D. Hickson",
             "Hine", "A. A. Hine",
-            "Howell", "E. Howell",
-            "HOWEL", "E. Howell",
-            "HOWELLNOLANSPRINGM", "E. Howell, M. C. Nolan, ?. Springmann",
-            "EH", "E. Howell",
+            "Howell", "E. S. Howell",
+            "HOWEL", "E. S. Howell",
+            "HOWELLNOLANSPRINGM", "E. S. Howell, M. C. Nolan, ?. Springmann",
+            "EH", "E. S. Howell",
+            "ESH", "E. S. Howell",
             "Kamoun", "P. G. Kamoun",
             "Lieske", "J. H. Lieske",
             "SM", "S. Marshall",
@@ -185,6 +182,7 @@ static void substitute_name( char *oname, const char *iname)
             "M.N.", "M. C. Nolan",
             "Ostro", "S. J. Ostro",
             "Ostro.s", "S. J. Ostro",
+            "OSTRO-NOLAN", "S. J. Ostro, M. C. Nolan",
             "Pettengill", "G. H. Pettengill",
             "PT", "P. Taylor",
             "P.T.", "P. Taylor",
@@ -196,6 +194,8 @@ static void substitute_name( char *oname, const char *iname)
             "Taylor", "P. Taylor",
             "AV", "A. Virkki",
             "FV", "F. Venditti",
+            "VIERINEN",  "J. Vierinen",
+            "MARKKANEN", "J. Markkanen",
             "Werner", "C. L. Werner",
             "Young", "J. W. Young",
             "Zaitsev", "A. Zaitsev",
@@ -252,6 +252,7 @@ static void fix_observers( char *buff)
             "Ostro,S.", "Ostro",
             "Ostro, S.", "Ostro",
             "Ostro,S", "Ostro",
+            "OSTRO-NOLAN", "Ostro, Nolan",
             "PETTENGILL,G.H.", "Pettengill",
             "PETTENGILL,G.H", "Pettengill",
             "Rosema,K.D", "Rosema",
@@ -267,7 +268,9 @@ static void fix_observers( char *buff)
             "EF ", "EF,",
             "ERV ", "ERV,",
             "LFZM ", "LFZM,",
-            "PT ", "PT,",
+  /*        "SM AS", "SM, AS",
+            "SM PT", "SM, PT",
+   */       "PT ", "PT,",
             "Zaitsev,A.", "Zaitsev",
             NULL };
 
@@ -279,19 +282,21 @@ static void fix_observers( char *buff)
          strcpy( tptr, obuff);
          }
 
-   if( isupper( buff[0]) && isupper( buff[1]) && buff[2])
-      {        /* cases such as 'AM DH .. ..' */
-      i = 2;
-      if( isupper( buff[i]))     /* maybe ERV,  etc. */
-         i++;
-      if( isupper( buff[i]))     /* Maybe LFZM, etc. */
-         i++;
-      while( buff[i] == ' ' && isupper( buff[i + 1]) && isupper( buff[i + 2]))
-         {
-         buff[i] = ',';
-         i += 3;
+   for( tptr = buff; *tptr; tptr++)
+      if( (tptr == buff || tptr[-1] == ',') &&
+                 isupper( tptr[0]) && isupper( tptr[1]) && tptr[2])
+         {        /* cases such as 'AM DH .. ..' */
+         i = 2;
+         if( isupper( tptr[i]))     /* maybe ERV,  etc. */
+            i++;
+         if( isupper( tptr[i]))     /* Maybe LFZM, etc. */
+            i++;
+         while( tptr[i] == ' ' && isupper( tptr[i + 1]) && isupper( tptr[i + 2]))
+            {
+            tptr[i] = ',';
+            i += 3;
+            }
          }
-      }
 
    *obuff = '\0';
    while( !done)
@@ -647,8 +652,9 @@ int main( const int argc, const char **argv)
       i = 0;
       while( buff[i] && memcmp( buff + i, "\"data\":", 7))
          i++;
-      printf( "COM 'radar' converter run at %s", ctime( &t0));
-      printf( "COM 'radar' version 2023 Jan 03;  see\n"
+      printf( "COM 'radar' converter run at %.24s GMT\n",
+                               asctime( gmtime( &t0)));
+      printf( "COM 'radar' version 2023 Oct 19;  see\n"
               "COM https://github.com/Bill-Gray/miscell/blob/master/radar.c\n"
               "COM for relevant code\n");
       output_index( buff + i);
