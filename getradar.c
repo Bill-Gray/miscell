@@ -38,11 +38,23 @@ int get_radar_data( FILE *ofile, FILE *ifile, const char *packed_desig)
    bool desigs_found = false, object_found = false;
    size_t len;
    long offset;
-   bool found_data = false;
+   bool found_data = false, extract_by_date = false;
 
    while( *packed_desig == ' ')
       packed_desig++;
-   if( 0 > unpack_unaligned_mpc_desig( unpacked_desig, packed_desig))
+   if( strlen( packed_desig) > 9 && packed_desig[4] == '-'
+                  && packed_desig[7] == '-')
+      {
+      const int year = atoi( packed_desig);
+      const int month = atoi( packed_desig + 5);
+      const int day = atoi( packed_desig + 8);
+
+      if( year > 1980 && year < 2050 && month >= 1 && month <= 12
+                  && day >= 1 && day <= 31)
+         extract_by_date = object_found = true;
+      }
+   if( !extract_by_date
+          && 0 > unpack_unaligned_mpc_desig( unpacked_desig, packed_desig))
       return( -2);            /* not a valid packed designation */
    len = strlen( packed_desig);
    while( packed_desig[len - 1] == ' ')
@@ -65,8 +77,17 @@ int get_radar_data( FILE *ofile, FILE *ifile, const char *packed_desig)
 
    offset = ftell( ifile);
    while( fgets( buff, sizeof( buff), ifile))
+      {
+      bool got_a_match = false;
+
       if( *buff < ' ')
          offset = ftell( ifile);
+      else if( extract_by_date)
+         {
+         if( !memcmp( buff, "COM Last modified ", 18)
+                  && memcmp( buff + 18, packed_desig, len) >= 0)
+            got_a_match = true;
+         }
       else if( strlen( buff) == 81 && !memcmp( buff + 72, "JPLRS", 5))
          {
          size_t i = 0;
@@ -74,27 +95,33 @@ int get_radar_data( FILE *ofile, FILE *ifile, const char *packed_desig)
          while( buff[i] == ' ')
             i++;
          if( !memcmp( buff + i, tpacked, len) && buff[i + len] == ' ')
+            got_a_match = true;
+         }
+      if( got_a_match)
+         {
+         if( !found_data)  /* first time through : output header data */
             {
-            if( !found_data)  /* first time through : output header data */
-               {
-               time_t t0 = time( NULL);
+            time_t t0 = time( NULL);
 
-               fseek( ifile, 0, SEEK_SET);
-               while( fgets( buff, sizeof( buff), ifile) && *buff >= ' ')
-                  fputs( buff, ofile);
-               fprintf( ofile, "COM radar data for %s = %s, extracted %.24s UTC\n\n",
-                               unpacked_desig, packed_desig,
-                               asctime( gmtime( &t0)));
-               }
-            fseek( ifile, offset, SEEK_SET);
+            fseek( ifile, 0, SEEK_SET);
             while( fgets( buff, sizeof( buff), ifile) && *buff >= ' ')
                fputs( buff, ofile);
-            fputs( "\n", ofile);
-            fseek( ifile, -1, SEEK_CUR);
-            found_data = true;
+            fprintf( ofile, "COM radar data for ");
+            if( extract_by_date)
+               fprintf( ofile, "%s", packed_desig);
+            else
+               fprintf( ofile, "%s = %s", unpacked_desig, packed_desig);
+            fprintf( ofile, ", extracted %.24s UTC\n\n",
+                            asctime( gmtime( &t0)));
             }
-         }                       /* if we found the desig in the header, */
-   assert( found_data);             /* we ought to find the data    */
+         fseek( ifile, offset, SEEK_SET);
+         while( fgets( buff, sizeof( buff), ifile) && *buff >= ' ')
+            fputs( buff, ofile);
+         fputs( "\n", ofile);
+         fseek( ifile, -1, SEEK_CUR);
+         found_data = true;
+         }
+      }
    return( found_data ? 0 : -1);    /* in the main part of the file */
 }
 
