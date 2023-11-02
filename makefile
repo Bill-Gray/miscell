@@ -43,20 +43,21 @@ ADDED_MATH_LIB=-lm
 
 all:  bc430$(EXE) blunder$(EXE) clock1$(EXE) css_art$(EXE) \
 	csv2txt$(EXE) details$(EXE) ellip_pt$(EXE) eop_proc$(EXE) fix_obs$(EXE) \
-	gfc_xvt$(EXE) gpl$(EXE) gmake2bsd$(EXE) i2mpc$(EXE) inverf$(EXE) \
+	getradar$(EXE) gfc_xvt$(EXE) gpl$(EXE) gmake2bsd$(EXE) i2mpc$(EXE) inverf$(EXE) \
 	jpl2mpc$(EXE) ktest$(EXE) mpcorbx$(EXE) mpc_extr$(EXE) mpc_sort$(EXE) \
  nofs2mpc$(EXE) peirce$(EXE) sr_plot$(EXE) \
 	plot_orb$(EXE) reverser$(EXE) \
 	si_print$(EXE) splottes$(EXE) vid_dump$(EXE) \
 	xfer2$(EXE) xfer3$(EXE)
 
-extras: $(ADDED_EXES) mpecer$(EXE) my_wget$(EXE) radar$(EXE)
+extras: $(ADDED_EXES) mpecer$(EXE) my_wget$(EXE) radar$(EXE) cgiradar$(EXE)
 
 clean:
 	$(RM) archive$(EXE)
 	$(RM) bc430$(EXE)
 	$(RM) blunder$(EXE)
 	$(RM) clock1$(EXE)
+	$(RM) cgiradar$(EXE)
 	$(RM) css_art$(EXE)
 	$(RM) csv2txt$(EXE)
 	$(RM) details$(EXE)
@@ -64,6 +65,7 @@ clean:
 	$(RM) eop_proc$(EXE)
 	$(RM) fix_obs$(EXE)
 	$(RM) getpoint$(EXE)
+	$(RM) getradar$(EXE)
 	$(RM) gfc_xvt$(EXE)
 	$(RM) gmake2bsd$(EXE)
 	$(RM) gpl$(EXE)
@@ -122,6 +124,9 @@ bc430$(EXE): bc430.c
 blunder$(EXE): blunder.cpp
 	$(CC) $(CFLAGS) -o blunder$(EXE) blunder.cpp $(ADDED_MATH_LIB)
 
+cgiradar$(EXE): getradar.c
+	$(CC) $(CFLAGS) -o cgiradar$(EXE) -DON_LINE_VERSION -I ~/include getradar.c $(LUNAR_LIB) $(ADDED_MATH_LIB)
+
 clock1$(EXE): clock1.c
 	$(CC) $(CFLAGS) -o clock1$(EXE) clock1.c
 
@@ -145,6 +150,9 @@ fix_obs$(EXE): fix_obs.c
 
 getpoint$(EXE): getpoint.c
 	$(CC) $(CFLAGS) -o getpoint$(EXE) getpoint.c
+
+getradar$(EXE): getradar.c
+	$(CC) $(CFLAGS) -o getradar$(EXE) -I ~/include getradar.c $(LUNAR_LIB) $(ADDED_MATH_LIB)
 
 gfc_xvt$(EXE): gfc_xvt.c
 	$(CC) $(CFLAGS) -o gfc_xvt$(EXE) gfc_xvt.c
