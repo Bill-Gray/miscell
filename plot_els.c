@@ -21,7 +21,11 @@ to get data suitable for plotting.  At present,  it plots inclination
 in black,  then switches to red to plot perigee distance.  Included
 both as an example of how the 'splot' routines work,  and also because
 somebody asked about the evolution of the orbit of a particular artsat
-and I needed a plot to explain what was going on. */
+and I needed a plot to explain what was going on.
+
+Add a command-line argument to cause the red line to plot orbital
+period instead of inclination.  The argument should be the maximum
+orbital period,  in minutes.   */
 
 #include <stdio.h>
 #include <string.h>
@@ -32,16 +36,18 @@ and I needed a plot to explain what was going on. */
 
 #define JD_TO_YEAR( jd) (2000. + ((jd) - 2451545.) / 365.25)
 
-int main( const int argc __attribute__ ((unused)),
-          const char **argv __attribute__ ((unused)))
+int main( const int argc, const char **argv)
 {
    splot_t splot;
    char buff[200], *tptr;
-   FILE *ifile = fopen( "/home/phred/.find_orb/ephemeri.txt", "rb");
+   FILE *ifile = fopen( "/home/phred/output/ephemeri.txt", "rb");
    double jd, jd_step;
    double year0, year1;
    double max_q = 0., min_q = 1e+20;
    int line = 0, n_steps;
+   const double max_period = (argc < 2 ? 0. : atof( argv[1]));
+   const double min_period = (argc < 3 ? 0. : atof( argv[2]));
+   const double max_incl = 90., min_incl = 0.;
 
    assert( ifile);
    if( !fgets( buff, sizeof( buff), ifile))
@@ -56,22 +62,37 @@ int main( const int argc __attribute__ ((unused)),
       }
    splot_newplot( &splot, 70, 460, 100, 600);
    if( year0 < year1)
-      splot_set_limits( &splot, year0, year1 - year0, 0., 90.);
+      splot_set_limits( &splot, year0, year1 - year0,
+                  (min_period ? min_period : min_incl),
+                  (max_period ? max_period - min_period : max_incl - min_incl));
    else
-      splot_set_limits( &splot, year1, year0 - year1, 0., 90.);
+      splot_set_limits( &splot, year1, year0 - year1,
+                  (min_period ? min_period : min_incl),
+                  (max_period ? max_period - min_period : max_incl - min_incl));
    splot_add_ticks_labels( &splot, 60., SPLOT_ALL_EDGES | SPLOT_LIGHT_GRID);
    splot_add_ticks_labels( &splot, 20., SPLOT_HORIZONTAL_EDGES);
    splot_add_ticks_labels( &splot, 60., SPLOT_BOTTOM_EDGE | SPLOT_ADD_LABELS);
    splot_add_ticks_labels( &splot, 15., SPLOT_LEFT_EDGE);
    splot_add_ticks_labels( &splot, 100., SPLOT_LEFT_EDGE | SPLOT_ADD_LABELS);
    splot_label( &splot, SPLOT_BOTTOM_EDGE, 1, "Year");
-   splot_label( &splot, SPLOT_LEFT_EDGE, 1, "Incl (deg)");
+   splot_label( &splot, SPLOT_LEFT_EDGE, 1,
+               (max_period ? "Period (minutes)" : "Incl (deg)"));
    tptr = strstr( buff, ": ");      /* top line also gives object name, */
    assert( tptr);                   /* which we use to label top of plot */
    splot_label( &splot, SPLOT_TOP_EDGE, 1, tptr + 1);
 
    while( fgets( buff, sizeof( buff), ifile))
-      if( (tptr = strstr( buff, "Incl.")) != NULL)
+      {
+      if( max_period && *buff == 'P' && atof( buff + 1))
+         {
+         const double year = JD_TO_YEAR( jd);
+         const double period_in_minutes = atof( buff + 1);
+
+         splot_moveto( &splot, year, period_in_minutes, (line > 0));
+         jd += jd_step;
+         line++;
+         }
+      else if( !max_period && NULL != (tptr = strstr( buff, "Incl.")))
          {
          const double year = JD_TO_YEAR( jd);
          const double incl = atof( tptr + 6);
@@ -80,7 +101,7 @@ int main( const int argc __attribute__ ((unused)),
          jd += jd_step;
          line++;
          }
-      else if( (tptr = strstr( buff, " q ")) != NULL)
+      if( (tptr = strstr( buff, " q ")) != NULL)
          {
          const double q = atof( tptr + 3) - 6378.;
 
@@ -89,7 +110,7 @@ int main( const int argc __attribute__ ((unused)),
          if( min_q > q)
             min_q = q;
          }
-
+      }
    fseek( ifile, 0L, SEEK_SET);
    if( !fgets( buff, sizeof( buff), ifile))
       return( -1);
