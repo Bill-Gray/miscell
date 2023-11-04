@@ -106,7 +106,8 @@ int get_radar_data( FILE *ofile, FILE *ifile, const char *packed_desig)
             fseek( ifile, 0, SEEK_SET);
             while( fgets( buff, sizeof( buff), ifile) && *buff >= ' ')
                fputs( buff, ofile);
-            fprintf( ofile, "COM radar data for ");
+            fprintf( ofile, "COM 'getradar' version 2023 Nov 01\n"
+                            "COM radar data for ");
             if( extract_by_date)
                fprintf( ofile, "%s", packed_desig);
             else
