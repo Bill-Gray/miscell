@@ -179,7 +179,7 @@ jpl2ast$(EXE): jpl2ast.c
 	$(CC) $(CFLAGS) -o jpl2ast$(EXE) -I ~/include jpl2ast.c $(LUNAR_LIB)
 
 jpl2mpc$(EXE): jpl2mpc.cpp
-	$(CC) $(CFLAGS) -o jpl2mpc$(EXE) jpl2mpc.cpp
+	$(CC) $(CFLAGS) -o jpl2mpc$(EXE) -I ~/include jpl2mpc.cpp
 
 jpl2sof$(EXE): jpl2sof.c
 	$(CC) $(CFLAGS) -o jpl2sof$(EXE) -I ~/include jpl2sof.c $(LUNAR_LIB) $(ADDED_MATH_LIB)
