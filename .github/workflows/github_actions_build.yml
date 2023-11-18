@@ -9,7 +9,13 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - name: make
-      run: make
+      run: |
+        git clone https://github.com/Bill-Gray/lunar
+        cd lunar
+        make ERRORS=Y liblunar.a
+        make install
+        cd ..
+        make
 
   buildOSX:
     runs-on: macOS-latest
@@ -18,6 +24,11 @@ jobs:
     - uses: actions/checkout@master
     - name: make
       run: |
+        git clone https://github.com/Bill-Gray/lunar
+        cd lunar
+        make CLANG=Y ERRORS=Y liblunar.a
+        make install
+        cd ..
         echo > clock1
         make CLANG=Y
 
