@@ -16,6 +16,7 @@ jobs:
         make install
         cd ..
         make
+        make cgiradar jpl2ast jpl2sof radar getradar
 
   buildOSX:
     runs-on: macOS-latest
@@ -31,4 +32,5 @@ jobs:
         cd ..
         echo > clock1
         make CLANG=Y
+        make CLANG=Y cgiradar jpl2ast jpl2sof radar getradar
 
