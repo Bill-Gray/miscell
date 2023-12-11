@@ -45,7 +45,7 @@ all:  bc430$(EXE) blunder$(EXE) clock1$(EXE) css_art$(EXE) \
 	csv2txt$(EXE) details$(EXE) ellip_pt$(EXE) eop_proc$(EXE) fix_obs$(EXE) \
 	getradar$(EXE) gfc_xvt$(EXE) gpl$(EXE) gmake2bsd$(EXE) i2mpc$(EXE) inverf$(EXE) \
 	jpl2mpc$(EXE) ktest$(EXE) mpcorbx$(EXE) mpc_extr$(EXE) mpc_sort$(EXE) \
- nofs2mpc$(EXE) peirce$(EXE) sr_plot$(EXE) \
+	nofs2mpc$(EXE) peirce$(EXE) sr_plot$(EXE) plot_els$(EXE) \
 	plot_orb$(EXE) reverser$(EXE) \
 	si_print$(EXE) splottes$(EXE) vid_dump$(EXE) \
 	xfer2$(EXE) xfer3$(EXE)
