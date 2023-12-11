@@ -154,6 +154,12 @@ int main( const int argc, const char **argv)
       perror( NULL);
       return( -2);
       }
+   if( !*object_name)
+      {
+      fprintf( stderr, "Usage : getradar <object name>\n"
+               "name can be packed or unpacked\n");
+      return( -3);
+      }
    assert( *object_name);
    rval = get_radar_data( stdout, ifile, object_name);
    if( -2 == rval)         /* maybe an unpacked ID was supplied? */
