@@ -27,20 +27,29 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #include "mpc_func.h"
 #include "stringex.h"
 
-/* Getting radar astrometry in a timely manner can be problematic.  It appears
-almost immediately at
+/* Getting radar astrometry in a timely manner can be problematic.  It
+appears almost immediately at
 
 http://ssd.jpl.nasa.gov/?grp=all&fmt=html&radar=
 
     but there is usually a significant delay before it shows up on AstDyS or
-NEODyS,  and it doesn't necessarily make it to MPC at all.  You can get all
-the radar data in JSON form from JPL's API using the following URL :
+NEODyS,  and anything recent doesn't appear at MPC at all.  The JPL data is
+now available converted to MPC 80-column format at
+
+https://www.projectpluto.com/radar/radar.htm
+
+   which lets you download all the radar data,  or just the data for a
+desired object.  That on-line service (which uses this code) may suffice
+for your needs;  you may not need to compile and run this code yourself.
+
+   If you _do_ want to run the conversion yourself,  you will first need to
+download the radar data in JSON form from JPL's API using the following URL :
 
 https://ssd-api.jpl.nasa.gov/sb_radar.api?modified=y&notes=y&observer=y
 
-   Save the result as 'radar.json' and run this program.  It will convert the
-data to the MPC's 80-column punched-card format (two lines per observation).
-Example output lines :
+   Save the result as 'radar.json' and run this program (no command-line
+arguments required).  It will convert the data to the MPC's 80-column
+punched-card format (two lines per observation). Example output lines :
 
 A1955         R1999 09 21.375000               +    13595900   8560 253 JPLRS253
 A1955         r1999 09 21.375000C                        5000       253 JPLRS253
@@ -52,7 +61,11 @@ A1955         r1999 09 23.395833C         5000                      253 JPLRS253
    Note that I didn't try to combine simultaneous Doppler and range observations
 into a single MPC observation.  The MPC format lets you do that,  but it's not
 a requirement (and keeping them separate does make it easier to exclude one
-observation but not the other.)            */
+observation but not the other.)
+
+   Also note that another program in this repository,  'getradar.c' (q.v.),  can
+be used to extract data for a specific object.  (The CGI-ified version is used
+for the on-line service mentioned above.)     */
 
 static void put_mpc_code_from_dss( char *mpc_code, const int dss_desig)
 {
