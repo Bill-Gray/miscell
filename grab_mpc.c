@@ -21,10 +21,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #define CURL_STATICLIB
 #include <curl/curl.h>
 #include <curl/easy.h>
+#include <unistd.h>
 #endif
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
@@ -77,7 +77,7 @@ static int check_for_existing( const char *url, const char *outfilename)
 
       if( fgets( buff, sizeof( buff), fp))
          {
-         int i = strlen( buff);
+         size_t i = strlen( buff);
          const time_t t0 = time( NULL);
 
          while( i && (buff[i - 1] == 10 || buff[i - 1] == 13))
