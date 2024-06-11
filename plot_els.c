@@ -36,6 +36,27 @@ orbital period,  in minutes.   */
 
 #define JD_TO_YEAR( jd) (2000. + ((jd) - 2451545.) / 365.25)
 
+static double get_q( const char *buff)
+{
+   double rval = 0.;
+#ifndef TEMP_REMOVE_SO_CAN_SHOW_APOGEE
+   const char *tptr = strstr( buff, " q ");
+
+   if( *buff == 'q')
+      rval = atof( buff + 1);
+   else if( tptr)
+      rval = atof( tptr + 3);
+#else
+   const char *tptr = strstr( buff, " Q ");
+
+   if( tptr)
+      rval = atof( tptr + 3);
+#endif
+   if( rval < 1.)          /* assume AU */
+      rval *= 149597870.7;       /* AU in km */
+   return( rval);
+}
+
 int main( const int argc, const char **argv)
 {
    splot_t splot;
@@ -44,6 +65,7 @@ int main( const int argc, const char **argv)
    double jd, jd_step;
    double year0, year1;
    double max_q = 0., min_q = 1e+20;
+   double center_radius = 6378.140;      /* assume earth */
    int line = 0, n_steps;
    const double max_period = (argc < 2 ? 0. : atof( argv[1]));
    const double min_period = (argc < 3 ? 0. : atof( argv[2]));
@@ -83,6 +105,10 @@ int main( const int argc, const char **argv)
 
    while( fgets( buff, sizeof( buff), ifile))
       {
+      double q = get_q( buff);
+
+      if( !memcmp( buff, "   Perilune", 9))
+         center_radius = 1737.;
       if( max_period && *buff == 'P' && atof( buff + 1))
          {
          const double year = JD_TO_YEAR( jd);
@@ -101,14 +127,15 @@ int main( const int argc, const char **argv)
          jd += jd_step;
          line++;
          }
-      if( (tptr = strstr( buff, " q ")) != NULL)
+      if( q)
          {
-         const double q = atof( tptr + 3) - 6378.;
-
+         q -= center_radius;
          if( max_q < q)
             max_q = q;
          if( min_q > q)
             min_q = q;
+         if( max_q > 990000.)
+            max_q = 990000.;
          }
       }
    fseek( ifile, 0L, SEEK_SET);
@@ -125,10 +152,10 @@ int main( const int argc, const char **argv)
    splot_add_ticks_labels( &splot, 100., SPLOT_RIGHT_EDGE | SPLOT_ADD_LABELS);
    line = 0;
    while( fgets( buff, sizeof( buff), ifile))
-      if( (tptr = strstr( buff, " q ")) != NULL)
+      if( get_q( buff))
          {
          const double year = JD_TO_YEAR( jd);
-         const double q = atof( tptr + 3) - 6378.;
+         const double q = get_q( buff) - center_radius;
 
          splot_moveto( &splot, year, q, (line > 0));
          jd += jd_step;
