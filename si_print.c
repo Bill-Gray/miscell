@@ -45,10 +45,10 @@ as just zeroes.
 
    If the SI_PRINTF_EXTENDED_PREFIXES flag is set, the 'usual' set of SI
 prefixes is extended to include 17 more letters in each direction, for a
-range of 10^51 each way.  Since the 'usual' sets end with z/Z or y/Y,
-the 'extended' sets simply continue backward through the alphabet,
-omitting letters already used elsewhere.  See the 'lower_prefixes' and
-'upper_prefixes' variables.
+range of 10^51 each way.  The 'extended' sets simply continue backward
+through the alphabet,  running backward through the alphabet from X, W,
+down,  omitting letters already used elsewhere.  See the 'lower_prefixes'
+and 'upper_prefixes' variables.
 
    If the SI_PRINTF_FORCE_SIGN flag is set,  positive numbers will be
 shown with a leading '+'.
@@ -95,10 +95,10 @@ void si_sprintf( char *buff, double ival, int n_places, const int flags)
       err_msg = "NaN!";
    else if( !isfinite( ival))
       err_msg = "inf!";
-   else if( ival > 999.39e+24 * extender
-                   || (ival > 99.39e+24 * extender && n_places == 3)
-                   || (ival > 9.939e+24 * extender && n_places == 2)
-                   || (ival < 1.01e-24 / extender && use_si_prefixes))
+   else if( ival > 999.39e+30 * extender
+                   || (ival > 99.39e+30 * extender && n_places == 3)
+                   || (ival > 9.939e+30 * extender && n_places == 2)
+                   || (ival < 1.01e-30 / extender && use_si_prefixes))
       {
       char tbuff[100], *tptr;
       int len;
@@ -122,7 +122,7 @@ void si_sprintf( char *buff, double ival, int n_places, const int flags)
       }
    else if( ival < .011 && use_si_prefixes)
       {
-      const char *lower_prefixes = " munpfazyxwvtsrqoljihgedcb";
+      const char *lower_prefixes = " munpfazyrqxwvtsoljihgedcb";
       const double limit = (n_places > 3 ? .9994 : .0994);
 
       for( i = 0; lower_prefixes[i] && ival < limit; i++)
@@ -137,7 +137,7 @@ void si_sprintf( char *buff, double ival, int n_places, const int flags)
          top_val *= 10.;
       if( i > n_places)
          {
-         const char *prefixes = " kMGTPEZYXWVUSRQONLJIHFDCBA";
+         const char *prefixes = " kMGTPEZYRQXWVUSONLJIHFDCBA";
          const double limit = (n_places > 3 ? 999.4 : 99.4);
 
          for( i = 0; ival > limit && prefixes[i]; i++)
@@ -276,13 +276,16 @@ Six places:
 314159
 3.141M
 
-bill@bill:~/miscell$ ./si_print 3.14159265358 30
--30:  Low e-30 3e-30 3.e-30 3.1e-30 3.14e-30 3.141e-30 3.1415e-30 3.14159e-30  -30
--29:  Low e-29 3e-29 3.e-29 3.1e-29 3.14e-29 3.141e-29 3.1415e-29 3.14159e-29  -29
--28:  Low e-28 3e-28 3.e-28 3.1e-28 3.14e-28 3.141e-28 3.1415e-28 3.14159e-28  -28
--27:  Low e-27 3e-27 3.e-27 3.1e-27 3.14e-27 3.141e-27 3.1415e-27 3.14159e-27  -27
--26:  Low e-26 3e-26 3.e-26 3.1e-26 3.14e-26 3.141e-26 3.1415e-26 3.14159e-26  -26
--25:  Low e-25 3e-25 3.e-25 3.1e-25 3.14e-25 3.141e-25 3.1415e-25 3.14159e-25  -25
+bill@bill:~/miscell$ ./si_print 3.14159265358 -r33
+-33:  Low e-33 3e-33 3.e-33 3.1e-33 3.14e-33 3.141e-33 3.1415e-33 3.14159e-33  -33
+-32:  Low e-32 3e-32 3.e-32 3.1e-32 3.14e-32 3.141e-32 3.1415e-32 3.14159e-32  -32
+-31:  Low e-31 3e-31 3.e-31 3.1e-31 3.14e-31 3.141e-31 3.1415e-31 3.14159e-31  -31
+-30:  3.q 3.1q 3.14q 3.141q 3.1415q 3.14159q 3.141592q 3.1415926q 3.14159265q  -30
+-29:  31q 31.q 31.4q 31.41q 31.415q 31.4159q 31.41592q 31.415926q 31.4159265q  -29
+-28:  .3r 314q 314.q 314.1q 314.15q 314.159q 314.1592q 314.15926q 314.159265q  -28
+-27:  3.r 3.1r 3.14r 3.141r 3.1415r 3.14159r 3.141592r 3.1415926r 3.14159265r  -27
+-26:  31r 31.r 31.4r 31.41r 31.415r 31.4159r 31.41592r 31.415926r 31.4159265r  -26
+-25:  .3y 314r 314.r 314.1r 314.15r 314.159r 314.1592r 314.15926r 314.159265r  -25
 -24:  3.y 3.1y 3.14y 3.141y 3.1415y 3.14159y 3.141592y 3.1415926y 3.14159265y  -24
 -23:  31y 31.y 31.4y 31.41y 31.415y 31.4159y 31.41592y 31.415926y 31.4159265y  -23
 -22:  .3z 314y 314.y 314.1y 314.15y 314.159y 314.1592y 314.15926y 314.159265y  -22
@@ -333,8 +336,12 @@ bill@bill:~/miscell$ ./si_print 3.14159265358 30
  23:  .3Y 314Z 314.Z 314.1Z 314.15Z 314.159Z 314.1592Z 314.15926Z 314.159265Z   23
  24:  3.Y 3.1Y 3.14Y 3.141Y 3.1415Y 3.14159Y 3.141592Y 3.1415926Y 3.14159265Y   24
  25:  31Y 31.Y 31.4Y 31.41Y 31.415Y 31.4159Y 31.41592Y 31.415926Y 31.4159265Y   25
- 26:  Hug 314Y 314.Y 314.1Y 314.15Y 314.159Y 314.1592Y 314.15926Y 314.159265Y   26
- 27:  Hug e+27 3e+27 3.e+27 3.1e+27 3.14e+27 3.141e+27 3.1415e+27 3.14159e+27   27
- 28:  Hug e+28 3e+28 3.e+28 3.1e+28 3.14e+28 3.141e+28 3.1415e+28 3.14159e+28   28
- 29:  Hug e+29 3e+29 3.e+29 3.1e+29 3.14e+29 3.141e+29 3.1415e+29 3.14159e+29   29
- 30:  Hug e+30 3e+30 3.e+30 3.1e+30 3.14e+30 3.141e+30 3.1415e+30 3.14159e+30   30 */
+ 26:  .3R 314Y 314.Y 314.1Y 314.15Y 314.159Y 314.1592Y 314.15926Y 314.159265Y   26
+ 27:  3.R 3.1R 3.14R 3.141R 3.1415R 3.14159R 3.141592R 3.1415926R 3.14159265R   27
+ 28:  31R 31.R 31.4R 31.41R 31.415R 31.4159R 31.41592R 31.415926R 31.4159265R   28
+ 29:  .3Q 314R 314.R 314.1R 314.15R 314.159R 314.1592R 314.15926R 314.159265R   29
+ 30:  3.Q 3.1Q 3.14Q 3.141Q 3.1415Q 3.14159Q 3.141592Q 3.1415926Q 3.14159265Q   30
+ 31:  31Q 31.Q 31.4Q 31.41Q 31.415Q 31.4159Q 31.41592Q 31.415926Q 31.4159265Q   31
+ 32:  Hug 314Q 314.Q 314.1Q 314.15Q 314.159Q 314.1592Q 314.15926Q 314.159265Q   32
+ 33:  Hug e+33 3e+33 3.e+33 3.1e+33 3.14e+33 3.141e+33 3.1415e+33 3.14159e+33   33
+*/
