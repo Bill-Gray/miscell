@@ -44,7 +44,35 @@ COD 703
 From
 
    we assume we're on to the next e-mail and switch the state back
-to NO_OUTPUT. */
+to NO_OUTPUT.
+
+   Some messages are coming in MIME-encoded (split across lines and
+certain byte values converted to '=' plus two hex digits).  We
+need to convert them to plain ASCII : */
+
+static int unhex( const char c)
+{
+   if( c >= '0' && c <= '9')
+      return( c - '0');
+   if( c >= 'A' && c <= 'F')
+      return( c - 'A' + 10);
+   return( -1);
+}
+
+static void fix_mime( char *buff)
+{
+   if( strlen( buff) > 76 && buff[75] == '=' && buff[76] <= ' ')
+      buff[75] = '\0';        /* fixes broken line */
+   while( *buff)
+      {
+      if( *buff == '=' && unhex( buff[1]) >= 0 && unhex( buff[2]) >= 0)
+         {
+         *buff = (char)( unhex( buff[1]) * 16 + unhex( buff[2]));
+         memmove( buff + 1, buff + 3, strlen( buff + 2));
+         }
+      buff++;
+      }
+}
 
 #define NO_OUTPUT      0
 #define GOT_OBJECT     1
@@ -85,7 +113,10 @@ int main( const int argc, const char **argv)
       if( state == OUTPUT_TEXT && !memcmp( buff, "From", 4))
          state = NO_OUTPUT;
       if( state == OUTPUT_TEXT)
+         {
+         fix_mime( buff);
          printf( "%s", buff);
+         }
       }
    fclose( ifile);
    return( 0);
