@@ -70,7 +70,7 @@ int main( const int argc, const char **argv)
                input_filename, ctime( &t0));
    printf( "#define N_TERMS %d\n\n", max_l);
    printf( "   const double ");
-   for( i = 0; argv[1][i] && argv[1][i] != '.'; i++)
+   for( i = 0; input_filename[i] && input_filename[i] != '.'; i++)
       printf( "%c", tolower( argv[1][i]));
    printf( "_terms[] = {\n");
    printf( "      /*       C term                    S term                 L M */");
