@@ -144,147 +144,110 @@ typedef struct
    char *observers, *notes;
    } radar_obs_t;
 
-static void substitute_name( char *oname, const char *iname)
+static bool show_unknown_names = false;
+
+static void substitute_name( char *oname, const char *iname, const char *desig, const char *time_observed)
 {
-   const char *subs[] = {
-            "LB", "L. Benner",
-            "Benner", "L. Benner",
-            "BennerA.M", "L. Benner",
-            "Benner AND NOLAN", "L. Benner, M. Nolan",
-            "Benner L. A. M.", "L. Benner",
-            "MB", "M. Brozovic",
-            "M.B.", "M. Brozovic",
-            "Brozovic", "M. Brozovic",
-            "MWB", "M. Busch",
-            "Busch", "M. Busch",
-            "Campbell", "D. B. Campbell",
-            "Chandler", "J. F. Chandler",
-            "LF", "L. Fernanda",
-            "LFZ", "L. Fernanda",
-            "LFZM", "L. Fernanda",
-            "LZ", "L. Fernanda",
-            "Zambrano", "L. Fernanda",
-            "Giorgini", "J. Giorgini",
-            "GIORGI", "J. Giorgini",
-            "JDG", "J. Giorgini",
-            "Goldstein", "R. M. Goldstein",
-            "Greenberg", "A. H. Greenberg",
-            "Harmon", "J. K. Harmon",
-            "Harris", "A. W. Harris",
-            "DH", "D. Hickson",
-            "Hine", "A. A. Hine",
-            "Howell", "E. S. Howell",
-            "HOWEL", "E. S. Howell",
-            "HOWELLNOLANSPRINGM", "E. S. Howell, M. C. Nolan, ?. Springmann",
-            "EH", "E. S. Howell",
-            "ESH", "E. S. Howell",
-            "Kamoun", "P. G. Kamoun",
-            "Lieske", "J. H. Lieske",
-            "SM", "S. Marshall",
-            "SN", "S. P. Naidu",
-            "Naidu", "S. P. Naidu",
-            "Nolan", "M. C. Nolan",
-            "Magri", "C. Magri",
-            "Margot", "J. L. Margot",
-            "Marsden", "B. G. Marsden",
-            "Marshall", "S. Marshall",
-            "SM", "S. Marshall",
-            "SPN", "S. P. Naidu",
-            "MCN", "M. C. Nolan",
-            "MN", "M. C. Nolan",
-            "M.N.", "M. C. Nolan",
-            "Ostro", "S. J. Ostro",
-            "Ostro.s", "S. J. Ostro",
-            "OSTRO-NOLAN", "S. J. Ostro, M. C. Nolan",
-            "Pettengill", "G. H. Pettengill",
-            "PT", "P. Taylor",
-            "P.T.", "P. Taylor",
-            "PAT", "P. Taylor",
-            "Rosema", "K. D. Rosema",
-            "Shapiro", "I. I. Shapiro",
-            "Shepard", "M. Shepard",
-            "Taylor ", "P. Taylor,",
-            "Taylor", "P. Taylor",
-            "AV", "A. Virkki",
-            "FV", "F. Venditti",
-            "VIERINEN",  "J. Vierinen",
-            "MARKKANEN", "J. Markkanen",
-            "Werner", "C. L. Werner",
-            "Young", "J. W. Young",
-            "Zaitsev", "A. Zaitsev",
-            NULL };
+   static char **subs = NULL;
+   static size_t n_subs = 0;
    size_t i;
 
-   for( i = 0; subs[i]; i += 2)
+   if( !subs)
+      {
+      char buff[150];
+      FILE *ifile = fopen( "rnames.txt", "rb");
+
+      assert( ifile);
+      subs = (char **)calloc( 2000, sizeof( char *));
+      while( fgets( buff, sizeof( buff), ifile))
+         if( *buff != '#')
+            {
+            buff[strlen( buff) - 1] = '\0';    /* remove trailing LF */
+            subs[n_subs] = strdup( buff);
+            i = 35;
+            while( i && buff[i - 1] == ' ')
+               i--;
+            assert( i);
+            subs[n_subs][i] = '\0';
+            n_subs++;
+            }
+      }
+
+   for( i = 0; i < n_subs; i++)
       if( !strcasecmp( iname, subs[i]))
          {
-         strcpy( oname, subs[i + 1]);
+         strcpy( oname, subs[i] + 35);
          return;
          }
-   strcpy( oname, iname);
-   if( havent_seen_this_name( iname))
-      fprintf( stderr, "!?%s\n", iname);
+   strcpy( oname, "!?");
+   strcat( oname, iname);
+   if( show_unknown_names && havent_seen_this_name( iname))
+      fprintf( stderr, "%s %s %s\n", desig, time_observed, iname);
 }
 
-static void fix_observers( char *buff)
+/* This code assumes names will be comma-separated.  Which means that
+'Benner,L.A.M',  for example,  would be read as 'Benner' and 'L.A.M'.
+Exceptions have to be replaced with the right name(s). */
+
+static void fix_observers( char *buff, const char *desig, const char *time_observed)
 {
    char obuff[300], *tptr, *start = buff;
    bool done = false;
    size_t i, j;
    static const char *subs[] = {
-            "Benner,L.A.M.", "Benner",
-            "Benner, L.A.M.", "Benner",
-            "Benner,L. A. M.", "Benner",
-            "Benner, L. A. M.", "Benner",
-            "Benner, L.", "Benner",
-            "Benner,L.", "Benner",
+            "Benner,L.A.M.",     "Benner",
+            "Benner, L.A.M.",    "Benner",
+            "Benner,L. A. M.",   "Benner",
+            "Benner, L. A. M.",  "Benner",
+            "Benner, L.",        "Benner",
+            "Benner,L.",         "Benner",
             "Bennner, L. A. M.", "Benner",
-            "Campbell,D.B.", "Campbell",
-            "Campbell,D.B", "Campbell",
-            "Chandler,J.F", "Chandler",
-            "GOLDSTEIN,R.M", "Goldstein",
-            "Greenberg,A.H.", "Greenberg",
-            "Harris,A.W", "Harris",
-            "Harmon, J.K.", "Harmon",
-            "Harmon,J.K", "Harmon",
-            "Hine,A.A", "Hine",
-            "Kamoun,P.G.", "Kamoun",
-            "LIESKE,J.H", "Lieske",
-            "Margot, J. L.", "Margot",
-            "Margot,J.L.", "Margot",
-            "MAGRIHOWELL", "Magri,Howell",
-            "MAGRI,C.", "Magri",
-            "Marsden,B.G.", "Marsden",
-            "Marshall, S.", "Marshall",
-            "Nolan,M.C.", "Nolan",
-            "Nolan,M", "Nolan",
-            "Nolan.", "Nolan",
-            "NolanHowell", "Nolan, Howell",
-            "Ostro,S.J.", "Ostro",
-            "Ostro,S.J", "Ostro",
-            "Ostro,S.", "Ostro",
-            "Ostro, S.", "Ostro",
-            "Ostro,S", "Ostro",
-            "OSTRO-NOLAN", "Ostro, Nolan",
-            "PETTENGILL,G.H.", "Pettengill",
-            "PETTENGILL,G.H", "Pettengill",
-            "Rosema,K.D", "Rosema",
-            "SHAPIRO,I.I.", "Shapiro",
-            "SHAPIRO,I.I", "Shapiro",
-            "SHAPIRO,I", "Shapiro",
-            "Shepard, M.", "Shepard",
-            "TAYLOR,P.", "Taylor",
-            "Werner,C.L", "Werner",
-            "Young,J.W", "Young",
-            "AM ", "AM,",
-            "AV ", "AV,",
-            "EF ", "EF,",
-            "ERV ", "ERV,",
-            "LFZM ", "LFZM,",
-  /*        "SM AS", "SM, AS",
-            "SM PT", "SM, PT",
-   */       "PT ", "PT,",
-            "Zaitsev,A.", "Zaitsev",
+            "BENER",             "Benner",
+            "BIUSCH",            "Busch",
+            "Busch, M.W.",       "Busch",
+            "Campbell,D.B.",     "Campbell",
+            "Campbell,D.B",      "Campbell",
+            "Chandler,J.F",      "Chandler",
+            "GOLDSTEIN,R.M",     "Goldstein",
+            "Greenberg,A.H.",    "Greenberg",
+            "Harris,A.W",        "Harris",
+            "Harmon, J.K.",      "Harmon",
+            "Harmon,J.K",        "Harmon",
+            "Hine,A.A",          "Hine",
+            "Horiuchi,S.",       "Horiuchi",
+            "Kamoun,P.G.",       "Kamoun",
+            "LIESKE,J.H",        "Lieske",
+            "Margot,J.L.,J.-L.", "Margot",
+            "Margot, J. L.",     "Margot",
+            "Margot,J.L.",       "Margot",
+            "Margot,JL",         "Margot",
+            "MAGRI,C.",          "Magri",
+            "Marsden,B.G.",      "Marsden",
+            "Marshall, S.",      "Marshall",
+            "Naidu, S.P.",       "Naidu",
+            "M. Nolan",          "M. Nolan",
+            "M. NOLAN AND A. HINE",  "M. Nolan, A. Hine",
+            "Nolan,MC",          "Nolan",
+            "Nolan,M.C.",        "Nolan",
+            "Nolan,M. C.",       "Nolan",
+            "Nolan,M",           "Nolan",
+            "Nolan.",            "Nolan",
+            "Ostro,S.J.",        "Ostro",
+            "Ostro,S.J",         "Ostro",
+            "Ostro,S.",          "Ostro",
+            "Ostro, S.",         "Ostro",
+            "Ostro,S",           "Ostro",
+            "PETTENGILL,G.H.",   "Pettengill",
+            "PETTENGILL,G.H",    "Pettengill",
+            "Rosema,K.D",        "Rosema",
+            "SHAPIRO,I.I.",      "Shapiro",
+            "SHAPIRO,I.I",       "Shapiro",
+            "SHAPIRO,I",         "Shapiro",
+            "Shepard, M.",       "Shepard",
+            "TAYLOR,P.",         "Taylor",
+            "Werner,C.L",        "Werner",
+            "Young,J.W",         "Young",
+            "Zaitsev,A.",        "Zaitsev",
             NULL };
 
    for( i = 0; subs[i]; i += 2)
@@ -325,7 +288,7 @@ static void fix_observers( char *buff)
       while( j && buff[j - 1] == ' ')
          j--;
       buff[j] = '\0';
-      substitute_name( obuff + strlen( obuff), buff);
+      substitute_name( obuff + strlen( obuff), buff, desig, time_observed);
       buff += i;
       if( !done)
          {
@@ -426,7 +389,7 @@ static void get_radar_obs( char *buff, radar_obs_t *obs)
             case 8:
                obs->bounce_point = *tptr;
                if( *tptr != 'C' && *tptr != 'P')
-                  printf( "? Error : '%s'\n", tptr);
+                  fprintf( stderr, "? Error : '%s'\n", tptr);
                assert( *tptr == 'C' || *tptr == 'P');
                break;
             case 9:
@@ -435,7 +398,8 @@ static void get_radar_obs( char *buff, radar_obs_t *obs)
 
                assert( field_len < (int)sizeof( tbuff) - 1);
                strlcpy_error( tbuff, tptr);
-               fix_observers( tbuff);
+//             printf( "%s\n", tbuff);
+               fix_observers( tbuff, obs->desig, obs->time);
                obs->observers = (char *)malloc( strlen( tbuff) + 1);
                strcpy( obs->observers, tbuff);
                }
@@ -640,8 +604,19 @@ int main( const int argc, const char **argv)
    bool show_comments = true;
 
    for( i = 1; i < argc; i++)
-      if( !strcmp( argv[i], "-c"))
-         show_comments = false;
+      if( argv[i][0] == '-')
+         switch( argv[i][1])
+            {
+            case 'n':
+               show_unknown_names = true;
+               break;
+            case 'c':
+               show_comments = false;
+               break;
+            default:
+               fprintf( stderr, "'%s' unrecognized option\n", argv[i]);
+               return( -1);
+            }
       else
          ifilename = argv[i];
 

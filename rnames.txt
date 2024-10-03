@@ -1,0 +1,88 @@
+# List of 'fixes' for radar observer names (see 'radar.c').  The name
+# as given in the JSON file is followed by the name in the initial/lastname
+# form required for an MPC report.  Comments can be added anywhere prefaced
+# by #.
+AV                                 A. Virkki
+AKV                                A. Virkki
+Virkki                             A. Virkki
+Benner                             L. Benner
+Benner AND NOLAN                   L. Benner, M. Nolan
+Benner L. A. M.                    L. Benner
+BennerA.M                          L. Benner
+Benne                              L. Benner
+Brozo                              M. Brozovic
+Brozovic                           M. Brozovic
+BUSC                               M. Busch
+Busch                              M. Busch
+Campbell                           D. B. Campbell
+Chandler                           J. F. Chandler
+DH                                 D. Hickson
+EH                                 E. S. Howell
+ESH                                E. S. Howell
+FV                                 F. Venditti
+GIORGI                             J. Giorgini
+Giorgini                           J. Giorgini
+Goldstein                          R. M. Goldstein
+Greenberg                          A. H. Greenberg
+Harmon                             J. K. Harmon
+Harris                             A. W. Harris
+Hine                               A. A. Hine
+Horiuchi                           S. Horiuchi
+HOWEL                              E. S. Howell
+Howell                             E. S. Howell
+HOWELLNOLANSPRINGM                 E. S. Howell, M. C. Nolan, ?. Springmann
+JDG                                J. Giorgini
+Kamoun                             P. G. Kamoun
+L. A. M.                           L. Benner
+Benner A.M.                        L. Benner
+LB                                 L. Benner
+LF                                 L. Fernanda
+LFZ                                L. Fernanda
+LFZM                               L. Fernanda
+Lieske                             J. H. Lieske
+LZ                                 L. Fernanda
+M.B.                               M. Brozovic
+M.N.                               M. C. Nolan
+Magri                              C. Magri
+Margot                             J. L. Margot
+J. L.                              J. L. Margot
+J.-L.                              J. L. Margot
+Margot NOLAN                       J. L. Margot, M. C. Nolan
+MARKKANEN                          J. Markkanen
+Marsden                            B. G. Marsden
+Marshall                           S. Marshall
+MB                                 M. Brozovic
+MCN                                M. C. Nolan
+MN                                 M. C. Nolan
+MWB                                M. Busch
+Nai                                S. P. Naidu
+Naid                               S. P. Naidu
+Naidu                              S. P. Naidu
+Nolan                              M. C. Nolan
+NAIDU NOLAN                        S. P. Naidu, M. C. Nolan
+Ostro                              S. J. Ostro
+Ostro.S.                           S. J. Ostro
+OSTRO-NOLAN                        S. J. Ostro, M. C. Nolan
+Ostro.s                            S. J. Ostro
+P.T.                               P. Taylor
+PAT                                P. Taylor
+Pettengill                         G. H. Pettengill
+PT                                 P. Taylor
+Rosema                             K. D. Rosema
+Shapiro                            I. I. Shapiro
+Shepard                            M. Shepard
+SM                                 S. Marshall
+SM                                 S. Marshall
+SN                                 S. P. Naidu
+SPN                                S. P. Naidu
+Taylor                             P. Taylor
+Taylor Virkki                      P. Taylor, A. Virkki
+VIERINEN                           J. Vierinen
+Werner                             C. L. Werner
+Young                              J. W. Young
+Zaitsev                            A. Zaitsev
+Zambrano                           L. Fernanda
+MAGRIHOWELL                        C. Magri, E. S. Howell
+Nolan.                             M. C. Nolan
+OSTRO-NOLAN                        S. J. Ostro, M. C. Nolan
+NolanHowell                        M. C. Nolan, E. S. Howell
