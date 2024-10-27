@@ -110,12 +110,12 @@ static int look_for_mpec_title( FILE *ifile, char *title)
 {
    const long curr_loc = ftell( ifile);
    char buff[200], *tptr;
-   int i, rval = -1;
+   int rval = -1;
 
    while( rval == -1 && fgets( buff, sizeof( buff), ifile))
       if( strstr( buff, "ISSN 1523-6714"))
          rval = -2;
-   for( i = 5; rval == -2 && fgets( buff, sizeof( buff), ifile); i++)
+   while( rval == -2 && fgets( buff, sizeof( buff), ifile))
       if( (tptr = strstr( buff, "</b>")) != NULL)
          {
          *tptr = '\0';
