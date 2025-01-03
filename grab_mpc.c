@@ -108,7 +108,7 @@ static FILE *init_output_file( const char *url, const char *object_name,
       {
       const time_t t0 = time( NULL);
 
-      fprintf( ofile, "COM UNIX time %ld (%.24s) %s\n", (long)t0, ctime( &t0), url);
+      fprintf( ofile, "COM UNIX time %ld (%.24s UTC) %s\n", (long)t0, asctime( gmtime( &t0)), url);
       fprintf( ofile, "COM Obj %s\n", object_name);
       }
    return( ofile);

@@ -135,7 +135,7 @@ int main( const int argc, const char **argv)
 
          /* Mark the header as having been processed: */
    sprintf( buff, "mpcorbx version %s,  run on %s",
-                                   __DATE__, ctime( &t0));
+                                   __DATE__, asctime( gmtime( &t0)));
    output_line( output_file, buff, use_cr);
    if( argc > 1)
       {

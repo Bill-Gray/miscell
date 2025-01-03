@@ -66,8 +66,8 @@ int main( const int argc, const char **argv)
             "in a convenient C array.  Run ./gfc_xvt (filename) (max coefficient).\n");
       return( -1);
       }
-   printf( "/* Generated from input file %s at %.24s using gfc_xvt */\n",
-               input_filename, ctime( &t0));
+   printf( "/* Generated from input file %s at %.24s UTC using gfc_xvt */\n",
+               input_filename, asctime( gmtime( &t0)));
    printf( "#define N_TERMS %d\n\n", max_l);
    printf( "   const double ");
    for( i = 0; input_filename[i] && input_filename[i] != '.'; i++)

@@ -283,7 +283,7 @@ int main( const int argc, const char **argv)
                {
                const time_t t0 = time( NULL);
 
-               fprintf( ofile, "# New objs added %s", ctime( &t0));
+               fprintf( ofile, "# New objs added %.24s UTC\n", asctime( gmtime( &t0)));
                }
             fprintf( ofile, "%s", buff);
             if( memcmp( old_neocp, buff, 12))

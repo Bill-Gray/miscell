@@ -640,9 +640,9 @@ int main( const int argc, const char **argv)
       i = 0;
       while( buff[i] && memcmp( buff + i, "\"data\":", 7))
          i++;
-      printf( "COM 'radar' converter run at %.24s GMT\n",
+      printf( "COM 'radar' converter run at %.24s UTC\n",
                                asctime( gmtime( &t0)));
-      printf( "COM 'radar' version 2023 Oct 19;  see\n"
+      printf( "COM 'radar' version 2025 Jan 02;  see\n"
               "COM https://github.com/Bill-Gray/miscell/blob/master/radar.c\n"
               "COM for relevant code\n");
       output_index( buff + i);

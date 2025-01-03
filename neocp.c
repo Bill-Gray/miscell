@@ -479,7 +479,7 @@ static void show_differences( void)
    FILE *ifile, *ofile;
    const time_t t0 = time( NULL);
 
-   printf( "Run at %s", ctime( &t0));
+   printf( "Run at %.24s UTC\n", asctime( gmtime( &t0)));
    printf( "%u objects before; %u after\n", n_before, n_after);
    crossreference( before, after);
    n_new = n_not_found_in_other_list( after, n_after);
@@ -487,7 +487,7 @@ static void show_differences( void)
                n_not_found_in_other_list( before, n_before), n_new);
    printf( "Removed objects:\n");
    ofile = err_fopen( "neocp.old", "ab");
-   fprintf( ofile, "# New objs added %s", ctime( &t0));
+   fprintf( ofile, "# New objs added %.24s UTC\n", asctime( gmtime( &t0)));
    if( n_before)           /* possibly no objects were on NEOCP,  or we're */
       ifile = err_fopen( "neocp.txt", "rb"); /* running for the first time */
    else
@@ -565,7 +565,7 @@ static void show_differences( void)
          {                    /* skipping HTML stuff */
          char buff[90];
 
-         fprintf( ofile, "# New objs added %s", ctime( &t0));
+         fprintf( ofile, "# New objs added %.24s UTC\n", asctime( gmtime( &t0)));
          while( fgets( buff, sizeof( buff), ifile))
             if( strlen( buff) > 80)
                fputs( buff, ofile);
