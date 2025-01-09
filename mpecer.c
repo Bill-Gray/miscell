@@ -134,6 +134,21 @@ static int look_for_mpec_title( FILE *ifile, char *title)
    return( rval);
 }
 
+static void fix_html_literals( char *buff)
+{
+   const char *fixes[] = { "&&amp;", "<&lt;", ">&gt;", "\"&quot;",
+                  " &nbsp;", "'&apos;", NULL };
+   char *tptr;
+   size_t i;
+
+   for( i = 0; fixes[i]; i++)
+      while( NULL != (tptr = strstr( buff, fixes[i] + 1)))
+         {
+         *tptr = fixes[i][0];
+         memmove( tptr + 1, tptr + strlen( fixes[i]) - 1, strlen( tptr));
+         }
+}
+
 static bool is_observation_line( const char *buff)
 {
    const bool rval = ( strlen( buff) == 81
@@ -206,6 +221,8 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
    if( !rval)
       {
       while( fgets( buff, sizeof( buff), ifile))
+         {
+         fix_html_literals( buff);
          if( !memcmp( buff, "Orbital elements:", 17))
             {
             int n_written = 0, j;
@@ -263,6 +280,8 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
          else if( is_observation_line( buff) && !is_daily_orbit_update)
             {
             buff[80] = '\0';
+            if( verbose > 2)
+               printf( "Got observation line %s", buff);
             if( !strstr( stns, buff + 77) && n_stns_found < 4)
                {
                if( stns[0])
@@ -284,6 +303,9 @@ static int grab_mpec( FILE *ofile, const char *year, const char half_month, cons
                   }
                }
             }
+         else if( verbose > 2)
+            printf( "Got unrecognized line %s", buff);
+         }
       }
 
    if( !rval)
@@ -350,6 +372,8 @@ int main( const int argc, const char **argv)
       printf( "Invalid year\n");
       return( -2);
       }
+   if( year == 1993)       /* first MPEC was 1993-S01 */
+      half_month = 'S';
    sprintf( filename, "%s.htm", argv[1]);
    ifile = err_fopen( filename, "rb");
    ofile = err_fopen( temp_file_name, "wb");
