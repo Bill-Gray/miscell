@@ -92,19 +92,19 @@ static void put_mpc_code_from_dss( char *mpc_code, const int dss_desig)
          code = "257";     /* Goldstone, DSS 25 */
          break;            /* used only as receiver for 2006 RH120 */
       case -35:
-         code = "d35";     /* DSS-35 in Australia */
+         code = "263";     /* DSS-35 in Australia */
          break;
       case -36:
-         code = "d36";     /* DSS-36 in Australia */
+         code = "264";     /* DSS-36 in Australia */
          break;
       case -38:
          code = "255";     /* used only as receiver for 6489 Golevka (1991 JX) */
          break;
       case -43:
-         code = "d43";     /* DSS-43 in Australia */
+         code = "265";     /* DSS-43 in Australia */
          break;
       case -47:
-         code = "d47";     /* DSS-47 in Australia */
+         code = "271";     /* DSS-47 in Australia */
          break;
       case -73:
          code = "273";
