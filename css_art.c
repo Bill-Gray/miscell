@@ -115,7 +115,8 @@ int main( const int argc, const char **argv)
       if( state == OUTPUT_TEXT)
          {
          fix_mime( buff);
-         printf( "%s", buff);
+         if( *buff >= ' ')
+            printf( "%s", buff);
          }
       }
    fclose( ifile);
