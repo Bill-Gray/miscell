@@ -117,22 +117,6 @@ static void put_mpc_code_from_dss( char *mpc_code, const int dss_desig)
    memcpy( mpc_code, code, 3);
 }
 
-static bool havent_seen_this_name( const char *iname)
-{
-   static char **names = NULL;
-   int i;
-   const int max_names = 10000;
-
-   if( !names)
-      names = (char **)calloc( max_names, sizeof( char *));
-   for( i = 0; names[i]; i++)
-      if( !strcmp( names[i], iname))
-         return( false);
-   names[i] = (char *)malloc( strlen( iname) + 1);
-   strcpy( names[i], iname);
-   return( true);
-}
-
 typedef struct
    {
    char desig[20], time[20], time_modified[20];
@@ -143,161 +127,6 @@ typedef struct
    int reference;
    char *observers, *notes;
    } radar_obs_t;
-
-static bool show_unknown_names = false;
-
-static void substitute_name( char *oname, const char *iname, const char *desig, const char *time_observed)
-{
-   static char **subs = NULL;
-   static size_t n_subs = 0;
-   size_t i;
-
-   if( !subs)
-      {
-      char buff[150];
-      FILE *ifile = fopen( "rnames.txt", "rb");
-
-      assert( ifile);
-      subs = (char **)calloc( 2000, sizeof( char *));
-      while( fgets( buff, sizeof( buff), ifile))
-         if( *buff != '#')
-            {
-            buff[strlen( buff) - 1] = '\0';    /* remove trailing LF */
-            subs[n_subs] = strdup( buff);
-            i = 35;
-            while( i && buff[i - 1] == ' ')
-               i--;
-            assert( i);
-            subs[n_subs][i] = '\0';
-            n_subs++;
-            }
-      }
-
-   for( i = 0; i < n_subs; i++)
-      if( !strcasecmp( iname, subs[i]))
-         {
-         strcpy( oname, subs[i] + 35);
-         return;
-         }
-   strcpy( oname, "!?");
-   strcat( oname, iname);
-   if( show_unknown_names && havent_seen_this_name( iname))
-      fprintf( stderr, "%s %s %s\n", desig, time_observed, iname);
-}
-
-/* This code assumes names will be comma-separated.  Which means that
-'Benner,L.A.M',  for example,  would be read as 'Benner' and 'L.A.M'.
-Exceptions have to be replaced with the right name(s). */
-
-static void fix_observers( char *buff, const char *desig, const char *time_observed)
-{
-   char obuff[300], *tptr, *start = buff;
-   bool done = false;
-   size_t i, j;
-   static const char *subs[] = {
-            "Benner,L.A.M.",     "Benner",
-            "Benner, L.A.M.",    "Benner",
-            "Benner,L. A. M.",   "Benner",
-            "Benner, L. A. M.",  "Benner",
-            "Benner, L.",        "Benner",
-            "Benner,L.",         "Benner",
-            "Bennner, L. A. M.", "Benner",
-            "BENER",             "Benner",
-            "BIUSCH",            "Busch",
-            "Busch, M.W.",       "Busch",
-            "Campbell,D.B.",     "Campbell",
-            "Campbell,D.B",      "Campbell",
-            "Chandler,J.F",      "Chandler",
-            "GOLDSTEIN,R.M",     "Goldstein",
-            "Greenberg,A.H.",    "Greenberg",
-            "Harris,A.W",        "Harris",
-            "Harmon, J.K.",      "Harmon",
-            "Harmon,J.K",        "Harmon",
-            "Hine,A.A",          "Hine",
-            "Horiuchi,S.",       "Horiuchi",
-            "Kamoun,P.G.",       "Kamoun",
-            "LIESKE,J.H",        "Lieske",
-            "Margot,J.L.,J.-L.", "Margot",
-            "Margot, J. L.",     "Margot",
-            "Margot,J.L.",       "Margot",
-            "Margot,JL",         "Margot",
-            "MAGRI,C.",          "Magri",
-            "Marsden,B.G.",      "Marsden",
-            "Marshall, S.",      "Marshall",
-            "Naidu, S.P.",       "Naidu",
-            "M. Nolan",          "M. Nolan",
-            "M. NOLAN AND A. HINE",  "M. Nolan, A. Hine",
-            "Nolan,MC",          "Nolan",
-            "Nolan,M.C.",        "Nolan",
-            "Nolan,M. C.",       "Nolan",
-            "Nolan,M",           "Nolan",
-            "Nolan.",            "Nolan",
-            "Ostro,S.J.",        "Ostro",
-            "Ostro,S.J",         "Ostro",
-            "Ostro,S.",          "Ostro",
-            "Ostro, S.",         "Ostro",
-            "Ostro,S",           "Ostro",
-            "PETTENGILL,G.H.",   "Pettengill",
-            "PETTENGILL,G.H",    "Pettengill",
-            "Rosema,K.D",        "Rosema",
-            "SHAPIRO,I.I.",      "Shapiro",
-            "SHAPIRO,I.I",       "Shapiro",
-            "SHAPIRO,I",         "Shapiro",
-            "Shepard, M.",       "Shepard",
-            "TAYLOR,P.",         "Taylor",
-            "Werner,C.L",        "Werner",
-            "Young,J.W",         "Young",
-            "Zaitsev,A.",        "Zaitsev",
-            NULL };
-
-   for( i = 0; subs[i]; i += 2)
-      if( (tptr = strcasestr( buff, subs[i])) != NULL)
-         {
-         strlcpy_error( obuff, subs[i + 1]);
-         strlcat_error( obuff, tptr + strlen( subs[i]));
-         strcpy( tptr, obuff);
-         }
-
-   for( tptr = buff; *tptr; tptr++)
-      if( (tptr == buff || tptr[-1] == ',') &&
-                 isupper( tptr[0]) && isupper( tptr[1]) && tptr[2])
-         {        /* cases such as 'AM DH .. ..' */
-         i = 2;
-         if( isupper( tptr[i]))     /* maybe ERV,  etc. */
-            i++;
-         if( isupper( tptr[i]))     /* Maybe LFZM, etc. */
-            i++;
-         while( tptr[i] == ' ' && isupper( tptr[i + 1]) && isupper( tptr[i + 2]))
-            {
-            tptr[i] = ',';
-            i += 3;
-            }
-         }
-
-   *obuff = '\0';
-   while( !done)
-      {
-      while( *buff == ' ')
-         buff++;
-      i = 0;
-      while( buff[i] && !strchr( ",;/&", buff[i]))
-         i++;
-      done = (buff[i] == '\0');
-      buff[i] = '\0';
-      j = i;
-      while( j && buff[j - 1] == ' ')
-         j--;
-      buff[j] = '\0';
-      substitute_name( obuff + strlen( obuff), buff, desig, time_observed);
-      buff += i;
-      if( !done)
-         {
-         strlcat_error( obuff, ", ");
-         buff++;
-         }
-      }
-   strcpy( start, obuff);
-}
 
 static void get_packed_desig( char *packed, const char *idesig)
 {
@@ -395,11 +224,17 @@ static void get_radar_obs( char *buff, radar_obs_t *obs)
             case 9:
                {
                char tbuff[200];
+               size_t i, j;
 
                assert( field_len < (int)sizeof( tbuff) - 1);
-               strlcpy_error( tbuff, tptr);
-//             printf( "%s\n", tbuff);
-               fix_observers( tbuff, obs->desig, obs->time);
+               for( i = j = 0; tptr[i]; i++)
+                  {              /* make sure there are spaces after commas */
+                  tbuff[j++] = tptr[i];
+                  if( tptr[i] == ',' && tptr[i + 1] != ' ')
+                     tbuff[j++] = ' ';
+                  assert( j < 190);
+                  }
+               tbuff[j++] = '\0';
                obs->observers = (char *)malloc( strlen( tbuff) + 1);
                strcpy( obs->observers, tbuff);
                }
@@ -472,10 +307,11 @@ static void output_index( const char *buff)
 uncertainties are all stored with implicit decimal points.
 See MPC's documentation of the radar astrometry format.  */
 
-static void put_with_implicit_decimal( char *line, const char *text)
+static int put_with_implicit_decimal( char *line, const char *text)
 {
    const char *decimal = strchr( text, '.');
    size_t len;
+   int rval = 0;
 
    if( decimal)
       len = decimal - text;
@@ -486,6 +322,7 @@ static void put_with_implicit_decimal( char *line, const char *text)
       {
       size_t n_places = strlen( decimal + 1);
 
+      rval = (n_places > 4 ? -1 : 0);
       if( n_places > 4)
          n_places = 4;
       memcpy( line, decimal + 1, n_places);
@@ -493,6 +330,7 @@ static void put_with_implicit_decimal( char *line, const char *text)
    line -= len;
    while( *line == '0' && line[1] != ' ')
       *line++ = ' ';       /* remove leading zeroes */
+   return( rval);
 }
 
 static char last_modified[20];
@@ -543,7 +381,7 @@ static void put_radar_obs( char *line1, char *line2, const radar_obs_t *obs)
    const int seconds = atoi( obs->time + 17)
                 + atoi( obs->time + 14) * 60 + atoi( obs->time + 11) * 3600;
    const int microdays = (seconds * 625 + 27) / 54;
-   int dest_column = (obs->is_range ? 43 : 58);
+   int dest_column = (obs->is_range ? 43 : 58), overflows;
    const char *measurement = obs->measurement;
    char *tptr;
 
@@ -581,8 +419,10 @@ static void put_radar_obs( char *line1, char *line2, const radar_obs_t *obs)
       if( *measurement == '-')
          measurement++;
       }
-   put_with_implicit_decimal( line1 + dest_column, measurement);
-   put_with_implicit_decimal( line2 + dest_column, obs->sigma);
+   overflows =  put_with_implicit_decimal( line1 + dest_column, measurement);
+   overflows += put_with_implicit_decimal( line2 + dest_column, obs->sigma);
+   if( overflows)
+      fprintf( stderr, "Overflow %s\n", obs->desig);
             /* I don't think it's technically necessary to zero-pad the
                sigma.  But I've always _seen_ it zero-padded,  and there's
                a chance someone reads it as a float and divides by 1000.
@@ -607,9 +447,6 @@ int main( const int argc, const char **argv)
       if( argv[i][0] == '-')
          switch( argv[i][1])
             {
-            case 'n':
-               show_unknown_names = true;
-               break;
             case 'c':
                show_comments = false;
                break;
@@ -642,7 +479,7 @@ int main( const int argc, const char **argv)
          i++;
       printf( "COM 'radar' converter run at %.24s UTC\n",
                                asctime( gmtime( &t0)));
-      printf( "COM 'radar' version 2025 Jan 02;  see\n"
+      printf( "COM 'radar' version 2025 Aug 19;  see\n"
               "COM https://github.com/Bill-Gray/miscell/blob/master/radar.c\n"
               "COM for relevant code\n");
       output_index( buff + i);
