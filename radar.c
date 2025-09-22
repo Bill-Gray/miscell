@@ -115,6 +115,9 @@ static void put_mpc_code_from_dss( char *mpc_code, const int dss_desig)
       case -74:
          code = "d74";     /* Ceduna 30-m,  South Australia */
          break;            /* First used 2025 Sep */
+      case -86:
+         code = "d86";     /* Usuda 64-m, JAXA */
+         break;            /* First used 2025 Sep */
       default:
          fprintf( stderr, "DSS designation %d unrecognized", dss_desig);
          code = "?!!";
@@ -382,6 +385,8 @@ static void put_radar_comment( const radar_obs_t *obs)
       }
 }
 
+int verbose = 0;
+
 static void put_radar_obs( char *line1, char *line2, const radar_obs_t *obs)
 {
    const int seconds = atoi( obs->time + 17)
@@ -427,7 +432,7 @@ static void put_radar_obs( char *line1, char *line2, const radar_obs_t *obs)
       }
    overflows =  put_with_implicit_decimal( line1 + dest_column, measurement);
    overflows += put_with_implicit_decimal( line2 + dest_column, obs->sigma);
-   if( overflows)
+   if( overflows && verbose)
       fprintf( stderr, "Overflow %s\n", obs->desig);
             /* I don't think it's technically necessary to zero-pad the
                sigma.  But I've always _seen_ it zero-padded,  and there's
@@ -455,6 +460,9 @@ int main( const int argc, const char **argv)
             {
             case 'c':
                show_comments = false;
+               break;
+            case 'v':
+               verbose = 1 + atoi( argv[i] + 1);
                break;
             default:
                fprintf( stderr, "'%s' unrecognized option\n", argv[i]);
