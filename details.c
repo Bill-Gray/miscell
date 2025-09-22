@@ -91,17 +91,19 @@ static void error_exit( const char *error_message)
 int main( const int argc, const char **argv)
 {
    FILE *ifile;
-   char buff[1000], *tptr, mpec_name[15];
+   const size_t def_buffsize = 300;
+   size_t buffsize = def_buffsize;
+   char *buff = (char *)malloc( buffsize), *tptr, mpec_name[15];
 
    if( argc < 2)
       error_exit( "No input file specified");
    ifile = fopen( argv[1], "rb");
    if( !ifile)
       error_exit( "Input file not found");
-   while( fgets( buff, sizeof( buff), ifile))
+   while( fgets( buff, def_buffsize, ifile))
       if( !memcmp( buff, "Observer details:", 17))
          {
-         while( fgets( buff, sizeof( buff), ifile) && *buff >= ' ')
+         while( fgets( buff, def_buffsize, ifile) && *buff >= ' ')
             {
             char tbuff[90], *scope;
 
@@ -117,6 +119,11 @@ int main( const int argc, const char **argv)
                while( tbuff[i] == ' ')
                   i++;
                assert( i > 2 && i < 5);
+               if( strlen( buff) + 100 > buffsize)
+                  {
+                  buffsize += 400;
+                  buff = (char *)realloc( buff, buffsize);
+                  }
                strcpy( buff + strlen( buff) - 1, tbuff + i - 1);
                }
             strip_trailing_period_and_whitespace( buff);
