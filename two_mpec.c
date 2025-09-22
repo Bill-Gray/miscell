@@ -4,7 +4,9 @@
 #include <assert.h>
 
 /* Code to combine an MPEC with heliocentric elements with one with
-geocentric elements. */
+geocentric elements.  Compile with
+
+cc -Wall -Wextra -pedantic -Werror -o two_mpec two_mpec.c         */
 
 int text_search_and_replace( char *str, const char *oldstr,
                                      const char *newstr)
