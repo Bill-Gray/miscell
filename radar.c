@@ -92,7 +92,7 @@ static void put_mpc_code_from_dss( char *mpc_code, const int dss_desig)
          code = "257";     /* Goldstone, DSS 25 */
          break;            /* used only as receiver for 2006 RH120 */
       case -34:
-         code = "d34";     /* Canberra,  34-m */
+         code = "272";     /* Canberra,  34-m */
          break;            /* First used 2025 Sep */
       case -35:
          code = "263";     /* DSS-35 in Australia */
@@ -113,10 +113,10 @@ static void put_mpc_code_from_dss( char *mpc_code, const int dss_desig)
          code = "273";
          break;            /* used only for 367943 Duende (2012 DA14) */
       case -74:
-         code = "d74";     /* Ceduna 30-m,  South Australia */
+         code = "287";     /* Ceduna 30-m,  South Australia */
          break;            /* First used 2025 Sep */
       case -86:
-         code = "d86";     /* Usuda 64-m, JAXA */
+         code = "308";     /* Usuda 64-m, JAXA */
          break;            /* First used 2025 Sep */
       default:
          fprintf( stderr, "DSS designation %d unrecognized", dss_desig);
