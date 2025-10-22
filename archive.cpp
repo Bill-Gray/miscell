@@ -21,22 +21,24 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
 /* Reads the MPC archive page at
 
-http://www.minorplanetcenter.net/iau/ECS/MPCArchive/MPCArchive.html
+https://www.minorplanetcenter.net/iau/ECS/MPCArchive/MPCArchive.html
 
 and outputs a "computer friendly" list (example lines follow) :
 
-20000523 MPO       1-   822
-20100411 MPS  320571-322138
-20100330 MPC   69147- 69662
-20170402 MPS  781895-785056
-20170326 MPS  778819-781894
-20170319 MPS  777639-778818
-20170312 MPC  103031-103972
+20250912 MPS 2422989 2436880
+20250814 MPC  185967  187040
+20250814 MPS 2418159 2422988
+20250814 MPO  930001  940620
+19831220 MPC    8323    8436
 
    suitable for use in determining a date for a given MPC,  MPS,  or
-MPO reference.  Note that,  as of 2017 April 10,  it looks as if the
-MPS references will pass the million mark sometime around 2019 or 2020;
-we'll probably have to make fixes for the "MPS1M" bug at that point. */
+MPO reference.  Compile with
+
+g++ -Wall -Wextra -pedantic -o archive archive.cpp
+
+   Find_Orb already deciphers MPC references;  it'd be nice if it could
+also give the date of the reference and perhaps a URL for it.  This table
+would help it to do so.       */
 
 int main( const int argc, const char **argv)
 {
