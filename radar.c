@@ -493,7 +493,7 @@ int main( const int argc, const char **argv)
          i++;
       printf( "COM 'radar' converter run at %.24s UTC\n",
                                asctime( gmtime( &t0)));
-      printf( "COM 'radar' version 2025 Aug 19;  see\n"
+      printf( "COM 'radar' version 2025 Oct 09;  see\n"
               "COM https://github.com/Bill-Gray/miscell/blob/master/radar.c\n"
               "COM for relevant code\n");
       output_index( buff + i);
