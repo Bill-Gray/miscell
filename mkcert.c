@@ -72,7 +72,7 @@ int main( const int argc, const char **argv)
    ofile = fopen( "/tmp/put", "wb");
    assert( ofile);
    fprintf( ofile, "cd /home/projectp/public_html/.well-known/acme-challenge\n");
-   fprintf( ofile, "put %s\n", filename);
+   fprintf( ofile, "put -- %s\n", filename);
    fprintf( ofile, "exit\n");
    fclose( ofile);
    rval = system( "sftp -b /tmp/put -P 2900 projectp@projectpluto.com");
