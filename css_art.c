@@ -16,12 +16,22 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 02110-1301, USA. */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#ifdef __WATCOMC__
+#include <direct.h>
+#else
+#include <dirent.h>
+#endif
 
 /* Code to extract CSS artsat astrometry from my inbox.  Of
 zero interest to anyone who isn't me.  Ignore this.  Move
 along.  Nothing to see here...
+
+CSS kindly sends me their artsat detections as they make them.
+I use the astrometry to update the TLEs on my GitHub site
+(https://www.github.com/Bill-Gray/tles).
 
 Normally, this code reads lines and ignores them (initial state is
 NO_OUTPUT),  because most of my e-mail is not artsat data from
@@ -74,23 +84,62 @@ static void fix_mime( char *buff)
       }
 }
 
+/* Thunderbird puts inboxes with randomized directory names,  such as
+
+~/.thunderbird/e34klna0.default/ImapMail/server.domainname.net/INBOX
+
+So we have to look in ~/.thunderbird for suitable directories and see if
+they have the INBOX.       */
+
+FILE *find_inbox_file( void)
+{
+   char filename[256];
+   char *home_dir = getenv( "HOME"), *end_ptr;
+   DIR *dir_ptr;
+   FILE *ifile = NULL;
+
+   assert( home_dir);
+   strcpy( filename, home_dir);
+   strcat( filename, "/.thunderbird");
+   dir_ptr = opendir( filename);
+   assert( dir_ptr);
+   strcat( filename, "/");
+   end_ptr = filename + strlen( filename);
+   if( dir_ptr)
+      {
+      struct dirent *result;
+
+      while( !ifile && (result = readdir( dir_ptr)) != NULL)
+         {
+         if( strstr( result->d_name, "default"))
+            {
+            strcpy( end_ptr, result->d_name);
+            strcat( filename, "/ImapMail/shared5.mainehost-1.net/INBOX");
+            ifile = fopen( filename, "rb");
+            if( !ifile)
+               {
+               strcpy( end_ptr, result->d_name);
+               strcat( filename, "/ImapMail/shared5.mainehost.net/INBOX");
+               ifile = fopen( filename, "rb");
+               }
+            }
+         }
+      closedir( dir_ptr);
+      }
+   return( ifile);
+}
+
 #define NO_OUTPUT      0
 #define GOT_OBJECT     1
 #define OUTPUT_TEXT    2
 
 int main( const int argc, const char **argv)
 {
-   const char *inbox_filename =
-            "/home/phred/.thunderbird/ye4urkt7.default/ImapMail/shared5.mainehost-1.net/INBOX";
-   const char *inbox2_filename =
-            "/home/olga/.thunderbird/3oz6ykst.default/ImapMail/shared5.mainehost.net/INBOX";
-   FILE *ifile = fopen( inbox_filename, "rb");
+   FILE *ifile = find_inbox_file( );
    char buff[200];
    const char *search_obj = (argc > 1 ? argv[1] : "");
    int state = NO_OUTPUT;
 
-   if( !ifile)
-      ifile = fopen( inbox2_filename, "rb");
    assert( ifile);
    while( fgets( buff, sizeof( buff), ifile))
       {
