@@ -35,8 +35,13 @@ me;  everybody else can probably just use the indices generated with the
 code as provided at the above URL.  Unless I drop dead and somebody else
 wants to update those indices.
 
+   This program runs on my server,  updating the current version of the
+above file every eight hours (cron job).  Each January,  I do a little
+housecleaning to update the cron job and to provide a 'starter' file for
+the new year.
+
    When run with the (four-digit) year as a command line arguments,  the
-code looks through the _existing_ 'YYYY.htm' file to find the last MPEC in
+code looks through the current 'YYYY.htm' file to find the last MPEC in
 it.   Let's say you're running it for 2017,  and the last MPEC listed in
 '2017.htm' is 2017-C42;  the code will grab the first 20000 bytes of the
 assumed next MPEC,  2017-C43,  and get a summary for it. Then for C44,
@@ -53,7 +58,10 @@ is unharmed.
    If you run the code frequently,  it'll usually just access a few recent
 MPECs and fail when it tries to get the first MPEC of the next half-month.
 If you haven't run it for four months,  though,  it'll get data for eight
-half-months.         */
+half-months.
+
+   Also see 'reverser.c' in this repository,  used to rearrange the files
+to produce a version running from most to least recent MPECs. */
 
 size_t total_written;
 
@@ -102,7 +110,7 @@ given on the first line with an <h2> tag.  It'll instead look like,  e.g.,
     In such cases,  you have to search a bit further down in the MPEC
 to find it,  then rewind back to where you were.  Return value is -1 if
 we couldn't find the ISSN text that ought to be present;  -2 if we found
-that text,  but no </b> tag in the following five lines;  -3 if we found
+that text,  but no </b> tag in the following lines;  -3 if we found
 that </b> tag,  but no <b> tag before it;  and 0 if we actually found
 the title we were looking for.  */
 
