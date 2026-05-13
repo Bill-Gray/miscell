@@ -110,10 +110,10 @@ static void put_mpc_code_from_dss( char *mpc_code, const int dss_desig)
          code = "271";     /* DSS-47 in Australia */
          break;
       case -63:
-         code = "d63";     /* DSS-63 (70-m),  Madrid */
+         code = "R47";     /* DSS-63 (70-m),  Madrid */
          break;
       case -70:
-         code = "d70";     /* Lovell (76-m, Jodrell Bank) */
+         code = "R46";     /* Lovell (76-m, Jodrell Bank) */
          break;
       case -73:
          code = "273";
