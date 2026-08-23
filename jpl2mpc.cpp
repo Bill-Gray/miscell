@@ -146,12 +146,16 @@ int main( const int argc, const char **argv)
               "format,  or how to get such ephemerides using a URL.\n");
       exit( -1);
       }
+   *object_name = '\0';
    for( i = 2; i < argc; i++)
       if( argv[i][0] == '-')
          switch( argv[i][1])
             {
             case 'k':
                output_in_au_days = false;
+               break;
+            case 'n':
+               strcpy( object_name, argv[i] + 2);
                break;
             }
 
@@ -180,14 +184,14 @@ int main( const int argc, const char **argv)
          is_ecliptical = true;
       else if( strstr( buff, "Reference frame : Ecliptic of J2000"))
          is_ecliptical = true;
-      else if( !memcmp( buff, " Revised:", 9))
+      else if( !memcmp( buff, " Revised:", 9) && !*object_name)
          {
          char *id = strchr( buff + 70, '-');
 
          assert( id);
          look_up_name( object_name, sizeof( object_name), atoi( id));
          }
-      else if( !memcmp( buff, "Target body name:", 17))
+      else if( !memcmp( buff, "Target body name:", 17) && !*object_name)
          {
          const char *tptr = strstr( buff, "(-");
 
