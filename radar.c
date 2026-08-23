@@ -91,6 +91,9 @@ static void put_mpc_code_from_dss( char *mpc_code, const int dss_desig)
       case -25:
          code = "257";     /* Goldstone, DSS 25 */
          break;            /* used only as receiver for 2006 RH120 */
+      case -26:
+         code = "d26";     /* Goldstone, DSS-26, 34-m */
+         break;            /* first used 2026 Jun */
       case -34:
          code = "272";     /* Canberra,  34-m */
          break;            /* First used 2025 Sep */
@@ -121,6 +124,9 @@ static void put_mpc_code_from_dss( char *mpc_code, const int dss_desig)
       case -74:
          code = "287";     /* Ceduna 30-m,  South Australia */
          break;            /* First used 2025 Sep */
+      case -76:
+         code = "d76";     /* DSS-76 Hobart 26-m */
+         break;            /* First used 2026 Aug */
       case -86:
          code = "308";     /* Usuda 64-m, JAXA */
          break;            /* First used 2025 Sep */
